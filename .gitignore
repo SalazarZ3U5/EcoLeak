@@ -1,0 +1,36 @@
+# Environment
+.env
+.env.*
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# ChromaDB local store
+chroma_db/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage

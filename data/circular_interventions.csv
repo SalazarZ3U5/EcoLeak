@@ -1,0 +1,14 @@
+virgin_material_key	circular_alternative_key	virgin_co2e_per_kg	recycled_co2e_per_kg	avg_capex_usd	payback_months
+virgin_hdpe_plastic	recycled_hdpe_flakes	1.95	0.62	2500	8
+virgin_pet_plastic	rpet_regrind	2.15	0.45	3000	10
+virgin_steel	electric_arc_scrap_steel	1.8	0.43	15000	24
+virgin_aluminum	recycled_scrap_aluminum	11.5	0.6	12000	18
+virgin_plastic_pellets	recycled_plastic_pellets	2.05	0.52	3500	6
+color_additives	bio_carrier_masterbatch	2.8	1.1	1200	5
+packaging_material	recycled_corrugated_packaging	0.95	0.2	1500	4
+virgin_pp_plastic	recycled_pp_granules	1.95	0.58	3000	8
+virgin_ldpe_plastic	recycled_ldpe_pellets	2.08	0.6	2800	7
+industrial_lubricant	re_refined_lubricant	1.2	0.35	800	3
+virgin_copper	recycled_scrap_copper	4.1	0.85	18000	18
+virgin_glass	recycled_cullet_glass	0.85	0.32	5000	12
+virgin_paper_kraft	recycled_kraft_paper	1.1	0.35	4000	9

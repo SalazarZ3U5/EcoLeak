@@ -1,0 +1,114 @@
+"""
+FastAPI application entry point.
+
+Initializes the app, mounts all routers, loads data, and syncs ChromaDB
+on startup. Run with:
+
+    uvicorn backend.main:app --reload
+"""
+
+from __future__ import annotations
+
+import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Load environment variables before anything else
+load_dotenv()
+
+from backend.api import health, analyze, chat, recommendations
+from backend.services import csv_loader, chroma_service
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Lifespan — startup / shutdown
+# ---------------------------------------------------------------------------
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load CSV data and sync ChromaDB on startup."""
+    logger.info("=== Starting Industrial Emission Detector ===")
+
+    # Stage 1: Load CSV data
+    try:
+        csv_loader.reload_data()
+        ef_count = len(csv_loader.get_emission_factors())
+        ci_count = len(csv_loader.get_circular_interventions())
+        logger.info("CSV data loaded: %d emission factors, %d circular interventions", ef_count, ci_count)
+    except Exception as e:
+        logger.error("Failed to load CSV data: %s", e)
+        raise
+
+    # Stage 2: Sync ChromaDB
+    try:
+        doc_count = chroma_service.sync_collection()
+        logger.info("ChromaDB synced: %d documents", doc_count)
+    except Exception as e:
+        logger.error("Failed to sync ChromaDB: %s", e)
+        # Non-fatal — circular recommendations will be degraded
+
+    logger.info("=== Startup complete ===")
+    yield
+    logger.info("=== Shutting down ===")
+
+
+# ---------------------------------------------------------------------------
+# App
+# ---------------------------------------------------------------------------
+
+app = FastAPI(
+    title="Industrial Emission Leak-Point Detector",
+    description=(
+        "Detects carbon emission hotspots for SME factories and recommends "
+        "circular economy alternatives with CO2e savings and financial impact."
+    ),
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# CORS — allow all origins for development
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount routers
+app.include_router(health.router)
+app.include_router(analyze.router)
+app.include_router(chat.router)
+app.include_router(recommendations.router)
+
+# ---------------------------------------------------------------------------
+# Frontend — serve static files and index.html
+# ---------------------------------------------------------------------------
+
+_FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+
+if _FRONTEND_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
+
+    @app.get("/")
+    async def serve_frontend():
+        """Serve the frontend SPA."""
+        return FileResponse(str(_FRONTEND_DIR / "index.html"))
+
+    logger.info("Frontend mounted from %s", _FRONTEND_DIR)

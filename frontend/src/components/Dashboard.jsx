@@ -471,7 +471,7 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
               {auditResult.leak_points.map((lp, i) => (
                 <span key={i} className="leak-badge">
-                  {lp.raw_name || lp.activity_key} — {lp.percent_of_total}% [{lp.leak_point_severity?.toUpperCase()}]
+                  {lp.raw_name || lp.activity_key} — {lp.share_percent ?? lp.percent_of_total}% [{(lp.hotspot_tier || lp.leak_point_severity || 'HIGH').toUpperCase()}]
                 </span>
               ))}
             </div>

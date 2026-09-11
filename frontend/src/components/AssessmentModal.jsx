@@ -611,7 +611,7 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                         fontWeight: 700
                       }}
                     >
-                      {lp.raw_name || lp.activity_key} — {lp.percent_of_total}% of plant emissions [{lp.leak_point_severity?.toUpperCase()}]
+                      {lp.raw_name || lp.activity_key} — {lp.share_percent ?? lp.percent_of_total}% of plant emissions [{(lp.hotspot_tier || lp.leak_point_severity || 'HIGH').toUpperCase()}]
                     </span>
                   ))}
                 </div>

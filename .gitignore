@@ -1,36 +1,98 @@
-# Environment
+# ============================================================
+# Environment & Secrets (NEVER COMMIT)
+# ============================================================
 .env
 .env.*
+!.env.example
+*.pem
+*.key
+*.cert
 
-# Virtual environment
+# ============================================================
+# Python Virtual Environments & Packages
+# ============================================================
 .venv/
 venv/
 env/
+ENV/
+*.egg-info/
+*.egg
+build/
+dist/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+var/
+sdist/
+wheels/
+*.manifest
+*.spec
 
-# ChromaDB local store
-chroma_db/
-
-# Python
+# ============================================================
+# Python Bytecode & Caches
+# ============================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-*.egg-info/
-dist/
-build/
-*.egg
 
-# IDE
+# ============================================================
+# Local Databases & Vector Stores
+# ============================================================
+chroma_db/
+*.sqlite3
+*.db
+
+# ============================================================
+# Node & Frontend (React / Vite)
+# ============================================================
+node_modules/
+frontend/node_modules/
+frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.eslintcache
+
+# ============================================================
+# Testing & Coverage Artifacts
+# ============================================================
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+
+# ============================================================
+# IDEs & Developer Tooling
+# ============================================================
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+*.sublime-project
+*.sublime-workspace
 
-# OS
+# ============================================================
+# Operating System Junk
+# ============================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Test artifacts
-.pytest_cache/
-htmlcov/
-.coverage
+# ============================================================
+# Logs
+# ============================================================
+*.log
+logs/

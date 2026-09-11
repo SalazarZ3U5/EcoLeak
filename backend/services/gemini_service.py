@@ -22,6 +22,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+from backend.services import groq_service
+
 logger = logging.getLogger(__name__)
 
 _client = None
@@ -50,8 +52,8 @@ def _get_client():
 
 
 def is_configured() -> bool:
-    """Check if Gemini API key is available."""
-    return bool(os.getenv("GEMINI_API_KEY", "").strip())
+    """Check if Groq or Gemini API key is available."""
+    return groq_service.is_configured() or bool(os.getenv("GEMINI_API_KEY", "").strip())
 
 
 def _parse_json_response(text: str) -> Optional[dict]:
@@ -81,17 +83,13 @@ def _parse_json_response(text: str) -> Optional[dict]:
 def extract_activities(message: str) -> Optional[dict]:
     """
     Extract structured activities from a natural language description.
-
-    Returns:
-        {
-            "industry": "...",
-            "activities": [
-                {"name": "...", "quantity": ..., "unit": "..."},
-                ...
-            ]
-        }
-    or None if extraction fails.
+    Prioritizes Groq (openai/gpt-oss-120b) with Gemini fallback.
     """
+    if groq_service.is_configured():
+        groq_result = groq_service.extract_activities(message)
+        if groq_result is not None:
+            return groq_result
+
     client = _get_client()
     if client is None:
         return None
@@ -141,10 +139,13 @@ Factory description:
 
 def resolve_entity(raw_name: str, known_keys: list[str]) -> Optional[str]:
     """
-    Use Gemini to match a raw entity name to one of the known internal keys.
-
-    Returns the matched key or None.
+    Use Groq (openai/gpt-oss-120b) with Gemini fallback to match raw entity to canonical key.
     """
+    if groq_service.is_configured():
+        groq_match = groq_service.resolve_entity(raw_name, known_keys)
+        if groq_match is not None:
+            return groq_match
+
     client = _get_client()
     if client is None:
         return None
@@ -235,12 +236,17 @@ Return ONLY valid JSON:
 def analyze_document(file_bytes: bytes, mime_type: str = "application/pdf") -> Optional[dict]:
     """
     Extract structured activity data from a document (bill, invoice, report).
-
-    Returns same format as extract_activities.
+    Prioritizes Groq text extraction with Gemini fallback.
     """
+    if groq_service.is_configured():
+        groq_result = groq_service.analyze_document(file_bytes, mime_type)
+        if groq_result is not None:
+            return groq_result
+
     client = _get_client()
     if client is None:
         return None
+
 
     from google.genai import types
 

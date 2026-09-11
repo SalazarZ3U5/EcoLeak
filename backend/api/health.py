@@ -8,7 +8,7 @@ import os
 from fastapi import APIRouter
 
 from backend.models.schemas import HealthResponse, DatabaseStatus
-from backend.services import csv_loader, chroma_service, gemini_service, hf_service
+from backend.services import csv_loader, chroma_service, gemini_service, hf_service, groq_service
 
 router = APIRouter()
 
@@ -48,5 +48,8 @@ async def database_status():
         chroma_ready=chroma_service.is_ready(),
         chroma_document_count=chroma_service.get_document_count(),
         gemini_configured=gemini_service.is_configured(),
+        groq_configured=groq_service.is_configured(),
+        active_llm_model=groq_service.get_model(),
         huggingface_configured=hf_service.is_configured(),
     )
+

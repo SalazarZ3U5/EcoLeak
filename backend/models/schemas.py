@@ -170,4 +170,7 @@ class DatabaseStatus(BaseModel):
     chroma_ready: bool = False
     chroma_document_count: int = 0
     gemini_configured: bool = False
+    groq_configured: bool = False
+    active_llm_model: str = "openai/gpt-oss-120b"
     huggingface_configured: bool = False
+

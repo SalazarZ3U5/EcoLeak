@@ -102,8 +102,21 @@ app.include_router(recommendations.router)
 # ---------------------------------------------------------------------------
 
 _FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
+_DIST_DIR = _FRONTEND_DIR / "dist"
 
-if _FRONTEND_DIR.exists():
+if _DIST_DIR.exists():
+    # Production / Built React SPA
+    if (_DIST_DIR / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(_DIST_DIR / "assets")), name="assets")
+    app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
+
+    @app.get("/")
+    async def serve_frontend():
+        """Serve the built React SPA."""
+        return FileResponse(str(_DIST_DIR / "index.html"))
+
+    logger.info("React SPA frontend mounted from %s", _DIST_DIR)
+elif _FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
 
     @app.get("/")
@@ -112,3 +125,4 @@ if _FRONTEND_DIR.exists():
         return FileResponse(str(_FRONTEND_DIR / "index.html"))
 
     logger.info("Frontend mounted from %s", _FRONTEND_DIR)
+

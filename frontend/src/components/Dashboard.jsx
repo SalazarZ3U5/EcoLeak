@@ -214,7 +214,7 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
           <div className="dash-form-grid-2">
             <div className="dash-form-group">
               <label className="dash-label"><Zap size={14} /> Monthly Electricity (kWh)</label>
-              <input type="number" min="100" step="500" value={kwh} onChange={(e) => setKwh(Math.max(0, Number(e.target.value)))} className="dash-input" required />
+              <input type="number" min="0" step="500" value={kwh} onChange={(e) => setKwh(Math.max(0, Number(e.target.value)))} className="dash-input" required />
             </div>
             <div className="dash-form-group">
               <label className="dash-label"><Flame size={14} /> Primary Fuel</label>

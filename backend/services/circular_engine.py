@@ -20,7 +20,7 @@ from backend.services.csv_loader import get_circular_interventions
 
 logger = logging.getLogger(__name__)
 
-USD_TO_INR = 84.0
+USD_TO_INR = 95.0
 
 # ---------------------------------------------------------------------------
 # Industrial Material Parameters & Engineering Profiles (INR-grounded)

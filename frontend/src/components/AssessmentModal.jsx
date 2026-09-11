@@ -303,7 +303,7 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                     </label>
                     <input 
                       type="number"
-                      min="100"
+                      min="0"
                       step="500"
                       value={kwh}
                       onChange={(e) => setKwh(Math.max(0, Number(e.target.value)))}

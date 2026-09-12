@@ -12,4 +12,7 @@ pytest
 httpx
 groq
 pypdf
+firebase-admin
+supabase
+PyJWT[crypto]
 

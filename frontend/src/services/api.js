@@ -4,7 +4,26 @@
  * or provides instantaneous, verified local GHG & Circularity calculations.
  */
 
+import { auth } from './firebase';
+
 const API_BASE = '';
+
+/**
+ * Get Authorization headers with Firebase ID token (if user is logged in).
+ * Returns empty object if no user is authenticated.
+ */
+async function getAuthHeaders() {
+  try {
+    const user = auth?.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      return { Authorization: `Bearer ${token}` };
+    }
+  } catch (err) {
+    console.debug('Auth token retrieval note:', err);
+  }
+  return {};
+}
 
 export function formatINR(val, compact = false) {
   if (val === undefined || val === null || isNaN(val)) return '₹0';
@@ -301,9 +320,11 @@ export async function analyzeActivities(payload) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
+    const authHeaders = await getAuthHeaders();
+
     const res = await fetch(`${API_BASE}/api/analyze`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify(payload),
       signal: controller.signal
     });
@@ -328,8 +349,11 @@ export async function analyzeDocument(file, industry = 'Other') {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
 
+    const authHeaders = await getAuthHeaders();
+
     const res = await fetch(`${API_BASE}/api/analyze/document`, {
       method: 'POST',
+      headers: { ...authHeaders },
       body: formData,
       signal: controller.signal
     });
@@ -355,9 +379,11 @@ export async function analyzeChat(message) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 5000);
 
+    const authHeaders = await getAuthHeaders();
+
     const res = await fetch(`${API_BASE}/api/analyze/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ message }),
       signal: controller.signal
     });
@@ -421,9 +447,11 @@ export async function askEcoBotAssistant(message, history = [], context = null) 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 9000);
 
+    const authHeaders = await getAuthHeaders();
+
     const res = await fetch(`${API_BASE}/api/assistant/chat`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
       body: JSON.stringify({ message, history, context }),
       signal: controller.signal
     });

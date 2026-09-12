@@ -14,7 +14,7 @@ import logging
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, Depends
 
 from backend.models.schemas import (
     AnalyzeRequest,
@@ -32,7 +32,9 @@ from backend.services import (
     circular_engine,
     gemini_service,
     hf_service,
+    supabase_service,
 )
+from backend.services.auth_service import get_current_user_optional
 
 logger = logging.getLogger(__name__)
 
@@ -199,24 +201,47 @@ def _generate_remediation_suggestion(raw_name: str, unit: str) -> str:
 # ---------------------------------------------------------------------------
 
 @router.post("/analyze", response_model=AnalyzeResponse)
-async def analyze(request: AnalyzeRequest):
+async def analyze(
+    request: AnalyzeRequest,
+    user: Optional[dict] = Depends(get_current_user_optional),
+):
     """
     Analyze structured factory activity data.
 
     Accepts a list of activities with name, quantity, and unit.
     Returns emissions, leak points, and circular recommendations.
+    Optionally auto-saves audit history if user is authenticated.
     """
     activities = [
         {"name": a.name, "quantity": a.quantity, "unit": a.unit}
         for a in request.activities
     ]
-    return run_analysis_pipeline(request.industry, activities)
+    result = run_analysis_pipeline(request.industry, activities)
+
+    # Auto-save audit if user is authenticated and Supabase is configured
+    if user and supabase_service.is_configured():
+        try:
+            await supabase_service.save_audit(
+                user_id=user["uid"],
+                user_email=user.get("email", ""),
+                industry=request.industry,
+                total_co2e=result.facility_summary.total_emissions_kg_co2e,
+                scope_breakdown=result.facility_summary.scope_breakdown.model_dump(),
+                leak_points=[lp.model_dump() for lp in result.leak_points[:10]],
+                circular_recommendations=[r.model_dump() for r in result.circular_recommendations[:5]],
+                data_quality_index=result.facility_summary.data_quality_index,
+            )
+        except Exception as e:
+            logger.warning("Auto-save audit failed (non-fatal): %s", e)
+
+    return result
 
 
 @router.post("/analyze/document", response_model=AnalyzeResponse)
 async def analyze_document(
     file: UploadFile = File(...),
     industry: str = Form(default="Other"),
+    user: Optional[dict] = Depends(get_current_user_optional),
 ):
     """
     Analyze a document (bill, invoice, report) using Gemini extraction.

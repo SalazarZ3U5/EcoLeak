@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Lock } from 'lucide-react';
+import { CuteEcoBotIcon } from './EcoBotChat';
 
 const steps = [
   {
@@ -53,7 +55,7 @@ function StepCard({ s, idx }) {
   );
 }
 
-export default function SimpleHowItWorks() {
+export default function SimpleHowItWorks({ onOpenAssessment, onOpenEcoBot, authUser }) {
   return (
     <section className="section" id="how">
       <div className="container">
@@ -62,6 +64,24 @@ export default function SimpleHowItWorks() {
           <p>
             No complex consulting fees. A guided intelligence tool designed for SMEs, factory operators, and consultants to pinpoint emission hotspots and quantify payback.
           </p>
+        </div>
+
+        {/* Exclusive AI Bot banner above workflow pipeline */}
+        <div className="pipeline-exclusive-ai-strip">
+          <div className="pipeline-ai-info">
+            <span className="pipeline-ai-badge">EXCLUSIVE OPERATOR AI</span>
+            <p>Need real-time engineering calculations or official Indian emission formula guidance?</p>
+          </div>
+          <button
+            type="button"
+            className={`pipeline-ai-cta-btn ${!authUser ? 'locked' : ''}`}
+            onClick={onOpenEcoBot}
+            title={authUser ? "Launch EcoBot AI Assistant" : "Sign In to Access EcoBot"}
+          >
+            <CuteEcoBotIcon size={18} isAnimated={Boolean(authUser)} />
+            <span>Consult EcoBot AI</span>
+            {!authUser && <Lock size={13} style={{ marginLeft: '4px' }} />}
+          </button>
         </div>
 
         <div className="pipeline-steps-row">

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter
+from typing import Optional
+
+from fastapi import APIRouter, Depends
 
 from backend.models.schemas import (
     ChatRequest,
@@ -13,6 +15,7 @@ from backend.models.schemas import (
 )
 from backend.services import gemini_service, assistant_service
 from backend.api.analyze import run_analysis_pipeline
+from backend.services.auth_service import get_current_user_optional
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +27,10 @@ router = APIRouter()
 # ---------------------------------------------------------------------------
 
 @router.post("/api/analyze/chat", response_model=AnalyzeResponse)
-async def analyze_chat(request: ChatRequest):
+async def analyze_chat(
+    request: ChatRequest,
+    user: Optional[dict] = Depends(get_current_user_optional),
+):
     """
     Analyze factory operations from natural language description.
 

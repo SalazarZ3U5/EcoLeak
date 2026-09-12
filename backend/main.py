@@ -28,8 +28,8 @@ from fastapi.responses import FileResponse
 # Load environment variables before anything else
 load_dotenv()
 
-from backend.api import health, analyze, chat, recommendations
-from backend.services import csv_loader, chroma_service
+from backend.api import health, analyze, chat, recommendations, audits
+from backend.services import csv_loader, chroma_service, auth_service, supabase_service
 
 # ---------------------------------------------------------------------------
 # Logging
@@ -69,6 +69,18 @@ async def lifespan(app: FastAPI):
         logger.error("Failed to sync ChromaDB: %s", e)
         # Non-fatal — circular recommendations will be degraded
 
+    # Stage 3: Initialize authentication services
+    auth_status = auth_service.get_auth_status()
+    logger.info(
+        "Auth services: Firebase=%s, Supabase=%s",
+        auth_status["firebase_admin_configured"],
+        auth_status["supabase_backend_configured"],
+    )
+    if supabase_service.is_configured():
+        logger.info("Supabase audit persistence: ENABLED")
+    else:
+        logger.info("Supabase audit persistence: DISABLED (no credentials)")
+
     logger.info("=== EcoLeak Startup complete ===")
     yield
     logger.info("=== EcoLeak Shutting down ===")
@@ -102,6 +114,7 @@ app.include_router(health.router)
 app.include_router(analyze.router)
 app.include_router(chat.router)
 app.include_router(recommendations.router)
+app.include_router(audits.router)
 
 # ---------------------------------------------------------------------------
 # Frontend — serve static files and index.html

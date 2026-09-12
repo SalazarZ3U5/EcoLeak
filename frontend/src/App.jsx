@@ -19,6 +19,7 @@ export default function App() {
   const [view, setView] = useState('landing');
   const [dashSection, setDashSection] = useState('input');
   const [authInitialTab, setAuthInitialTab] = useState('signin');
+  const [isEcoBotOpen, setIsEcoBotOpen] = useState(false);
   const [authUser, setAuthUser] = useState(() => {
     try {
       const saved = localStorage.getItem('ecoleak_auth_user');
@@ -95,6 +96,15 @@ export default function App() {
     setView('landing');
   };
 
+  const handleOpenEcoBot = () => {
+    if (!authUser) {
+      setAuthInitialTab('signin');
+      setView('auth');
+      return;
+    }
+    setIsEcoBotOpen(true);
+  };
+
   const plantContext = authUser ? {
     industry: authUser.facilityName || 'Manufacturing SME',
     location: authUser.location || 'MIDC Industrial Area, Pune',
@@ -138,6 +148,8 @@ export default function App() {
             authUser={authUser}
             onSignOut={handleSignOut}
             onOpenAuth={() => openAuth('signin')}
+            onOpenEcoBot={handleOpenEcoBot}
+            isEcoBotOpen={isEcoBotOpen}
           />
         )
       )}
@@ -156,7 +168,11 @@ export default function App() {
           <main>
             <Hero onOpenAssessment={() => openDashboard('input')} />
             <Ticker />
-            <SimpleHowItWorks onOpenAssessment={() => openDashboard('input')} />
+            <SimpleHowItWorks
+              onOpenAssessment={() => openDashboard('input')}
+              onOpenEcoBot={handleOpenEcoBot}
+              authUser={authUser}
+            />
             <SimpleCalculator onOpenAssessment={openDashboard} />
             <ImpactROI onOpenAssessment={() => openDashboard('input')} />
           </main>
@@ -165,8 +181,14 @@ export default function App() {
         </div>
       )}
 
-      {/* Omnipresent Floating EcoBot AI Assistant with Cute Mascot Icon */}
-      <EcoBotChat activePlantContext={plantContext} />
+      {/* Exclusive EcoBot AI Assistant (triggered via workflow pipeline buttons, authenticated only) */}
+      <EcoBotChat
+        isOpen={isEcoBotOpen}
+        onClose={() => setIsEcoBotOpen(false)}
+        activePlantContext={plantContext}
+        authUser={authUser}
+        onOpenAuth={() => openAuth('signin')}
+      />
     </>
   );
 }

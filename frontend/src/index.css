@@ -2357,7 +2357,363 @@ h1, h2, h3, h4, .font-heading {
   z-index: 20;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* ── Exclusive AI Bot Trigger on Workflow Pipeline ─────────────── */
+.workflow-ai-bot-slot {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.workflow-exclusive-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 6px 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(235, 250, 243, 0.96) 100%);
+  border: 1.5px solid rgba(0, 184, 107, 0.4);
+  border-radius: 100px;
+  box-shadow: 0 4px 16px rgba(0, 184, 107, 0.14), 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.workflow-exclusive-ai-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--mint-hover);
+  box-shadow: 0 8px 24px rgba(0, 184, 107, 0.26), 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.workflow-exclusive-ai-btn.ai-locked {
+  background: rgba(245, 247, 250, 0.95);
+  border-color: rgba(140, 155, 170, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.workflow-exclusive-ai-btn.ai-locked:hover {
+  border-color: rgba(140, 155, 170, 0.6);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.workflow-exclusive-ai-btn.ai-active {
+  background: linear-gradient(135deg, #e6f9f0 0%, #d2f6e6 100%);
+  border-color: var(--mint);
+  box-shadow: 0 0 0 3px rgba(0, 184, 107, 0.25);
+}
+
+.workflow-ai-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e8f9f1 0%, #cbf5e2 100%);
+  border: 1px solid rgba(0, 184, 107, 0.3);
+  flex-shrink: 0;
+}
+
+.workflow-exclusive-ai-btn.ai-locked .workflow-ai-avatar {
+  background: #edf0f4;
+  border-color: #d1d7de;
+}
+
+.workflow-ai-copy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.workflow-ai-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--emerald-deep);
+  letter-spacing: -0.01em;
+}
+
+.workflow-exclusive-ai-btn.ai-locked .workflow-ai-name {
+  color: var(--text-secondary);
+}
+
+.workflow-ai-tag {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(0, 184, 107, 0.14);
+  color: var(--emerald-deep);
+}
+
+.workflow-exclusive-ai-btn.ai-locked .workflow-ai-tag {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--text-muted);
+}
+
+.workflow-ai-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.workflow-ai-pill.online {
+  background: rgba(0, 184, 107, 0.12);
+  color: var(--emerald-deep);
+}
+
+.workflow-ai-pill.locked {
+  background: rgba(100, 116, 139, 0.12);
+  color: var(--text-secondary);
+}
+
+.ai-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00b86b;
+  box-shadow: 0 0 8px #00b86b;
+  display: inline-block;
+  animation: aiLivePulse 2s infinite;
+}
+
+@keyframes aiLivePulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 12px #00b86b; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* ── Sidebar AI Launcher Card (Directly above WORKFLOW PIPELINE) ── */
+.sidebar-ai-launcher-card {
+  padding: 0 12px 14px;
+}
+
+.sidebar-ai-bot-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, rgba(0, 184, 107, 0.08) 0%, rgba(0, 210, 255, 0.08) 100%);
+  border: 1.5px solid rgba(0, 184, 107, 0.28);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.22s ease;
+  text-align: left;
+}
+
+.sidebar-ai-bot-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 184, 107, 0.16) 0%, rgba(0, 210, 255, 0.16) 100%);
+  border-color: rgba(0, 184, 107, 0.5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 184, 107, 0.18);
+}
+
+.sidebar-ai-bot-btn.ai-locked {
+  background: rgba(240, 244, 248, 0.6);
+  border-color: rgba(140, 155, 170, 0.25);
+}
+
+.sidebar-ai-bot-btn.ai-locked:hover {
+  background: rgba(235, 240, 246, 0.9);
+  border-color: rgba(140, 155, 170, 0.45);
+}
+
+.sidebar-ai-bot-btn.ai-active {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 2px rgba(0, 184, 107, 0.25);
+}
+
+.ai-bot-icon-glow {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 184, 107, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 184, 107, 0.12);
+  flex-shrink: 0;
+}
+
+.ai-bot-btn-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-bot-btn-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.ai-bot-btn-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ai-bot-exclusive-badge {
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: linear-gradient(135deg, #00b86b, #00a896);
+  color: #fff;
+}
+
+.ai-bot-btn-status {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.ai-online-text {
+  color: var(--emerald-deep);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-locked-text {
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Landing Page Pipeline AI Banner ────────────────────────── */
+.pipeline-exclusive-ai-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 22px;
+  background: linear-gradient(135deg, rgba(235, 250, 243, 0.85) 0%, rgba(240, 249, 255, 0.85) 100%);
+  border: 1.5px solid rgba(0, 184, 107, 0.3);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 18px rgba(0, 184, 107, 0.08);
+}
+
+.pipeline-ai-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--emerald-deep);
+  background: rgba(0, 184, 107, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.pipeline-ai-info p {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 500;
+}
+
+.pipeline-ai-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  background: linear-gradient(135deg, #00b86b 0%, #008f53 100%);
+  color: #fff;
+  border: none;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(0, 184, 107, 0.25);
+}
+
+.pipeline-ai-cta-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 184, 107, 0.35);
+}
+
+.pipeline-ai-cta-btn.locked {
+  background: #334155;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ── EcoBot Auth Gate (Modal view when unauthenticated) ──────── */
+.ecobot-auth-gate {
+  padding: 36px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ecobot-gate-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: rgba(0, 184, 107, 0.12);
+  color: var(--emerald-deep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border: 1.5px solid rgba(0, 184, 107, 0.3);
+}
+
+.ecobot-gate-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.ecobot-gate-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 22px;
+  max-width: 320px;
+}
+
+.ecobot-gate-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: linear-gradient(135deg, #00b86b 0%, #008f53 100%);
+  color: #fff;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 184, 107, 0.3);
+}
+
+.ecobot-gate-cta:hover {
+  background: var(--mint-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(0, 184, 107, 0.4);
 }
 
 .workflow-steps-flex {

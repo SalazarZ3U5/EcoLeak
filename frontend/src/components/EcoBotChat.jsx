@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  X, Send, RefreshCw, Maximize2, Minimize2, Check, Copy, ShieldCheck, ArrowRight
+  X, Send, RefreshCw, Maximize2, Minimize2, Check, Copy, ShieldCheck, ArrowRight, Lock, LogIn
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -97,8 +97,13 @@ const QUICK_QUERIES = [
   { label: 'Polymer Substitution Math', prompt: 'Calculate the net CO2e reduction percentage and tonnage saved when substituting 50 metric tons of virgin HDPE with mechanically recycled resin.' }
 ];
 
-export default function EcoBotChat({ activePlantContext }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function EcoBotChat({
+  isOpen = false,
+  onClose,
+  activePlantContext,
+  authUser,
+  onOpenAuth,
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -166,26 +171,75 @@ export default function EcoBotChat({ activePlantContext }) {
     setTimeout(() => setCopiedIdx(null), 1800);
   };
 
+  // Completely remove floating launcher button when closed
+  if (!isOpen) {
+    return null;
+  }
+
+  // Authentication Gate: only authenticated operators can access EcoBot
+  if (!authUser) {
+    return (
+      <div className="ecobot-chat-container">
+        <div className={`ecobot-window ${isExpanded ? 'ecobot-expanded' : ''}`}>
+          <div className="ecobot-header">
+            <div className="ecobot-header-left">
+              <div className="ecobot-header-avatar">
+                <CuteEcoBotIcon size={24} isAnimated={false} />
+              </div>
+              <div className="ecobot-header-info">
+                <div className="ecobot-name-row">
+                  <span className="ecobot-title">EcoBot</span>
+                  <span className="ecobot-status-pill locked">
+                    <Lock size={10} /> Auth Required
+                  </span>
+                </div>
+                <span className="ecobot-subtitle">
+                  Industrial Emission &amp; Mathematical Intelligence
+                </span>
+              </div>
+            </div>
+            <div className="ecobot-header-actions">
+              <button
+                type="button"
+                className="ecobot-head-btn"
+                onClick={onClose}
+                title="Close"
+                aria-label="Close"
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>
+
+          <div className="ecobot-auth-gate">
+            <div className="ecobot-gate-icon">
+              <Lock size={28} />
+            </div>
+            <h3 className="ecobot-gate-title">Operator Authentication Required</h3>
+            <p className="ecobot-gate-desc">
+              EcoBot AI Copilot is exclusively available to authenticated industrial operators. Please sign in or register to access real-time emission calculations and circular interventions.
+            </p>
+            <button
+              type="button"
+              className="ecobot-gate-cta"
+              onClick={() => {
+                if (onClose) onClose();
+                if (onOpenAuth) onOpenAuth();
+              }}
+            >
+              <LogIn size={15} />
+              <span>Sign In / Register to Access</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ecobot-chat-container">
-      {/* ── Floating Launcher Button: ONLY "Ask EcoBot" ────────────────────── */}
-      {!isOpen && (
-        <button
-          type="button"
-          className="ecobot-launcher-btn"
-          onClick={() => setIsOpen(true)}
-          aria-label="Open EcoBot"
-        >
-          <div className="launcher-icon-wrapper">
-            <CuteEcoBotIcon size={26} isAnimated={true} />
-          </div>
-          <span className="launcher-label-text">Ask EcoBot</span>
-        </button>
-      )}
-
       {/* ── Chat Modal Window ──────────────────────────────────────────────── */}
-      {isOpen && (
-        <div className={`ecobot-window ${isExpanded ? 'ecobot-expanded' : ''}`}>
+      <div className={`ecobot-window ${isExpanded ? 'ecobot-expanded' : ''}`}>
           {/* Elite Header */}
           <div className="ecobot-header">
             <div className="ecobot-header-left">
@@ -218,7 +272,7 @@ export default function EcoBotChat({ activePlantContext }) {
               <button
                 type="button"
                 className="ecobot-head-btn"
-                onClick={() => setIsOpen(false)}
+                onClick={onClose}
                 title="Close Assistant"
                 aria-label="Close Assistant"
               >
@@ -346,7 +400,6 @@ export default function EcoBotChat({ activePlantContext }) {
             </button>
           </form>
         </div>
-      )}
     </div>
   );
 }

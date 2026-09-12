@@ -16,6 +16,7 @@ import {
   formatCO2e
 } from '../services/api';
 import { INDUSTRY_PRESETS } from '../data/mockData';
+import { CuteEcoBotIcon } from './EcoBotChat';
 
 // ─── 1-Click Pre-filled Facility Profiles ─────────────────────────────────────
 const PRESET_SCENARIOS = {
@@ -108,7 +109,9 @@ export default function Dashboard({
   initialSection = 'input',
   authUser,
   onSignOut,
-  onOpenAuth
+  onOpenAuth,
+  onOpenEcoBot,
+  isEcoBotOpen = false,
 }) {
   const [activeSection, setActiveSection] = useState(
     initialSection === 'audit' ? 'input' : (initialSection === 'results' ? 'leaks' : (initialSection === 'signin' ? 'input' : initialSection))
@@ -1102,6 +1105,35 @@ export default function Dashboard({
           {sidebarOpen && <span>Back to Overview</span>}
         </button>
 
+        {/* Exclusive AI Bot button above WORKFLOW PIPELINE in Sidebar */}
+        <div className="sidebar-ai-launcher-card">
+          <button
+            type="button"
+            className={`sidebar-ai-bot-btn ${!authUser ? 'ai-locked' : 'ai-unlocked'} ${isEcoBotOpen ? 'ai-active' : ''}`}
+            onClick={onOpenEcoBot}
+            title={authUser ? "Launch EcoBot AI Copilot" : "Authentication Required for EcoBot AI"}
+          >
+            <div className="ai-bot-icon-glow">
+              <CuteEcoBotIcon size={20} isAnimated={Boolean(authUser)} />
+            </div>
+            {sidebarOpen && (
+              <div className="ai-bot-btn-text">
+                <div className="ai-bot-btn-title-row">
+                  <span className="ai-bot-btn-title">EcoBot AI</span>
+                  <span className="ai-bot-exclusive-badge">EXCLUSIVE</span>
+                </div>
+                <span className="ai-bot-btn-status">
+                  {authUser ? (
+                    <span className="ai-online-text"><span className="ai-live-dot" /> Copilot Active</span>
+                  ) : (
+                    <span className="ai-locked-text"><Lock size={10} /> Auth Required</span>
+                  )}
+                </span>
+              </div>
+            )}
+          </button>
+        </div>
+
         {sidebarOpen && <div className="sidebar-nav-label">WORKFLOW PIPELINE</div>}
 
         <nav className="sidebar-nav">
@@ -1220,6 +1252,33 @@ export default function Dashboard({
             >
               <span className="step-num">3</span>
               <span>Circular Solutions &amp; ROI</span>
+            </button>
+          </div>
+
+          {/* Exclusive AI Bot Button directly on the Workflow Pipeline */}
+          <div className="workflow-ai-bot-slot">
+            <button
+              type="button"
+              className={`workflow-exclusive-ai-btn ${!authUser ? 'ai-locked' : 'ai-unlocked'} ${isEcoBotOpen ? 'ai-active' : ''}`}
+              onClick={onOpenEcoBot}
+              title={authUser ? "Open EcoBot AI Industrial Assistant" : "Sign In Required for EcoBot AI"}
+            >
+              <div className="workflow-ai-avatar">
+                <CuteEcoBotIcon size={18} isAnimated={Boolean(authUser)} />
+              </div>
+              <div className="workflow-ai-copy">
+                <span className="workflow-ai-name">EcoBot AI</span>
+                <span className="workflow-ai-tag">EXCLUSIVE</span>
+              </div>
+              {authUser ? (
+                <span className="workflow-ai-pill online">
+                  <span className="ai-live-dot" /> Online
+                </span>
+              ) : (
+                <span className="workflow-ai-pill locked">
+                  <Lock size={11} /> Locked
+                </span>
+              )}
             </button>
           </div>
         </header>

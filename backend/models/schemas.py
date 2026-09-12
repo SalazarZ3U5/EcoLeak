@@ -77,6 +77,7 @@ class EmissionResult(BaseModel):
     share_percent: float = Field(default=0.0, description="Percentage of total facility emissions")
     is_leak_point: bool = Field(default=False, description="True if activity is a significant hotspot")
     hotspot_tier: str = Field(default="low", description="'high' (primary), 'medium' (secondary), or 'low'")
+    diagnostic: Optional[str] = Field(default=None, description="Detailed diagnostic hotspot summary")
     audit_note: Optional[str] = Field(default=None, description="Conversion or audit trail explanation")
     status: str = Field(default="resolved", description="'resolved' or 'unresolved'")
     warning: Optional[str] = Field(default=None, description="Warning message if resolution failed")
@@ -119,6 +120,7 @@ class CircularRecommendation(BaseModel):
     feasibility_score: int = Field(default=85, ge=0, le=100, description="Engineering & regulatory feasibility 0-100")
     technical_difficulty: str = Field(default="Low", description="'Low', 'Medium', or 'High'")
     regulatory_readiness: str = Field(default="Commercial ready")
+    mechanism: Optional[str] = Field(default=None, description="Engineering closed-loop mechanism description")
     confidence_score: float = Field(default=0.90, ge=0.0, le=1.0)
 
 

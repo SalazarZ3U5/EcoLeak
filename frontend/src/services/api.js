@@ -175,6 +175,30 @@ const CIRCULAR_CATALOG = {
     complexity: 'Turnkey',
     compliance: 'EPR Single-Use Plastic Replacement Mandate',
     loop_description: 'Biodegradable packaging loop replaces virgin EPS/bubble wrap with recycled paper pulp.'
+  },
+  'Cardboard Waste': {
+    alternative: 'Closed-Loop Pulping & OCC Shredding',
+    recycled_ef: 0.065,
+    reduction_pct: 75,
+    capex_inr: 336000,
+    opex_saving_rate: 8,
+    payback_months: 9,
+    feasibility: 94,
+    complexity: 'Low',
+    compliance: 'FSC Recycled 100% Certification Aligned',
+    loop_description: 'Pulp hydro-pulper closed recycling loop preserves fiber strength while slashing water intake.'
+  },
+  'Waste Cardboard': {
+    alternative: 'Closed-Loop Pulping & OCC Shredding',
+    recycled_ef: 0.065,
+    reduction_pct: 75,
+    capex_inr: 336000,
+    opex_saving_rate: 8,
+    payback_months: 9,
+    feasibility: 94,
+    complexity: 'Low',
+    compliance: 'FSC Recycled 100% Certification Aligned',
+    loop_description: 'Pulp hydro-pulper closed recycling loop preserves fiber strength while slashing water intake.'
   }
 };
 
@@ -222,6 +246,7 @@ function computeLocalAudit(industry, activities) {
       activity_key: item.raw_name,
       raw_name: item.raw_name,
       scope: item.scope,
+      co2e_kg: item.emissions_kg,
       emissions_kg: item.emissions_kg,
       share_percent: share_percent,
       cumulative_share: cumulative_share,
@@ -309,6 +334,7 @@ function computeLocalAudit(industry, activities) {
         scope_3_pct: Math.round((scope3_kg / total_emissions_kg) * 100),
       }
     },
+    activities: leak_points,
     leak_points: leak_points,
     circular_recommendations: circular_recommendations,
     unresolved_activities: []
@@ -340,14 +366,20 @@ export async function analyzeActivities(payload) {
   return computeLocalAudit(payload.industry, payload.activities);
 }
 
-export async function analyzeDocument(file, industry = 'Other') {
+export async function analyzeDocument(file, industry = 'Other', language = '', sarvamApiKey = '') {
   try {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('industry', industry);
+    if (language && language !== 'auto') {
+      formData.append('language', language);
+    }
+    if (sarvamApiKey && sarvamApiKey.trim()) {
+      formData.append('sarvam_api_key', sarvamApiKey.trim());
+    }
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
 
     const authHeaders = await getAuthHeaders();
 

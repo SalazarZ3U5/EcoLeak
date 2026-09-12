@@ -71,6 +71,7 @@ def detect_leak_points(emissions: list[EmissionResult]) -> list[EmissionResult]:
             "share_percent": share,
             "is_leak_point": is_leak,
             "hotspot_tier": tier,
+            "diagnostic": f"{emission.raw_name or emission.activity_key} accounts for {share}% of your entire plant carbon footprint.",
         }))
 
     leak_count = sum(1 for e in annotated if e.is_leak_point)

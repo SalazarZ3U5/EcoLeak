@@ -33,6 +33,7 @@ from backend.services import (
     gemini_service,
     hf_service,
     supabase_service,
+    sarvam_service,
 )
 from backend.services.auth_service import get_current_user_optional
 
@@ -144,6 +145,10 @@ def run_analysis_pipeline(
     # --- Step 4: Circular recommendations ---
     recommendations = []
     leak_points = [e for e in annotated if e.is_leak_point]
+    recommendations = circular_engine.recommend_for_activities(annotated)
+    if not recommendations and leak_points:
+        for lp in leak_points:
+            warnings.append(f"No circular alternative found for '{lp.activity_key}'.")
 
     for lp in leak_points:
         # Check if activity is a virgin material hotspot
@@ -241,43 +246,89 @@ async def analyze(
 async def analyze_document(
     file: UploadFile = File(...),
     industry: str = Form(default="Other"),
+    language: Optional[str] = Form(default=None),
+    sarvam_api_key: Optional[str] = Form(default=None),
     user: Optional[dict] = Depends(get_current_user_optional),
 ):
     """
-    Analyze a document (bill, invoice, report) using Gemini extraction.
+    Analyze an uploaded document (utility bill, invoice, or consumption ledger).
 
-    The document is processed by Gemini to extract activities, which
-    then flow through the standard analysis pipeline.
+    For Indian language documents (Hindi, Marathi, Gujarati, Tamil, Telugu, etc.),
+    Sarvam AI's DocAgent (Sarvam Vision 1.5) is used for high-fidelity OCR and
+    extraction. If Sarvam AI is unconfigured or encounters an error, PyMuPDF
+    serves as the robust local multilingual fallback.
     """
     warnings: list[str] = []
 
     file_bytes = await file.read()
     mime_type = file.content_type or "application/octet-stream"
+    filename = file.filename or "document.pdf"
+    extraction: Optional[dict] = None
 
-    # Multilingual PDF extraction metadata tracking with PyMuPDF
-    if "pdf" in mime_type.lower():
+    # Step 1: Detect if file contains Indian languages / scripts
+    is_indic_doc = False
+    detected_scripts: list[str] = []
+    normalized_lang = (language or "").strip()
+    if normalized_lang and normalized_lang in sarvam_service.INDIC_LANGUAGES and normalized_lang != "en-IN":
+        is_indic_doc = True
+    elif "pdf" in mime_type.lower():
         try:
-            from backend.services.pdf_parser import extract_pdf_content
-            parsed_meta = extract_pdf_content(file_bytes)
-            parser_label = parsed_meta.get("parser", "PyMuPDF (Multilingual)")
-            pages = parsed_meta.get("page_count", 1)
-            tables_count = len(parsed_meta.get("tables", []))
-            scripts = ", ".join(parsed_meta.get("detected_scripts", [])) or "Latin/Multilingual"
-            warnings.append(f"Document parsed with {parser_label} ({pages} page(s), {tables_count} table grid(s), scripts: {scripts}).")
+            from backend.services.pdf_parser import has_indic_scripts
+            is_indic_doc, detected_scripts = has_indic_scripts(file_bytes)
         except Exception as e:
-            logger.debug("PyMuPDF metadata check note: %s", e)
+            logger.debug("Indic script check error: %s", e)
 
-    # Use Groq / Gemini with PyMuPDF extracted text to extract activities
-    extraction = gemini_service.analyze_document(file_bytes, mime_type)
+    # Step 2: Try Sarvam AI DocAgent for Indian language documents
+    if is_indic_doc or (normalized_lang and normalized_lang != "en-IN"):
+        if sarvam_service.is_configured(sarvam_api_key):
+            try:
+                target_lang = normalized_lang or "hi-IN"
+                extraction = sarvam_service.parse_with_sarvam_docagent(
+                    file_bytes=file_bytes,
+                    filename=filename,
+                    mime_type=mime_type,
+                    language=target_lang,
+                    api_key=sarvam_api_key,
+                )
+                if extraction and extraction.get("activities"):
+                    parser_name = extraction.get("parser", "Sarvam AI DocAgent")
+                    warnings.append(f"Parsed with {parser_name} for Indian language document.")
+                else:
+                    warnings.append("Sarvam AI DocAgent did not extract activities; falling back to PyMuPDF.")
+                    extraction = None
+            except Exception as e:
+                logger.warning("Sarvam DocAgent error: %s (falling back to PyMuPDF)", e)
+                warnings.append("Sarvam DocAgent error; falling back to PyMuPDF.")
+                extraction = None
+        else:
+            warnings.append("Indian language document detected; Sarvam AI DocAgent key not set (falling back to PyMuPDF).")
+
+    # Step 3: Fallback to PyMuPDF if Sarvam DocAgent was not used or did not produce results
+    if extraction is None:
+        if "pdf" in mime_type.lower():
+            try:
+                from backend.services.pdf_parser import extract_pdf_content
+                parsed_meta = extract_pdf_content(file_bytes)
+                parser_label = parsed_meta.get("parser", "PyMuPDF (Multilingual)")
+                pages = parsed_meta.get("page_count", 1)
+                tables_count = len(parsed_meta.get("tables", []))
+                scripts = ", ".join(parsed_meta.get("detected_scripts", [])) or "Latin/Multilingual"
+                fb_tag = " (PyMuPDF fallback)" if is_indic_doc else ""
+                warnings.append(f"Document parsed with {parser_label}{fb_tag} ({pages} page(s), {tables_count} table grid(s), scripts: {scripts}).")
+            except Exception as e:
+                logger.debug("PyMuPDF metadata check note: %s", e)
+
+        # Use Groq / Gemini with PyMuPDF extracted text to extract activities
+        extraction = gemini_service.analyze_document(file_bytes, mime_type)
 
     if extraction is None:
-        warnings.append("Gemini unavailable or document extraction failed.")
+        warnings.append("Document extraction could not extract structured activities.")
         return AnalyzeResponse(
             facility_summary=FacilitySummary(
                 industry=industry,
                 total_emissions_kg_co2e=0,
             ),
-            warnings=warnings + ["Could not extract data from document. Gemini may not be configured."],
+            warnings=warnings + ["Could not extract data from document. Check file format or API keys."],
         )
 
     # Extract industry if found
@@ -299,3 +350,4 @@ async def analyze_document(
     result = run_analysis_pipeline(industry, activities)
     result.warnings = warnings + result.warnings
     return result
+

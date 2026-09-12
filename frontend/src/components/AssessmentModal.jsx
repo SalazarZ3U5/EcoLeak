@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   X, CheckCircle2, ArrowRight, Zap, Flame, Building2, 
   UploadCloud, MessageSquareText, Layers, AlertTriangle, 
-  TrendingDown, Coins, ShieldCheck, RefreshCw, FileText, ChevronRight
+  TrendingDown, Coins, ShieldCheck, RefreshCw, FileText, ChevronRight, Languages
 } from 'lucide-react';
 import { 
   analyzeActivities, 
@@ -59,6 +59,8 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
 
   // Document Upload State
   const [uploadFile, setUploadFile] = useState(null);
+  const [uploadLanguage, setUploadLanguage] = useState('auto');
+  const [sarvamApiKey, setSarvamApiKey] = useState('');
 
   // Chat Copilot State
   const [chatMessage, setChatMessage] = useState(
@@ -146,7 +148,7 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
     setLoading(true);
     setError(null);
     try {
-      const res = await analyzeDocument(uploadFile, industry);
+      const res = await analyzeDocument(uploadFile, industry, uploadLanguage, sarvamApiKey);
       setAuditResult(res);
     } catch (err) {
       setError(err.message || 'Document analysis failed. Ensure file is readable.');
@@ -422,6 +424,51 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                     style={{ marginTop: '14px' }}
                     onChange={(e) => setUploadFile(e.target.files[0] || null)}
                   />
+                </div>
+
+                {/* Indian Language Support & Engine Badge */}
+                <div style={{
+                  marginTop: '14px',
+                  padding: '12px 14px',
+                  background: 'var(--bg-white)',
+                  border: '1px solid var(--line-strong)',
+                  borderRadius: 'var(--radius-sm)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <span className="elite-tag badge-cyan" style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Languages size={12} /> Sarvam AI DocAgent (Indic OCR)
+                      </span>
+                      <span className="elite-tag badge-subtle" style={{ fontSize: '10px' }}>
+                        PyMuPDF Fallback
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="modal-form-group" style={{ marginBottom: '0' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                      <Languages size={14} color="var(--mint)" /> Document Language
+                    </label>
+                    <select
+                      value={uploadLanguage}
+                      onChange={(e) => setUploadLanguage(e.target.value)}
+                      className="modal-select"
+                      style={{ fontSize: '13px', padding: '8px 10px' }}
+                    >
+                      <option value="auto">Auto-Detect (Sarvam DocAgent for Indic)</option>
+                      <option value="hi-IN">Hindi (हिन्दी)</option>
+                      <option value="mr-IN">Marathi (मराठी)</option>
+                      <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+                      <option value="ta-IN">Tamil (தமிழ்)</option>
+                      <option value="te-IN">Telugu (తెలుగు)</option>
+                      <option value="bn-IN">Bengali (বাংলা)</option>
+                      <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+                      <option value="ml-IN">Malayalam (മലയാളം)</option>
+                      <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+                      <option value="od-IN">Odia (ଓଡ଼ିଆ)</option>
+                      <option value="en-IN">English</option>
+                    </select>
+                  </div>
                 </div>
 
                 <button 

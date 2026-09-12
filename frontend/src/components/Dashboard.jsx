@@ -6,7 +6,7 @@ import {
   RefreshCw, ArrowRight, CheckCircle2, Lock, Mail, Menu,
   Download, Printer, Sparkles, Sliders, Factory, Check, Info,
   Eye, EyeOff, User, UserPlus, LogOut, UserCheck, Key, Cog, Package,
-  MapPin, FileCheck, ShieldAlert, Scale
+  MapPin, FileCheck, ShieldAlert, Scale, Languages
 } from 'lucide-react';
 import {
   analyzeActivities,
@@ -151,6 +151,9 @@ export default function Dashboard({
   // ── Document & Chat State ──────────────────────────────────────────────────
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadDrag, setUploadDrag] = useState(false);
+  const [uploadLanguage, setUploadLanguage] = useState('auto');
+  const [sarvamApiKey, setSarvamApiKey] = useState('');
+  const [showSarvamKey, setShowSarvamKey] = useState(false);
   const [chatMessage, setChatMessage] = useState(
     'Our factory in Maharashtra processes 60 tons of virgin plastic pellets and 2.5 tons of color additives monthly, using 20,000 kWh of grid electricity and 500 liters of diesel backup.'
   );
@@ -241,7 +244,7 @@ export default function Dashboard({
     setLoading(true);
     setError(null);
     try {
-      const res = await analyzeDocument(uploadFile, industry);
+      const res = await analyzeDocument(uploadFile, industry, uploadLanguage, sarvamApiKey);
       setAuditResult(res);
       setActiveSection('leaks');
     } catch (err) {
@@ -584,6 +587,70 @@ export default function Dashboard({
             </div>
           </div>
 
+          {/* Indic Language Support & Sarvam DocAgent Engine Badge */}
+          <div className="dash-card elite-card" style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="elite-tag badge-cyan" style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Languages size={13} /> Sarvam AI DocAgent (Indic OCR)
+                </span>
+                <span className="elite-tag badge-subtle" style={{ fontSize: '11px' }}>
+                  PyMuPDF Fallback
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSarvamKey(!showSarvamKey)}
+                style={{ background: 'none', border: 'none', color: 'var(--mint-hover)', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                {showSarvamKey ? 'Hide Custom Key' : 'Custom Sarvam API Key?'}
+              </button>
+            </div>
+
+            <div className="dash-form-group">
+              <label className="dash-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Languages size={15} color="var(--mint-hover)" />
+                Document Language (Indian Regional &amp; Multilingual)
+              </label>
+              <select
+                value={uploadLanguage}
+                onChange={(e) => setUploadLanguage(e.target.value)}
+                className="dash-select"
+              >
+                <option value="auto">Auto-Detect (Sarvam DocAgent for Indic)</option>
+                <option value="hi-IN">Hindi (हिन्दी)</option>
+                <option value="mr-IN">Marathi (मराठी)</option>
+                <option value="gu-IN">Gujarati (ગુજરાતી)</option>
+                <option value="ta-IN">Tamil (தமிழ்)</option>
+                <option value="te-IN">Telugu (తెలుగు)</option>
+                <option value="bn-IN">Bengali (বাংলা)</option>
+                <option value="kn-IN">Kannada (ಕನ್ನಡ)</option>
+                <option value="ml-IN">Malayalam (മലയാളം)</option>
+                <option value="pa-IN">Punjabi (ਪੰਜਾਬੀ)</option>
+                <option value="od-IN">Odia (ଓଡ଼ିଆ)</option>
+                <option value="en-IN">English</option>
+              </select>
+              <span className="input-helper">
+                Powered by Sarvam Vision 1.5 across 22+ Indian languages. PyMuPDF retained as deterministic fallback.
+              </span>
+            </div>
+
+            {showSarvamKey && (
+              <div className="dash-form-group" style={{ marginTop: '12px' }}>
+                <label className="dash-label">
+                  Sarvam AI Subscription Key (Optional override)
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter custom Sarvam API Key or leave blank to use server environment"
+                  value={sarvamApiKey}
+                  onChange={(e) => setSarvamApiKey(e.target.value)}
+                  className="dash-input"
+                />
+              </div>
+            )}
+          </div>
+
           <div className="dash-action-bar">
             <button
               type="submit"
@@ -671,7 +738,9 @@ export default function Dashboard({
       );
     }
 
-    const leakPoints = auditResult.leak_points || [];
+    const leakPoints = (auditResult.activities && auditResult.activities.length > 0)
+      ? auditResult.activities
+      : (auditResult.leak_points || []);
     const scopeBreakdown = auditResult.facility_summary?.scope_breakdown || {};
 
     return (
@@ -739,7 +808,7 @@ export default function Dashboard({
                     </div>
                   </div>
                   <div className="leak-stat-wrap">
-                    <span className="leak-qty">{formatCO2e(lp.emissions_kg)}</span>
+                    <span className="leak-qty">{formatCO2e(lp.co2e_kg ?? lp.emissions_kg)}</span>
                     <span className={`leak-tier-badge ${lp.share_percent >= 35 ? 'tier-critical' : 'tier-high'}`}>
                       {lp.share_percent}% of Total
                     </span>

@@ -76,7 +76,9 @@ EcoLeak/
 │       ├── gemini_service.py       # Google GenAI SDK fallback
 │       ├── groq_service.py         # Primary Groq (openai/gpt-oss-120b) extractor
 │       ├── hf_service.py           # Hugging Face sentence-transformers fallback
-│       └── leak_detector.py        # Pareto 80/20 cumulative emission classifier
+│       ├── leak_detector.py        # Pareto 80/20 cumulative emission classifier
+│       ├── pdf_parser.py           # PyMuPDF multilingual table & layout extraction fallback
+│       └── sarvam_service.py       # Sarvam AI DocAgent (Indic OCR & Extraction across 22+ Indian languages)
 ├── data/
 │   ├── emission_factors.csv        # Canonical Scope 1, 2, 3 emission factor table
 │   └── circular_interventions.csv  # Verified circular alternatives, CAPEX & base payback
@@ -133,11 +135,12 @@ Credentials live in `.env` at the project root:
 | `GROQ_API_KEY` | Optional* | Primary LLM engine for document & chat ingestion (`openai/gpt-oss-120b`) |
 | `GROQ_MODEL` | Optional | Defaults to `openai/gpt-oss-120b` |
 | `GEMINI_API_KEY` | Optional | Fallback LLM engine (`gemini-3.6-flash`) |
+| `SARVAM_API_KEY` | Optional | Sarvam AI DocAgent (Indic OCR & Extraction across 22+ Indian languages) |
 | `HF_TOKEN` | Optional | Hugging Face token for local sentence embeddings |
 | `VITE_FIREBASE_*` | Optional | Firebase Auth Web credentials |
 | `VITE_SUPABASE_*` | Optional | Supabase credentials |
 
-*\*Note: If no API keys are provided, structured analysis via `/api/analyze` continues to function with 100% accuracy using the local deterministic engine.*
+*\*Note: If no API keys are provided, structured analysis via `/api/analyze` continues to function with 100% accuracy using the local deterministic engine, and document analysis seamlessly uses PyMuPDF.*
 
 ---
 

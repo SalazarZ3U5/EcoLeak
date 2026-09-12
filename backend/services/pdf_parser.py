@@ -80,7 +80,11 @@ def extract_pdf_content(file_bytes: bytes) -> dict:
                     parts = u_name.split()
                     if parts:
                         script_name = parts[0]
-                        if script_name in {"DEVANAGARI", "LATIN", "CYRILLIC", "ARABIC", "CJK", "TAMIL", "GUJARATI"}:
+                        if script_name in {
+                            "DEVANAGARI", "LATIN", "CYRILLIC", "ARABIC", "CJK",
+                            "TAMIL", "GUJARATI", "BENGALI", "TELUGU", "KANNADA",
+                            "MALAYALAM", "GURMUKHI", "ORIYA"
+                        }:
                             scripts_found.add(script_name)
 
             # 2. Extract structured table matrices (crucial for utility bills & consumption tariffs)
@@ -147,3 +151,24 @@ def extract_text_multilingual(file_bytes: bytes, mime_type: str = "application/p
         return unicodedata.normalize("NFKC", file_bytes.decode("utf-8", errors="ignore"))
     except Exception:
         return ""
+
+
+def has_indic_scripts(file_bytes: bytes) -> tuple[bool, list[str]]:
+    """
+    Quickly detect if a PDF document contains Indian scripts.
+
+    Returns:
+        (is_indic, list_of_detected_indic_scripts)
+    """
+    try:
+        content = extract_pdf_content(file_bytes)
+        scripts = content.get("detected_scripts", [])
+        indic_set = {
+            "DEVANAGARI", "TAMIL", "GUJARATI", "BENGALI", "TELUGU",
+            "KANNADA", "MALAYALAM", "GURMUKHI", "ORIYA"
+        }
+        found_indic = [s for s in scripts if s in indic_set]
+        return (len(found_indic) > 0, found_indic)
+    except Exception as e:
+        logger.debug("Failed checking Indic scripts: %s", e)
+        return (False, [])

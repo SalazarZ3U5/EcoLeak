@@ -199,7 +199,7 @@ def verify_token(token: str) -> dict:
 # ---------------------------------------------------------------------------
 
 async def get_current_user(
-    authorization: Optional[str] = Header(None, alias="Authorization"),
+    authorization: str = Header(..., alias="Authorization"),
 ) -> dict:
     """
     Strict auth dependency — returns authenticated user claims or 401.

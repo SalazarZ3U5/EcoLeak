@@ -7,13 +7,15 @@ import {
   GoogleAuthProvider,
   signOut as fbSignOut,
   updateProfile,
-  onAuthStateChanged
+  onAuthStateChanged,
+  deleteUser
 } from 'firebase/auth';
 import {
   getFirestore,
   doc,
   setDoc,
   getDoc,
+  deleteDoc,
   serverTimestamp
 } from 'firebase/firestore';
 import { FIREBASE_CONFIG, isFirebaseConfigured } from './authConfig';
@@ -133,5 +135,34 @@ export async function logoutFirebase() {
   }
 }
 
+/**
+ * Permanently delete the user from Firebase Auth and Firestore `users` collection
+ */
+export async function deleteCurrentUserFirebase() {
+  if (!auth) return false;
+  const user = auth.currentUser;
+  if (!user) return false;
+
+  const uid = user.uid;
+  // 1. Delete Firestore user document
+  if (db && uid) {
+    try {
+      await deleteDoc(doc(db, 'users', uid));
+    } catch (e) {
+      console.warn('Firestore user doc delete note:', e);
+    }
+  }
+
+  // 2. Delete Auth record
+  try {
+    await deleteUser(user);
+    return true;
+  } catch (err) {
+    console.warn('Firebase deleteUser error (may need recent login):', err);
+    throw err;
+  }
+}
+
 export { app, auth, db, googleProvider };
+
 

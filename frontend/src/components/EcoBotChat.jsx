@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  X, Send, RefreshCw, Maximize2, Minimize2, Check, Copy, ShieldCheck, ArrowRight, Lock, LogIn
+  X, Send, RefreshCw, Maximize2, Minimize2, Check, Copy, ShieldCheck, ArrowRight, Lock, LogIn, Mic, MicOff
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -118,6 +118,8 @@ export default function EcoBotChat({
   ]);
 
   const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const [isListening, setIsListening] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -128,6 +130,73 @@ export default function EcoBotChat({
       scrollToBottom();
     }
   }, [messages, isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {}
+      }
+    };
+  }, []);
+
+  const toggleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-IN';
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setInputMessage((prev) => {
+            const separator = prev && !prev.endsWith(' ') ? ' ' : '';
+            return prev + separator + finalTranscript.trim();
+          });
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  };
 
   const handleSendMessage = async (textToSend = null) => {
     const text = textToSend || inputMessage;
@@ -379,16 +448,25 @@ export default function EcoBotChat({
               e.preventDefault();
               handleSendMessage();
             }}
-            className="ecobot-input-bar"
+            className={`ecobot-input-bar ${isListening ? 'listening-active' : ''}`}
           >
             <input
               type="text"
-              placeholder="Enter formula inquiry or consumption data..."
+              placeholder={isListening ? "Listening... speak metrics or questions..." : "Enter formula inquiry or consumption data..."}
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               className="ecobot-input"
               disabled={isLoading}
             />
+            <button
+              type="button"
+              className={`ecobot-mic-btn ${isListening ? 'mic-listening' : ''}`}
+              onClick={toggleVoiceInput}
+              title={isListening ? "Stop listening" : "Speak using microphone"}
+              aria-label="Toggle voice input"
+            >
+              {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+            </button>
             <button
               type="submit"
               disabled={!inputMessage.trim() || isLoading}

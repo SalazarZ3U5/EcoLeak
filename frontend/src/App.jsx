@@ -13,6 +13,8 @@ import Footer from './components/Footer';
 import Dashboard from './components/Dashboard';
 import LoginPage from './components/LoginPage';
 import SignupPage from './components/SignupPage';
+import VisionPage from './components/VisionPage';
+import MultilingualShowcase from './components/MultilingualShowcase';
 import { assignAvatarToUser } from './services/avatarService';
 import { syncProfileToSupabase } from './services/api';
 
@@ -22,6 +24,9 @@ const parseLocationRoute = () => {
   const hash = (window.location.hash || '').toLowerCase().replace('#', '');
   const route = hash || path;
 
+  if (route.includes('vision') || route.includes('manifesto')) {
+    return { view: 'vision', section: 'overview' };
+  }
   if (route.includes('copilot') || route.includes('ecobot') || route.includes('chat')) {
     return { view: 'dashboard', section: 'copilot' };
   }
@@ -38,7 +43,7 @@ const parseLocationRoute = () => {
     return { view: 'signup', section: 'overview' };
   }
   if (route.includes('dashboard') || route.includes('app')) {
-    let sec = 'overview';
+    let sec = 'input';
     if (route.includes('copilot') || route.includes('ecobot') || route.includes('chat')) sec = 'copilot';
     else if (route.includes('plant')) sec = 'plant';
     else if (route.includes('leaks')) sec = 'leaks';
@@ -53,7 +58,8 @@ const parseLocationRoute = () => {
 // Sync browser URL bar with active view and section
 const syncBrowserUrl = (v, s) => {
   let targetUrl = '/';
-  if (v === 'login') targetUrl = '/login';
+  if (v === 'vision') targetUrl = '/vision';
+  else if (v === 'login') targetUrl = '/login';
   else if (v === 'signup') targetUrl = '/signup';
   else if (v === 'dashboard') {
     if (s === 'profile') targetUrl = '/operator';
@@ -88,21 +94,17 @@ export default function App() {
       if (user.regId?.includes('MH-SPCB/PUN/CTO-2026/4102') || user.regId?.includes('MH-SPCB/PUN/CTO-2026/0894')) user.regId = '';
       if (user.phone === '+91 98201 54892') user.phone = '';
 
-      // Backward compatibility: migrate legacy single plant into plants array
-      if ((!user.plants || user.plants.length === 0) && user.facilityName && user.facilityName.trim()) {
-        user.plants = [{
-          id: 'plant_1',
-          facilityName: user.facilityName.trim(),
-          industryType: user.industryType || '',
-          capacity: user.capacity || '',
-          location: user.location || '',
-          regId: user.regId || '',
-          regCategory: user.regCategory || '',
-          regStandard: user.regStandard || '',
-          emissionCap: user.emissionCap || '',
-          regionalOffice: user.regionalOffice || '',
-        }];
-        localStorage.setItem('ecoleak_auth_user', JSON.stringify(user));
+      // Ensure plants is an array if present, but never auto-populate plants for users
+      if (!user.plants) {
+        user.plants = [];
+      } else if (Array.isArray(user.plants)) {
+        // Strip mock demo plants that might have been automatically injected previously
+        user.plants = user.plants.filter(p => 
+          p.facilityName && 
+          !p.facilityName.includes('EcoLeak Unit 1') && 
+          !p.facilityName.includes('EcoLeak Unit 2') &&
+          !p.facilityName.includes('GreenPack')
+        );
       }
 
       return assignAvatarToUser(user);
@@ -216,8 +218,8 @@ export default function App() {
     setAuthUser(updated);
     localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     syncProfileToSupabase(updated).catch((e) => console.debug('Supabase profile sync note:', e));
-    // If user arrived intending to view the operator profile, route them there directly
-    const targetSec = dashSection === 'profile' ? 'profile' : (dashSection || 'overview');
+    // If user arrived intending to view the operator profile, route them there directly, else default to 'input'
+    const targetSec = dashSection === 'profile' ? 'profile' : (dashSection && dashSection !== 'overview' ? dashSection : 'input');
     setDashSection(targetSec);
     setView('dashboard');
     syncBrowserUrl('dashboard', targetSec);
@@ -250,6 +252,18 @@ export default function App() {
     openDashboard('copilot');
   };
 
+  const openVision = () => {
+    setView('vision');
+    syncBrowserUrl('vision', 'overview');
+  };
+
+  useEffect(() => {
+    window.onOpenVision = openVision;
+    return () => {
+      delete window.onOpenVision;
+    };
+  }, []);
+
   const plantContext = authUser ? {
     industry: authUser.facilityName || '',
     location: authUser.location || '',
@@ -258,7 +272,15 @@ export default function App() {
 
   return (
     <>
-      {/* ── Login Portal (Standalone Page with Navbar) ────────────────────── */}
+      {/* ── Vision Manifesto Page ── */}
+      {view === 'vision' && (
+        <VisionPage 
+          onBack={openLanding} 
+          onOpenApp={() => openDashboard('input')} 
+        />
+      )}
+
+      {/* ── Login Authentication Page ── */}
       {view === 'login' && (
         <LoginPage
           authUser={authUser}
@@ -271,15 +293,12 @@ export default function App() {
         />
       )}
 
-      {/* ── Register / Signup Portal (Standalone Page with Navbar) ────────── */}
+      {/* ── Signup Authentication Page ── */}
       {view === 'signup' && (
         <SignupPage
           authUser={authUser}
           onAuthSuccess={handleAuthSuccess}
-          onUpdateUser={handleUpdateUser}
-          onSignOut={handleSignOut}
           onBack={openLanding}
-          onOpenDashboard={() => openDashboard('overview')}
           onNavigateToLogin={openLogin}
         />
       )}
@@ -321,6 +340,7 @@ export default function App() {
             onOpenApp={() => openDashboard('overview')}
             onOpenSignIn={openLogin}
             onOpenSignUp={openSignup}
+            onOpenVision={openVision}
             onBack={openLanding}
           />
 
@@ -332,11 +352,12 @@ export default function App() {
               onOpenEcoBot={handleOpenEcoBot}
               authUser={authUser}
             />
+            <MultilingualShowcase onOpenAssessment={() => openDashboard('input')} />
             <SimpleCalculator onOpenAssessment={openDashboard} />
             <ImpactROI onOpenAssessment={() => openDashboard('input')} />
           </main>
 
-          <Footer />
+          <Footer onOpenVision={openVision} />
         </div>
       )}
     </>

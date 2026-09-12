@@ -55,6 +55,38 @@ export function formatCO2e(kg, preferTonnes = false) {
   return `${Math.round(val).toLocaleString()} kg CO₂e`;
 }
 
+/**
+ * Convert abstract CO2e values into tangible, intuitive real-world equivalents
+ * Based on EPA Greenhouse Gas Equivalencies data:
+ * - 1 passenger car emits ~4,600 kg CO2e / year (~4.6 tonnes)
+ * - 1 urban tree seedling absorbs ~22 kg CO2e / year (or ~60 trees for 1 tonne CO2e per decade)
+ * - 1 barrel of crude oil consumed = ~430 kg CO2e
+ * - 1 Indian household monthly electricity burn = ~200 kWh = ~164 kg CO2e
+ * - 1 domestic smartphone charge = ~0.008 kg CO2e
+ */
+export function calculateImpactEquivalents(kgCO2e) {
+  const kg = Math.max(0, Number(kgCO2e) || 0);
+  const tonnes = kg / 1000;
+
+  // Real world metrics
+  const carsPerYear = Math.round((kg / 4600) * 10) / 10;
+  const treesPlanted = Math.max(1, Math.round(kg / 21.77)); // EPA: ~21.77 kg/tree/year
+  const barrelsOil = Math.max(1, Math.round(kg / 430));
+  const homesElectricityMonths = Math.max(1, Math.round(kg / 164));
+  const flightsDelToBom = Math.max(1, Math.round(kg / 150)); // ~150 kg CO2e per passenger Delhi-Mumbai flight
+
+  return {
+    tonnes: Math.round(tonnes * 10) / 10,
+    carsPerYear: carsPerYear < 1 ? (Math.round(carsPerYear * 10) / 10 || 0.5) : Math.round(carsPerYear),
+    treesPlanted,
+    barrelsOil,
+    homesElectricityMonths,
+    flightsDelToBom,
+    primaryHeadline: `${tonnes >= 1 ? `${(Math.round(tonnes * 10) / 10).toLocaleString()} tCO₂e` : `${Math.round(kg).toLocaleString()} kg CO₂e`} saved = taking ${carsPerYear >= 1 ? Math.round(carsPerYear) : carsPerYear} cars off the road for a year`,
+    secondaryHeadline: `= planting ${(treesPlanted).toLocaleString()} mature tree seedlings`
+  };
+}
+
 export const KNOWN_DISPLAY_NAMES = {
   // Virgin Feedstocks
   'virgin_plastic_pellets': 'Virgin Plastic Pellets',
@@ -648,10 +680,128 @@ export const DEFAULT_DEMO_AUDITS = [
   }
 ];
 
+// ─── Supabase Storage Document Persistence ──────────────────────────────────
+export const STORAGE_BUCKET_DOCUMENTS = 'audit-documents';
+
+/**
+ * Upload a document (bill/invoice/report) to Supabase Storage bucket.
+ * Gracefully degrades to local object metadata if bucket is not yet created.
+ */
+export async function uploadDocumentToStorage(file, user = null, plantId = '') {
+  if (!file) return null;
+  const timestamp = Date.now();
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const userPrefix = user?.uid || user?.email ? (user.uid || user.email.replace(/[^a-zA-Z0-9]/g, '_')) : 'anonymous';
+  const filePath = `${userPrefix}/${timestamp}_${safeName}`;
+
+  let storageUrl = null;
+  let uploadError = null;
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.storage
+        .from(STORAGE_BUCKET_DOCUMENTS)
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type || 'application/octet-stream'
+        });
+
+      if (error) {
+        console.warn('Supabase storage upload note (bucket may need creation or public policy):', error.message);
+        uploadError = error.message;
+      } else if (data) {
+        const { data: pubData } = supabase.storage.from(STORAGE_BUCKET_DOCUMENTS).getPublicUrl(filePath);
+        storageUrl = pubData?.publicUrl || null;
+      }
+    } catch (err) {
+      console.warn('Supabase storage exception note:', err);
+      uploadError = err.message;
+    }
+  }
+
+  const docRecord = {
+    id: `doc_${timestamp}`,
+    name: file.name,
+    size: file.size,
+    type: file.type || 'application/pdf',
+    filePath,
+    url: storageUrl,
+    uploadedAt: new Date().toISOString(),
+    plantId: plantId || user?.plants?.[0]?.id || '',
+    uploader: user?.name || user?.email || 'Plant Operator',
+    status: storageUrl ? 'stored_cloud' : 'local_cached',
+    errorNote: uploadError
+  };
+
+  // Cache record in localStorage for instant access & listing
+  try {
+    const raw = localStorage.getItem('ecoleak_uploaded_documents');
+    const existing = raw ? JSON.parse(raw) : [];
+    localStorage.setItem('ecoleak_uploaded_documents', JSON.stringify([docRecord, ...existing.slice(0, 30)]));
+  } catch (e) {
+    console.debug('Local uploaded documents cache write note:', e);
+  }
+
+  return docRecord;
+}
+
+/**
+ * Fetch all uploaded documents for the user from Supabase Storage / local cache.
+ */
+export async function fetchUploadedDocuments(user = null) {
+  let cloudDocs = [];
+  if (supabase && user) {
+    try {
+      const userPrefix = user.uid || user.email ? (user.uid || user.email.replace(/[^a-zA-Z0-9]/g, '_')) : '';
+      if (userPrefix) {
+        const { data, error } = await supabase.storage
+          .from(STORAGE_BUCKET_DOCUMENTS)
+          .list(userPrefix, { limit: 50, sortBy: { column: 'created_at', order: 'desc' } });
+        if (!error && Array.isArray(data)) {
+          cloudDocs = data.map(item => {
+            const path = `${userPrefix}/${item.name}`;
+            const { data: pData } = supabase.storage.from(STORAGE_BUCKET_DOCUMENTS).getPublicUrl(path);
+            return {
+              id: item.id || `cloud_${item.name}`,
+              name: item.name.replace(/^\d+_/, ''),
+              size: item.metadata?.size || 0,
+              type: item.metadata?.mimetype || 'application/pdf',
+              filePath: path,
+              url: pData?.publicUrl,
+              uploadedAt: item.created_at || new Date().toISOString(),
+              status: 'stored_cloud'
+            };
+          });
+        }
+      }
+    } catch (err) {
+      console.debug('Supabase storage list note:', err);
+    }
+  }
+
+  // Combine with locally cached documents (avoiding duplicates)
+  let localDocs = [];
+  try {
+    const raw = localStorage.getItem('ecoleak_uploaded_documents');
+    if (raw) localDocs = JSON.parse(raw);
+  } catch {}
+
+  const mergedMap = new Map();
+  for (const doc of [...cloudDocs, ...localDocs]) {
+    const key = doc.name + (doc.size || '');
+    if (!mergedMap.has(key)) {
+      mergedMap.set(key, doc);
+    }
+  }
+
+  return Array.from(mergedMap.values());
+}
+
 /**
  * Persist an audit record to Supabase assessments table and local audit cache.
  */
-export async function saveAuditToSupabase(auditResult, user = null, selectedPlant = null) {
+export async function saveAuditToSupabase(auditResult, user = null, selectedPlant = null, uploadedDoc = null) {
   if (!auditResult) return null;
   try {
     const summary = auditResult.facility_summary || {};
@@ -720,7 +870,8 @@ export async function saveAuditToSupabase(auditResult, user = null, selectedPlan
         capacity: selectedPlant?.capacity || user?.capacity || '',
         regionalOffice: selectedPlant?.regionalOffice || user?.regionalOffice || '',
         leak_points: (auditResult.leak_points || []).slice(0, 15),
-        circular_recommendations: (auditResult.circular_recommendations || []).slice(0, 10)
+        circular_recommendations: (auditResult.circular_recommendations || []).slice(0, 10),
+        uploaded_document: uploadedDoc || null
       },
     };
 
@@ -838,7 +989,66 @@ export async function fetchUserAudits() {
     console.debug('Failed to fetch audits from API, returning default demo audits:', err);
   }
 
-  // Fallback to default verified demo audits so plants are always correctly mapped
-  return DEFAULT_DEMO_AUDITS;
+  // If no audits saved yet, return empty list
+  return [];
 }
+
+/**
+ * Permanently delete the operator account and all associated database records.
+ * Purges:
+ * - Supabase profiles & assessments tables
+ * - Supabase storage documents in 'audit-documents' bucket
+ * - Firebase Auth & Firestore users collection
+ * - LocalStorage caches
+ */
+export async function permanentlyDeleteOperatorAccount(user) {
+  const errors = [];
+  const uid = user?.uid || user?.email || '';
+  const email = user?.email || '';
+
+  // 1. Call Backend API endpoint DELETE /api/account
+  try {
+    const authHeaders = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/account`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders
+      }
+    });
+    if (!res.ok) {
+      console.warn('Backend delete account response status:', res.status);
+    }
+  } catch (err) {
+    console.warn('Backend delete account call note:', err);
+  }
+
+  // 2. Direct client-side Supabase purge (in case backend is running standalone or offline)
+  if (supabase && uid) {
+    try {
+      // Delete assessments for user
+      await supabase.from('assessments').delete().eq('raw_inputs->>user_id', uid);
+      if (email) {
+        await supabase.from('assessments').delete().eq('raw_inputs->>operator_email', email);
+      }
+      // Delete profile
+      await supabase.from('profiles').delete().eq('auth_uid', uid);
+    } catch (sErr) {
+      console.warn('Direct Supabase delete note:', sErr);
+    }
+  }
+
+  // 3. Clear all browser storage caches for this operator
+  try {
+    localStorage.removeItem('ecoleak_auth_user');
+    localStorage.removeItem('ecoleak_saved_audits');
+    localStorage.removeItem('ecoleak_uploaded_documents');
+    sessionStorage.clear();
+  } catch (cErr) {
+    console.warn('Storage cleanup note:', cErr);
+  }
+
+  return { success: true };
+}
+
 

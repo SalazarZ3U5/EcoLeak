@@ -128,12 +128,18 @@ export default function SimpleCalculator({ onOpenAssessment }) {
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                       ~{co2CutTons} <JargonTooltip term="tCO2e">tCO₂e</JargonTooltip>/yr cut
                     </span>
+                    <span style={{ fontSize: '10.5px', color: 'var(--emerald-deep)', fontWeight: 700, marginTop: '3px', display: 'block' }}>
+                      ≈ {Math.round(co2CutTons / 4.6)} cars off road · {Math.round((co2CutTons * 1000) / 22).toLocaleString()} trees
+                    </span>
                   </div>
                   <div className="stat-item">
                     <small><JargonTooltip term="CAPEX">CapEx</JargonTooltip> Amortization</small>
                     <strong>{preset.payback}</strong>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                       <JargonTooltip term="Payback Period">Payback</JargonTooltip> breakeven
+                    </span>
+                    <span style={{ fontSize: '10.5px', color: 'var(--cyan-fresh)', fontWeight: 700, marginTop: '3px', display: 'block' }}>
+                      Rapid ROI breakeven
                     </span>
                   </div>
                 </div>

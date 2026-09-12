@@ -211,3 +211,59 @@ async def delete_audit(audit_id: str, user_id: str) -> bool:
     except Exception as e:
         logger.warning("Failed to delete audit from Supabase: %s", e)
         return False
+
+
+async def delete_operator_account(user_id: str, email: str = "") -> dict:
+    """
+    Permanently purge operator account and all associated assessments and files from Supabase.
+    """
+    client = _get_client()
+    deleted_counts = {
+        "profiles_deleted": 0,
+        "assessments_deleted": 0,
+        "files_deleted": 0,
+        "status": "success"
+    }
+    if client is None:
+        return deleted_counts
+
+    try:
+        # 1. Delete all audit assessments linked to this user
+        try:
+            res_audits = client.table("assessments").delete().eq("raw_inputs->>user_id", user_id).execute()
+            deleted_counts["assessments_deleted"] = len(res_audits.data) if res_audits.data else 0
+        except Exception as e:
+            logger.warning("Failed to delete assessments by user_id: %s", e)
+
+        # Fallback check by email if available
+        if email:
+            try:
+                client.table("assessments").delete().eq("raw_inputs->>operator_email", email).execute()
+            except Exception as e:
+                logger.debug("Secondary assessment deletion by email note: %s", e)
+
+        # 2. Delete operator profile from profiles table
+        try:
+            res_prof = client.table("profiles").delete().eq("auth_uid", user_id).execute()
+            deleted_counts["profiles_deleted"] = len(res_prof.data) if res_prof.data else 0
+        except Exception as e:
+            logger.warning("Failed to delete profile from Supabase: %s", e)
+
+        # 3. Clean up uploaded storage files in audit-documents
+        try:
+            file_list = client.storage.from_("audit-documents").list(user_id)
+            if file_list and isinstance(file_list, list):
+                paths_to_del = [f"{user_id}/{f['name']}" for f in file_list if 'name' in f]
+                if paths_to_del:
+                    client.storage.from_("audit-documents").remove(paths_to_del)
+                    deleted_counts["files_deleted"] = len(paths_to_del)
+        except Exception as e:
+            logger.debug("Storage cleanup note: %s", e)
+
+        logger.info("Permanently deleted operator account %s from Supabase", user_id)
+        return deleted_counts
+    except Exception as e:
+        logger.error("Failed to permanently delete operator account: %s", e)
+        deleted_counts["status"] = "partial_error"
+        deleted_counts["error"] = str(e)
+        return deleted_counts

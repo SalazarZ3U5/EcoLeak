@@ -6,7 +6,7 @@ import {
   RefreshCw, ArrowRight, CheckCircle2, Lock, Mail, Menu,
   Download, Printer, Sparkles, Sliders, Factory, Check, Info,
   Eye, EyeOff, User, UserPlus, LogOut, UserCheck, Key, Cog, Package,
-  MapPin, FileCheck, ShieldAlert, Scale, Languages
+  MapPin, FileCheck, ShieldAlert, Scale, Languages, FileText, ExternalLink, Database
 } from 'lucide-react';
 import {
   analyzeActivities,
@@ -15,7 +15,9 @@ import {
   formatINR,
   formatCO2e,
   formatDisplayName,
-  saveAuditToSupabase
+  saveAuditToSupabase,
+  uploadDocumentToStorage,
+  fetchUploadedDocuments
 } from '../services/api';
 import { INDUSTRY_PRESETS } from '../data/mockData';
 import { CuteEcoBotIcon } from './EcoBotChat';
@@ -23,6 +25,10 @@ import EcoBotDashboardPage from './EcoBotDashboardPage';
 import OperatorProfilePage from './OperatorProfilePage';
 import { UserPfp } from '../services/avatarService';
 import JargonTooltip, { JargonIcon } from './JargonTooltip';
+import EcoLeakLogo from './EcoLeakLogo';
+import LeakVisualizer from './LeakVisualizer';
+import TangibleImpactSuite from './TangibleImpactSuite';
+import ActionPlanBookletModal from './ActionPlanBookletModal';
 
 // ─── 1-Click Pre-filled Facility Profiles ─────────────────────────────────────
 const PRESET_SCENARIOS = {
@@ -123,12 +129,12 @@ export default function Dashboard({
   onSectionChange,
 }) {
   const parseSection = (sec) => {
-    if (sec === 'audit') return 'input';
+    if (sec === 'overview' || sec === 'audit' || sec === 'signin') return 'input';
     if (sec === 'results') return 'leaks';
-    if (sec === 'signin') return 'input';
     if (sec === 'operator') return 'profile';
     if (sec === 'chat' || sec === 'ecobot' || sec === 'copilot') return 'copilot';
-    return sec || 'input';
+    if (['input', 'leaks', 'circular', 'report', 'profile', 'plant', 'copilot'].includes(sec)) return sec;
+    return 'input';
   };
 
   const [activeSection, setActiveSection] = useState(() => parseSection(initialSection));
@@ -213,6 +219,27 @@ export default function Dashboard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [auditResult, setAuditResult] = useState(null);
+  const [showBookletModal, setShowBookletModal] = useState(false);
+  // ── Uploaded Storage Documents ─────────────────────────────────────────────
+  const [uploadedDocuments, setUploadedDocuments] = useState([]);
+  const [loadingDocs, setLoadingDocs] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDocs() {
+      setLoadingDocs(true);
+      try {
+        const docs = await fetchUploadedDocuments(authUser);
+        if (isMounted) setUploadedDocuments(docs || []);
+      } catch (e) {
+        console.debug('Failed to load documents:', e);
+      } finally {
+        if (isMounted) setLoadingDocs(false);
+      }
+    }
+    loadDocs();
+    return () => { isMounted = false; };
+  }, [authUser]);
 
   // Initialize with a default run so first-time users immediately see rich data
   useEffect(() => {
@@ -297,10 +324,24 @@ export default function Dashboard({
     setLoading(true);
     setError(null);
     try {
+      // 1. Upload to Supabase Storage bucket 'audit-documents' (with resilient local metadata fallback)
+      let uploadedDoc = null;
+      try {
+        uploadedDoc = await uploadDocumentToStorage(uploadFile, authUser, selectedPlantId);
+        if (uploadedDoc) {
+          setUploadedDocuments(prev => [uploadedDoc, ...prev.filter(d => d.id !== uploadedDoc.id)]);
+        }
+      } catch (uploadErr) {
+        console.warn('Storage upload note:', uploadErr);
+      }
+
+      // 2. Extract activities and compute emissions
       const res = await analyzeDocument(uploadFile, industry, uploadLanguage, sarvamApiKey);
       setAuditResult(res);
+
+      // 3. Save audit record linked to the uploaded document
       const selectedPlant = authUser?.plants?.find(p => p.id === selectedPlantId) || authUser?.plants?.[0] || null;
-      saveAuditToSupabase(res, authUser, selectedPlant).catch((e) => console.debug('Background Supabase save note:', e));
+      saveAuditToSupabase(res, authUser, selectedPlant, uploadedDoc).catch((e) => console.debug('Background Supabase save note:', e));
       handleSectionSelect('leaks');
     } catch (err) {
       setError(err.message || 'Document analysis failed.');
@@ -755,6 +796,105 @@ export default function Dashboard({
               )}
             </button>
           </div>
+
+          {/* ── Past Documents Repository Card ── */}
+          <div className="dash-card elite-card" style={{ marginTop: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'rgba(0,184,107,0.12)', color: 'var(--mint-hover)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Database size={17} />
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: 'var(--text-primary)' }}>
+                    Past Documents
+                  </h4>
+                  <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>
+                    Digital invoice and utility document history
+                  </span>
+                </div>
+              </div>
+              <span className="elite-tag badge-cyan" style={{ fontSize: '11px' }}>
+                {uploadedDocuments.length} Document{uploadedDocuments.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {loadingDocs ? (
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+                <RefreshCw size={18} className="spin" style={{ margin: '0 auto 8px' }} />
+                <span>Loading past documents...</span>
+              </div>
+            ) : uploadedDocuments.length === 0 ? (
+              <div style={{ padding: '28px 16px', textAlign: 'center', background: 'rgba(0,0,0,0.02)', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+                <FileText size={28} style={{ color: 'var(--text-muted)', margin: '0 auto 8px', opacity: 0.6 }} />
+                <div style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                  No Past Documents Uploaded Yet
+                </div>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-muted)' }}>
+                  Upload a PDF electricity bill, fuel voucher, or material invoice above to automatically save and track your documents.
+                </p>
+              </div>
+            ) : (
+              <div className="uploaded-docs-table-wrap" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--line-strong)', color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <th style={{ padding: '10px 12px' }}>Document Name</th>
+                      <th style={{ padding: '10px 12px' }}>File Size</th>
+                      <th style={{ padding: '10px 12px' }}>Timestamp</th>
+                      <th style={{ padding: '10px 12px' }}>Storage Status</th>
+                      <th style={{ padding: '10px 12px', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {uploadedDocuments.map((doc, idx) => (
+                      <tr key={doc.id || idx} style={{ borderBottom: '1px solid rgba(0,0,0,0.04)', transition: 'background 0.2s' }}>
+                        <td style={{ padding: '12px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <FileText size={15} style={{ color: 'var(--mint-hover)', flexShrink: 0 }} />
+                            <span style={{ maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={doc.name}>
+                              {doc.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td style={{ padding: '12px', color: 'var(--text-secondary)' }}>
+                          {doc.size ? `${(doc.size / 1024).toFixed(1)} KB` : 'PDF Document'}
+                        </td>
+                        <td style={{ padding: '12px', color: 'var(--text-muted)', fontSize: '11.5px' }}>
+                          {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                        </td>
+                        <td style={{ padding: '12px' }}>
+                          {doc.status === 'stored_cloud' ? (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#047857', background: 'rgba(16, 185, 129, 0.12)', padding: '2px 8px', borderRadius: '100px' }}>
+                              <CheckCircle2 size={11} /> Saved
+                            </span>
+                          ) : (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#0284c7', background: 'rgba(14, 165, 233, 0.12)', padding: '2px 8px', borderRadius: '100px' }}>
+                              <Check size={11} /> Saved
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '12px', textAlign: 'right' }}>
+                          {doc.url ? (
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: 'var(--mint-hover)', textDecoration: 'none' }}
+                            >
+                              <span>View File</span>
+                              <ExternalLink size={12} />
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Cached Record</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </form>
       )}
 
@@ -882,6 +1022,13 @@ export default function Dashboard({
           </div>
         </div>
 
+        {/* ── Interactive Graph Visualizations (Pareto 80/20 & GHG Scopes Donut) ── */}
+        <LeakVisualizer
+          leakPoints={leakPoints}
+          scopeBreakdown={scopeBreakdown}
+          totalEmissions={totalEmissions}
+        />
+
         {/* Top Emission Hotspots / Pareto Leak Points */}
         <div className="dash-card elite-card">
           <div className="dash-card-label-row">
@@ -994,10 +1141,17 @@ export default function Dashboard({
               Specific interventions that substitute linear leak-points with closed-loop materials, process heat recapture, and verified savings.
             </p>
           </div>
-          <button className="dash-elite-btn-sm" onClick={() => setActiveSection('report')}>
-            <Download size={14} /> Download Action Plan
+          <button className="dash-elite-btn-sm" onClick={() => setShowBookletModal(true)}>
+            <Download size={14} /> Download Action Plan (Booklet PDF)
           </button>
         </div>
+
+        {/* ── Tangible Impact Suite: Real-World Equivalents & Live Before/After Demo Bench ── */}
+        <TangibleImpactSuite
+          simulatedSavingsKg={simulatedSavingsKg}
+          simulatedOpexSavings={simulatedOpexSavings}
+          totalEmissions={totalEmissions}
+        />
 
         {/* Interactive Circular Loop Balancer */}
         <div className="dash-card elite-card interactive-balancer-card">
@@ -1169,9 +1323,14 @@ export default function Dashboard({
             Audit-ready report summary for factory managers, green bank loans, and pollution control board regulations.
           </p>
         </div>
-        <button className="dash-elite-btn-sm" onClick={() => window.print()}>
-          <Printer size={14} /> Print / Save as PDF
-        </button>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button className="dash-elite-btn-sm" onClick={() => setShowBookletModal(true)}>
+            <Download size={14} /> Download Action Plan (Booklet PDF)
+          </button>
+          <button className="dash-back-btn-sm" onClick={() => window.print()} title="Standard browser print">
+            <Printer size={14} /> Print View
+          </button>
+        </div>
       </div>
 
       <div className="dash-card elite-card report-card">
@@ -1337,10 +1496,7 @@ export default function Dashboard({
       <aside className={`dash-sidebar ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
         <div className="sidebar-header">
           <div className="sidebar-brand">
-            <div className="brand-mark">
-              <span></span>
-              <span></span>
-            </div>
+            <EcoLeakLogo size={34} />
             {sidebarOpen && (
               <div>
                 <span className="sidebar-brand-text">Eco<span className="brand-accent">Leak</span></span>
@@ -1534,6 +1690,20 @@ export default function Dashboard({
           {(sectionRenderers[activeSection] || renderInputSection)()}
         </div>
       </main>
+
+      {/* ── Executive Action Plan Custom Booklet Modal ── */}
+      <ActionPlanBookletModal
+        isOpen={showBookletModal}
+        onClose={() => setShowBookletModal(false)}
+        auditResult={auditResult}
+        authUser={authUser}
+        totalEmissions={totalEmissions}
+        simulatedSavingsKg={simulatedSavingsKg}
+        simulatedOpexSavings={simulatedOpexSavings}
+        totalCapex={totalCapex}
+        avgPaybackMonths={avgPaybackMonths}
+        uniqueRecs={uniqueRecs}
+      />
     </div>
   );
 }

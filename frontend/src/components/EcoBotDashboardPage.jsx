@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Send, RefreshCw, Check, Copy, ShieldCheck, ArrowRight, Lock, LogIn,
   Sparkles, Bot, Zap, Flame, Scale, Layers, HelpCircle, AlertCircle,
-  FileCheck, Factory, CornerDownLeft, ExternalLink, ShieldAlert, Building2, Crown, X
+  FileCheck, Factory, CornerDownLeft, ExternalLink, ShieldAlert, Building2, Crown, X,
+  Mic, MicOff
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -80,50 +81,23 @@ export default function EcoBotDashboardPage({
   const [showProBadge, setShowProBadge] = useState(false);
 
   // Multi-Factory Definition: Dynamic plant context from user profile
-  const userPlants = (authUser?.plants && authUser.plants.length > 0)
-    ? authUser.plants
-    : (authUser?.facilityName ? [{
-        id: 'primary',
-        facilityName: authUser.facilityName,
-        location: authUser.location || '',
-        industryType: authUser.industryType || '',
-        regCategory: authUser.regCategory || '',
-        regId: authUser.regId || '',
-        capacity: authUser.capacity || '',
-        emissionCap: authUser.emissionCap || '',
-      }] : []);
+  const userPlants = Array.isArray(authUser?.plants) ? authUser.plants : [];
 
-  const factoryList = userPlants.length > 0
-    ? userPlants.map((p, idx) => ({
-        id: p.id || `plant_${idx + 1}`,
-        name: p.facilityName || `Facility ${idx + 1}`,
-        badgeIcon: idx === 0 ? '📍' : '🏭',
-        statusLabel: idx === 0 ? 'Active Audit Data' : `Plant #${idx + 1}`,
-        location: p.location || '',
-        industry: p.industryType || '',
-        regCategory: p.regCategory || '',
-        regId: p.regId || '',
-        capacity: p.capacity || '',
-        emissionCap: p.emissionCap || '',
-        context: idx === 0 ? (activePlantContext || p) : p
-      }))
-    : [
-        {
-          id: 'primary',
-          name: activePlantContext?.facilityName || authUser?.facilityName || 'Primary Facility',
-          badgeIcon: '📍',
-          statusLabel: 'Active Context',
-          location: activePlantContext?.location || authUser?.location || '',
-          industry: activePlantContext?.industry || authUser?.industry || 'Plastics & Polymers',
-          regCategory: activePlantContext?.regCategory || authUser?.regCategory || 'Orange Category',
-          regId: activePlantContext?.regId || authUser?.regId || '',
-          capacity: activePlantContext?.capacity || authUser?.capacity || '',
-          emissionCap: activePlantContext?.emissionCap || authUser?.emissionCap || '',
-          context: activePlantContext || {}
-        }
-      ];
+  const factoryList = userPlants.map((p, idx) => ({
+    id: p.id || `plant_${idx + 1}`,
+    name: p.facilityName || `Facility ${idx + 1}`,
+    badgeIcon: idx === 0 ? '📍' : '🏭',
+    statusLabel: idx === 0 ? 'Active Facility' : `Plant #${idx + 1}`,
+    location: p.location || '',
+    industry: p.industryType || '',
+    regCategory: p.regCategory || '',
+    regId: p.regId || '',
+    capacity: p.capacity || '',
+    emissionCap: p.emissionCap || '',
+    context: p
+  }));
 
-  const currentActiveFactory = factoryList.find(f => f.id === selectedFactoryId) || factoryList[0];
+  const currentActiveFactory = factoryList.find(f => f.id === selectedFactoryId) || factoryList[0] || null;
 
   const [messages, setMessages] = useState([
     {
@@ -135,6 +109,9 @@ export default function EcoBotDashboardPage({
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const recognitionRef = useRef(null);
+  const [isListening, setIsListening] = useState(false);
+  const [voiceNotice, setVoiceNotice] = useState('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -143,6 +120,81 @@ export default function EcoBotDashboardPage({
   useEffect(() => {
     scrollToBottom();
   }, [messages, isLoading]);
+
+  // Clean up speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {}
+      }
+    };
+  }, []);
+
+  const toggleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+      return;
+    }
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
+      setVoiceNotice('');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-IN'; // Optimized for Indian English & technical terms
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setVoiceNotice('Listening to factory audio / voice...');
+      };
+
+      recognition.onresult = (event) => {
+        let finalTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          }
+        }
+        if (finalTranscript) {
+          setInputMessage((prev) => {
+            const separator = prev && !prev.endsWith(' ') ? ' ' : '';
+            return prev + separator + finalTranscript.trim();
+          });
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.warn('Speech recognition notice:', event.error);
+        setIsListening(false);
+        setVoiceNotice('');
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        setVoiceNotice('');
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error('Speech recognition activation error:', err);
+      setIsListening(false);
+      setVoiceNotice('');
+    }
+  };
 
   const handleCloseProModal = () => {
     setShowProModal(false);
@@ -459,56 +511,82 @@ export default function EcoBotDashboardPage({
 
           {/* ── Inline Factory Context Selector (beside input) ───────────── */}
           <div className="dock-context-row">
-            <div className="dock-context-chip">
-              <div className="dock-context-selector">
-                <Building2 size={13} className="dock-ctx-icon" />
-                <select
-                  className="dock-factory-select"
-                  value={showProBadge ? 'all_pro' : selectedFactoryId}
-                  onChange={(e) => handleFactorySelect(e.target.value)}
-                  title="Select which factory's emissions & circular context is sent to EcoBot"
-                >
-                  {factoryList.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.badgeIcon} {f.name}
+            {factoryList.length > 0 ? (
+              <div className="dock-context-chip">
+                <div className="dock-context-selector">
+                  <Building2 size={13} className="dock-ctx-icon" />
+                  <select
+                    className="dock-factory-select"
+                    value={showProBadge ? 'all_pro' : selectedFactoryId}
+                    onChange={(e) => handleFactorySelect(e.target.value)}
+                    title="Select which factory's emissions & circular context is sent to EcoBot"
+                  >
+                    {factoryList.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.badgeIcon} {f.name}
+                      </option>
+                    ))}
+                    <option value="all_pro">
+                      🔒 All Factories (Cross-Plant) — PRO
                     </option>
-                  ))}
-                  <option value="all_pro">
-                    🔒 All Factories (Cross-Plant) — PRO
-                  </option>
-                </select>
-              </div>
+                  </select>
+                </div>
 
-              {showProBadge && (
-                <button
-                  type="button"
-                  className="dock-pro-lock-btn"
-                  onClick={() => setShowProModal(true)}
-                  title="Cross-Facility Portfolio Analysis requires PRO"
-                >
-                  <Lock size={10} />
-                  <span className="pro-lock-badge">PRO</span>
-                </button>
-              )}
+                {showProBadge && (
+                  <button
+                    type="button"
+                    className="dock-pro-lock-btn"
+                    onClick={() => setShowProModal(true)}
+                    title="Cross-Facility Portfolio Analysis requires PRO"
+                  >
+                    <Lock size={10} />
+                    <span className="pro-lock-badge">PRO</span>
+                  </button>
+                )}
 
-              <div className="dock-token-guard" title="Single-plant context isolation keeps token usage minimal">
-                <ShieldCheck size={11} />
-                <span>~1.1k tokens</span>
+                <div className="dock-token-guard" title="Single-plant context isolation keeps token usage minimal">
+                  <ShieldCheck size={11} />
+                  <span>~1.1k tokens</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="dock-context-chip">
+                <div className="dock-token-guard">
+                  <ShieldCheck size={11} />
+                  <span>General Industrial Mode · Zero Hallucinations</span>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="dock-input-wrapper">
+          <div className={`dock-input-wrapper ${isListening ? 'dock-listening' : ''}`}>
             <textarea
               ref={textareaRef}
               className="dock-textarea"
-              placeholder="Ask EcoBot about Scope 1-3 math, CEA electricity factor, Williams' 0.65 Rule, or SPCB permits..."
+              placeholder={isListening ? "Listening... speak your facility metrics, fuels, or questions..." : "Ask EcoBot about Scope 1-3 math, CEA electricity factor, Williams' 0.65 Rule, or SPCB permits..."}
               rows={2}
               value={inputMessage}
               onChange={handleInputResize}
               onKeyDown={handleKeyDown}
               disabled={isLoading}
             />
+
+            <button
+              type="button"
+              className={`dock-voice-btn ${isListening ? 'voice-active' : ''}`}
+              onClick={toggleVoiceInput}
+              title={isListening ? "Stop voice recording" : "Input using microphone (Voice to Text)"}
+              aria-label="Voice input toggle"
+            >
+              {isListening ? (
+                <span className="voice-pulsing-wrapper">
+                  <MicOff size={16} />
+                  <span className="voice-ripple" />
+                </span>
+              ) : (
+                <Mic size={16} />
+              )}
+            </button>
 
             <button
               type="button"
@@ -531,7 +609,13 @@ export default function EcoBotDashboardPage({
               <CornerDownLeft size={11} /> Press <strong>Enter ↵</strong> to send
             </span>
             <span className="dock-hint-item">
-              Shift + Enter for new line
+              {isListening ? (
+                <strong style={{ color: '#ef4444', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span className="live-dot-ping" style={{ background: '#ef4444' }} /> Mic Active · Speak now
+                </strong>
+              ) : (
+                'Microphone voice input enabled'
+              )}
             </span>
             <span className="dock-hint-item hint-model">
               Deterministic Math Pipeline · Zero Hallucination Guarantee

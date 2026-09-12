@@ -7,6 +7,7 @@ import {
   TrendingDown
 } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
+import EcoLeakLogo from './EcoLeakLogo';
 import { triggerGoogleAuth, isFirebaseConfigured, isSupabaseConfigured } from '../services/authConfig';
 import {
   loginWithFirebaseEmail,
@@ -494,10 +495,7 @@ export default function AuthPage({
             role="button"
             tabIndex={0}
           >
-            <div className="brand-mark">
-              <span></span>
-              <span></span>
-            </div>
+            <EcoLeakLogo size={32} />
             <span className="brand-text">
               Eco<span className="brand-accent">Leak</span>
             </span>

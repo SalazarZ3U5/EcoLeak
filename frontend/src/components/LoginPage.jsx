@@ -55,10 +55,6 @@ export default function LoginPage({
     }
   }, [authUser, onOpenDashboard]);
 
-  if (authUser) {
-    return null;
-  }
-
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);

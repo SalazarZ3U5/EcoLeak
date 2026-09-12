@@ -6,11 +6,11 @@ import {
   Layers, Zap, Flame, LogOut, CheckCircle2, Factory, TrendingDown,
   Clock, Hash, Shield, Database, ExternalLink, Cpu, Phone, Briefcase,
   Sliders, ArrowRight, CheckSquare, Award, ChevronDown, ChevronUp,
-  Plus, Trash2
+  Plus, Trash2, FileText
 } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
-import { formatINR, formatCO2e, fetchUserAudits, syncProfileToSupabase } from '../services/api';
-import { syncUserToFirestore } from '../services/firebase';
+import { formatINR, formatCO2e, fetchUserAudits, syncProfileToSupabase, permanentlyDeleteOperatorAccount } from '../services/api';
+import { syncUserToFirestore, deleteCurrentUserFirebase } from '../services/firebase';
 import { UserPfp } from '../services/avatarService';
 import Navbar from './Navbar';
 import JargonTooltip, { JargonIcon } from './JargonTooltip';
@@ -90,31 +90,16 @@ export default function OperatorProfilePage({
       setOpDepartment(authUser.department || '');
       setOpNotes(authUser.notes || '');
 
-      // Load multi-plant array (backward compat: migrate legacy single plant)
-      if (authUser.plants && authUser.plants.length > 0) {
+      // Only load plants explicitly added by the user
+      if (authUser.plants && Array.isArray(authUser.plants)) {
         setPlants(authUser.plants);
-      } else if (authUser.facilityName) {
-        // Migrate legacy single-plant data to plants array
-        const legacyPlant = {
-          id: 'plant_1',
-          facilityName: authUser.facilityName || '',
-          industryType: authUser.industryType || '',
-          capacity: authUser.capacity || '',
-          location: authUser.location || '',
-          regId: authUser.regId || '',
-          regCategory: authUser.regCategory || '',
-          regStandard: authUser.regStandard || '',
-          emissionCap: authUser.emissionCap || '',
-          regionalOffice: authUser.regionalOffice || '',
-        };
-        setPlants([legacyPlant]);
       } else {
         setPlants([]);
       }
     }
   }, [authUser]);
 
-  // Load audit records
+  // Load audit records (strictly do NOT automatically populate plants)
   useEffect(() => {
     let isMounted = true;
     async function loadAudits() {
@@ -122,8 +107,6 @@ export default function OperatorProfilePage({
         const data = await fetchUserAudits();
         if (isMounted && data && data.length > 0) {
           setAudits(data);
-          // Auto-sync unique facilities from audit history into plants inventory
-          syncPlantsFromAudits(data, true);
         } else if (isMounted) {
           setAudits([]);
         }
@@ -136,6 +119,44 @@ export default function OperatorProfilePage({
     loadAudits();
     return () => { isMounted = false; };
   }, [authUser]);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText.trim().toUpperCase() !== 'DELETE') {
+      showFeedback('warning', 'Please type DELETE into the confirmation box to confirm.');
+      return;
+    }
+    setIsDeletingAccount(true);
+    try {
+      // 1. Permanently delete from Supabase (assessments, profiles, documents) and clear local caches
+      await permanentlyDeleteOperatorAccount(authUser);
+
+      // 2. Permanently delete from Firebase Auth and Firestore
+      try {
+        await deleteCurrentUserFirebase();
+      } catch (fbErr) {
+        console.warn('Firebase user delete note (proceeding with local signout):', fbErr);
+      }
+
+      showFeedback('success', 'Your operator account and all associated records have been permanently deleted.');
+      setShowDeleteModal(false);
+
+      // 3. Complete logout/navigation
+      setTimeout(() => {
+        if (onSignOut) {
+          onSignOut();
+        } else if (onBack) {
+          onBack();
+        }
+      }, 1500);
+    } catch (err) {
+      showFeedback('warning', err.message || 'Error occurred while purging records.');
+      setIsDeletingAccount(false);
+    }
+  };
 
   const showFeedback = (type, text) => {
     setFeedbackMsg({ type, text });
@@ -712,6 +733,11 @@ export default function OperatorProfilePage({
                                     <span className="scope-pill scope-1"><JargonTooltip term="Scope 1">Scope 1</JargonTooltip>: {formatCO2e(audit.scope_1_kg || 1200)}</span>
                                     <span className="scope-pill scope-2"><JargonTooltip term="Scope 2">Scope 2</JargonTooltip>: {formatCO2e(audit.scope_2_kg || 16400)}</span>
                                     <span className="scope-pill scope-3"><JargonTooltip term="Scope 3">Scope 3</JargonTooltip>: {formatCO2e(audit.scope_3_kg || 176980)}</span>
+                                    {audit.raw_inputs?.uploaded_document && (
+                                      <span className="scope-pill" style={{ background: 'rgba(14, 165, 233, 0.12)', color: '#0284c7', borderColor: 'rgba(14, 165, 233, 0.3)' }}>
+                                        <FileText size={10} /> {audit.raw_inputs.uploaded_document.name}
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
 
@@ -891,6 +917,55 @@ export default function OperatorProfilePage({
                   </div>
                 )}
               </div>
+
+              {/* Card 4: Danger Zone - Permanent Account & Database Deletion */}
+              <div
+                className="profile-card-clean elite-card"
+                style={{
+                  marginTop: '24px',
+                  borderColor: 'rgba(239, 68, 68, 0.35)',
+                  background: 'rgba(254, 242, 242, 0.4)'
+                }}
+              >
+                <div className="profile-card-header">
+                  <div className="card-header-icon" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
+                    <AlertTriangle size={18} />
+                  </div>
+                  <div className="card-header-titles">
+                    <h3 className="profile-card-title" style={{ color: '#b91c1c' }}>Danger Zone</h3>
+                    <span className="profile-card-subtitle">Permanently delete operator account and all synchronized records</span>
+                  </div>
+                </div>
+
+                <div style={{ padding: '0 4px 6px' }}>
+                  <p style={{ fontSize: '12.5px', color: '#7f1d1d', margin: '0 0 14px', lineHeight: 1.5 }}>
+                    Once deleted, your account profile, all recorded emission assessments, and uploaded utility invoices will be permanently wiped from the database. This action cannot be reversed.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => { setShowDeleteModal(true); setDeleteConfirmText(''); }}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 16px',
+                      background: '#ef4444',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = '#dc2626'}
+                    onMouseLeave={(e) => e.currentTarget.style.background = '#ef4444'}
+                  >
+                    <Trash2 size={14} /> Delete Account &amp; Erase Records
+                  </button>
+                </div>
+              </div>
+
             </div>
           )}
 
@@ -1438,6 +1513,115 @@ export default function OperatorProfilePage({
 
         </div>
       </main>
+
+      {/* ── Permanent Delete Confirmation Modal ── */}
+      {showDeleteModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+          onClick={() => !isDeletingAccount && setShowDeleteModal(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '18px',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '28px',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.35)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <AlertTriangle size={22} />
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#991b1b' }}>
+                  Delete Account Permanently?
+                </h3>
+                <span style={{ fontSize: '12px', color: '#64748b' }}>
+                  Database Wipe &amp; Irreversible Action
+                </span>
+              </div>
+            </div>
+
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '12px 14px', marginBottom: '18px' }}>
+              <p style={{ margin: 0, fontSize: '12.5px', color: '#991b1b', lineHeight: 1.5 }}>
+                This will permanently delete:
+              </p>
+              <ul style={{ margin: '8px 0 0 16px', padding: 0, fontSize: '12px', color: '#b91c1c' }}>
+                <li>Your operator profile record from <strong>Supabase (profiles)</strong></li>
+                <li>All logged emissions assessments from <strong>Supabase (assessments)</strong></li>
+                <li>All uploaded utility invoices &amp; documents from <strong>audit-documents storage bucket</strong></li>
+                <li>Your user record from <strong>Firebase Auth &amp; Firestore</strong></li>
+              </ul>
+            </div>
+
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                To confirm, type <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>DELETE</span> below:
+              </label>
+              <input
+                type="text"
+                className="dash-input"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Type DELETE"
+                disabled={isDeletingAccount}
+                style={{ borderColor: deleteConfirmText.trim().toUpperCase() === 'DELETE' ? '#ef4444' : undefined, fontWeight: 700 }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                disabled={isDeletingAccount}
+                onClick={() => setShowDeleteModal(false)}
+                style={{ padding: '9px 18px' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteConfirmText.trim().toUpperCase() !== 'DELETE' || isDeletingAccount}
+                onClick={handleDeleteAccount}
+                style={{
+                  padding: '9px 20px',
+                  background: deleteConfirmText.trim().toUpperCase() === 'DELETE' ? '#ef4444' : '#fca5a5',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '9px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: deleteConfirmText.trim().toUpperCase() === 'DELETE' ? 'pointer' : 'not-allowed',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {isDeletingAccount ? (
+                  <><RefreshCw size={14} className="spin" /> Erasing Database Records...</>
+                ) : (
+                  <><Trash2 size={14} /> Permanently Delete</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

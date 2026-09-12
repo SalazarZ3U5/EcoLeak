@@ -146,3 +146,23 @@ async def delete_audit(
         )
 
     return {"status": "deleted", "audit_id": audit_id}
+
+
+@router.delete("/account")
+async def delete_account(
+    user: dict = Depends(get_current_user),
+):
+    """
+    Permanently delete the authenticated operator's account, profiles, assessments,
+    and associated storage files from database records.
+    """
+    user_id = user.get("uid", "")
+    email = user.get("email", "")
+
+    result = await supabase_service.delete_operator_account(user_id=user_id, email=email)
+    return {
+        "status": "account_deleted",
+        "message": "Operator account and all associated database records have been permanently deleted.",
+        "details": result,
+    }
+

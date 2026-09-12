@@ -39,8 +39,13 @@ export default function App() {
             email: fbUser.email || prev?.email || '',
             picture: fbUser.photoURL || prev?.picture || '',
             facilityName: prev?.facilityName || 'GreenPack Plastics Plant',
+            location: prev?.location || 'MIDC Chakan Industrial Area, Pune, Maharashtra',
+            regId: prev?.regId || 'MH-SPCB/PUN/CTO-2026/0894',
+            regCategory: prev?.regCategory || 'Orange Category (SPCB)',
+            regStandard: prev?.regStandard || 'SPCB Consent to Operate & BRSR Core',
+            emissionCap: prev?.emissionCap || '450 MT CO2e / Year',
             role: prev?.role || 'Plant Manager',
-            authMethod: 'firebase-google',
+            authMethod: prev?.authMethod || 'firebase-google',
           };
           localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
           return updated;
@@ -67,7 +72,13 @@ export default function App() {
 
   const handleAuthSuccess = (user) => {
     setAuthUser(user);
+    localStorage.setItem('ecoleak_auth_user', JSON.stringify(user));
     setView('dashboard');
+  };
+
+  const handleUpdateUser = (updatedUser) => {
+    setAuthUser(updatedUser);
+    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updatedUser));
   };
 
   const handleSignOut = async () => {
@@ -89,6 +100,7 @@ export default function App() {
         initialTab={authInitialTab}
         authUser={authUser}
         onAuthSuccess={handleAuthSuccess}
+        onUpdateUser={handleUpdateUser}
         onSignOut={handleSignOut}
         onBack={() => setView('landing')}
         onOpenDashboard={() => {

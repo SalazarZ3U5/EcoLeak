@@ -5,7 +5,8 @@ import {
   Building2, AlertTriangle, TrendingDown, Coins, ShieldCheck,
   RefreshCw, ArrowRight, CheckCircle2, Lock, Mail, Menu,
   Download, Printer, Sparkles, Sliders, Factory, Check, Info,
-  Eye, EyeOff, User, UserPlus, LogOut, UserCheck, Key, Cog, Package
+  Eye, EyeOff, User, UserPlus, LogOut, UserCheck, Key, Cog, Package,
+  MapPin, FileCheck, ShieldAlert, Scale
 } from 'lucide-react';
 import {
   analyzeActivities,
@@ -998,8 +999,19 @@ export default function Dashboard({
               EcoLeak Industrial Emission Assessment
             </h3>
             <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
-              Theme: Circular Carbon Ecosystem · Facility: {industry}
+              Theme: Circular Carbon Ecosystem · Facility: {authUser?.facilityName || industry}
             </span>
+            <div className="report-compliance-meta-row">
+              <span className="report-meta-chip">
+                <MapPin size={11} /> {authUser?.location || 'MIDC Bhosari Industrial Area, Pune'}
+              </span>
+              <span className="report-meta-chip">
+                <FileCheck size={11} /> SPCB: {authUser?.regId || 'MH-SPCB/CTO-2026/4102'}
+              </span>
+              <span className="report-meta-chip">
+                <ShieldAlert size={11} /> {authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Orange Category'}
+              </span>
+            </div>
           </div>
           <div className="report-status-badge">
             <CheckCircle2 size={15} color="var(--mint)" /> Verified Factors Aligned
@@ -1132,10 +1144,15 @@ export default function Dashboard({
                     className="sidebar-user-info"
                     onClick={onOpenAuth}
                     style={{ cursor: 'pointer' }}
-                    title="View Operator Profile"
+                    title="View Operator Profile & Regulatory Parameters"
                   >
                     <strong className="sidebar-user-name">{authUser.name}</strong>
                     <span className="sidebar-user-facility">{authUser.facilityName || 'Active Plant'}</span>
+                    {authUser.location && (
+                      <span className="sidebar-user-location" title={authUser.location}>
+                        <MapPin size={10} style={{ flexShrink: 0 }} /> {authUser.location.split(',')[0]}
+                      </span>
+                    )}
                   </div>
                   <button
                     type="button"

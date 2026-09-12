@@ -3519,3 +3519,304 @@ h1, h2, h3, h4, .font-heading {
   border-color: var(--mint);
 }
 
+/* ── Form Subheading Badges & Grouping ─────────────────────────────────────── */
+.form-subheading-badge {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  background: rgba(0, 184, 107, 0.08);
+  border: 1px solid rgba(0, 184, 107, 0.22);
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  color: var(--mint-hover);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.input-hint-note {
+  display: block;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Office & Plant Location with Auto-Detect GPS ─────────────────────────── */
+.btn-gps-detect-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0, 184, 107, 0.12);
+  border: 1px solid rgba(0, 184, 107, 0.35);
+  border-radius: 6px;
+  color: var(--mint-hover);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-gps-detect-inline:hover:not(:disabled) {
+  background: var(--mint-hover);
+  color: #ffffff;
+  border-color: var(--mint-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 184, 107, 0.25);
+}
+
+.btn-gps-detect-inline:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.location-input-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.location-feedback-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.location-feedback-pill.pill-success {
+  background: rgba(0, 184, 107, 0.12);
+  border: 1px solid rgba(0, 184, 107, 0.3);
+  color: var(--mint-hover);
+}
+
+.location-feedback-pill.pill-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: #b45309;
+}
+
+/* ── Regulatory Parameters Form ───────────────────────────────────────────── */
+.reg-params-two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* ── Regulatory Parameters Panel in Verified Profile ──────────────────────── */
+.profile-reg-params-panel {
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1.5px solid rgba(0, 184, 107, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.03);
+}
+
+.reg-panel-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+
+.reg-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--emerald-deep);
+  text-transform: uppercase;
+}
+
+.reg-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.badge-orange-cat {
+  background: rgba(245, 158, 11, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
+.badge-red-cat {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.badge-green-cat {
+  background: rgba(0, 184, 107, 0.12);
+  color: var(--mint-hover);
+  border: 1px solid rgba(0, 184, 107, 0.4);
+}
+
+.badge-white-cat {
+  background: rgba(100, 116, 139, 0.12);
+  color: #475569;
+  border: 1px solid rgba(100, 116, 139, 0.4);
+}
+
+.reg-params-display-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.reg-param-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #ffffff;
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+}
+
+.reg-param-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.reg-param-val {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.font-mono-val {
+  font-family: 'JetBrains Mono', monospace, ui-monospace;
+  letter-spacing: 0.02em;
+  color: var(--emerald-deep);
+}
+
+.reg-param-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.location-verified-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--mint-hover);
+  font-weight: 600;
+}
+
+/* ── Profile Editing Form ─────────────────────────────────────────────────── */
+.btn-profile-edit-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: #ffffff;
+  border: 1.5px solid var(--line-strong);
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--emerald-deep);
+  cursor: pointer;
+  margin-left: auto;
+  transition: all 0.2s ease;
+}
+
+.btn-profile-edit-toggle:hover {
+  background: var(--mint-light);
+  border-color: var(--mint);
+  color: var(--mint-hover);
+}
+
+.profile-edit-form-wrap {
+  margin: 20px 0;
+  padding: 20px;
+  background: rgba(0, 184, 107, 0.04);
+  border: 1.5px dashed rgba(0, 184, 107, 0.4);
+  border-radius: 16px;
+}
+
+.profile-edit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.profile-edit-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--emerald-deep);
+}
+
+.profile-edit-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+/* ── Sidebar Operator Location ────────────────────────────────────────────── */
+.sidebar-user-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--mint-hover);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 1px;
+}
+
+/* ── Executive Action Plan Compliance Metadata Chips ──────────────────────── */
+.report-compliance-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.report-meta-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  background: rgba(0, 184, 107, 0.08);
+  border: 1px solid rgba(0, 184, 107, 0.25);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--emerald-deep);
+}
+
+

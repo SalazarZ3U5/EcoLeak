@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Sparkles } from 'lucide-react';
+import { ArrowUpRight, Sparkles, ShieldCheck } from 'lucide-react';
 
-export default function Navbar({ onOpenAssessment, onOpenLogin }) {
+export default function Navbar({ onOpenAssessment, onOpenLogin, authUser }) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -38,7 +38,14 @@ export default function Navbar({ onOpenAssessment, onOpenLogin }) {
             onClick={onOpenLogin}
             id="nav-signin-btn"
           >
-            Operator Sign In
+            {authUser ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <ShieldCheck size={14} color="var(--mint)" />
+                <span>{authUser.name ? authUser.name.split(' ')[0] : 'Operator'}</span>
+              </span>
+            ) : (
+              'Sign In'
+            )}
           </button>
           <button 
             className="btn btn-primary"

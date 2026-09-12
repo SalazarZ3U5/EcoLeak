@@ -3,10 +3,13 @@
 # ============================================================
 .env
 .env.*
+.env.local
 !.env.example
 *.pem
 *.key
 *.cert
+fb.json
+*.secret.json
 
 # ============================================================
 # Python Virtual Environments & Packages

@@ -1,28 +1,55 @@
 /**
- * Authentication Configuration & Google OAuth Helper
+ * Authentication Configuration & Service Credentials
  * 
- * You can set your Google Client ID below or in your .env file as:
- * VITE_GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
+ * All API keys and credentials are loaded dynamically from environment variables
+ * (import.meta.env) to prevent hardcoding secrets in the codebase.
  */
 
 export const AUTH_CONFIG = {
-  googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID_HERE',
-  enableMockAuthFallback: true, // Allows testing if API key is not yet set
+  googleClientId: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+  enableMockAuthFallback: true, // Allows smooth local testing fallback
 };
 
 /**
+ * Firebase Configuration (loaded from .env / VITE_FIREBASE_*)
+ */
+export const FIREBASE_CONFIG = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '',
+};
+
+/**
+ * Supabase Configuration (loaded from .env / VITE_SUPABASE_*)
+ */
+export const SUPABASE_CONFIG = {
+  url: import.meta.env.VITE_SUPABASE_URL || '',
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
+};
+
+/**
+ * Utility checks for configuration availability
+ */
+export const isFirebaseConfigured = () => Boolean(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.projectId);
+export const isSupabaseConfigured = () => Boolean(SUPABASE_CONFIG.url && SUPABASE_CONFIG.anonKey);
+export const isGoogleConfigured = () => Boolean(AUTH_CONFIG.googleClientId && AUTH_CONFIG.googleClientId !== 'YOUR_GOOGLE_CLIENT_ID_HERE');
+
+/**
  * Helper to trigger Google OAuth or simulate login if keys are pending.
- * If you configure the Google Identity Services script in index.html,
+ * If Google Identity Services script is loaded on window and configured,
  * this function will interface directly with it.
  */
 export async function triggerGoogleAuth() {
-  // If Google GSI library is loaded on window
-  if (window.google?.accounts?.id && AUTH_CONFIG.googleClientId !== 'YOUR_GOOGLE_CLIENT_ID_HERE') {
+  // If Google GSI library is loaded on window and client ID is configured
+  if (window.google?.accounts?.id && isGoogleConfigured()) {
     return new Promise((resolve, reject) => {
       window.google.accounts.id.initialize({
         client_id: AUTH_CONFIG.googleClientId,
         callback: (response) => {
-          // Decode JWT credential payload
           try {
             const base64Url = response.credential.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -38,7 +65,7 @@ export async function triggerGoogleAuth() {
               email: data.email,
               picture: data.picture,
               authMethod: 'google',
-              facilityName: 'Registered Plant'
+              facilityName: 'Registered Plant',
             });
           } catch (err) {
             reject(err);
@@ -49,7 +76,7 @@ export async function triggerGoogleAuth() {
     });
   }
 
-  // Graceful fallback for local development / testing before user adds API key
+  // Graceful fallback for local development / testing before user adds OAuth key
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
@@ -57,7 +84,7 @@ export async function triggerGoogleAuth() {
         email: 'sarthakk@industrial-ops.com',
         facilityName: 'GreenPack Plastics Ltd.',
         role: 'Plant Operations Lead',
-        authMethod: 'google'
+        authMethod: 'google',
       });
     }, 600);
   });

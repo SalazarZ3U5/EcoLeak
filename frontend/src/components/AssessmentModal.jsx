@@ -184,9 +184,6 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
 
         {!auditResult ? (
           <div>
-            <div className="modal-tag">
-              AUTONOMOUS INDUSTRIAL DECARBONIZATION AUDIT
-            </div>
             <h2>Map your factory's closed loop.</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '4px' }}>
               Deterministic GHG Protocol accounting (Scopes 1, 2, 3) coupled with Pareto leak-point detection and ChromaDB circular alternatives.
@@ -488,10 +485,7 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
              LIVE AUDIT REPORT VIEW
              ============================================================ */
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <div className="modal-tag" style={{ margin: 0 }}>
-                VERIFIED GHG AUDIT REPORT
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '8px' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
                 DQI: <strong>{auditResult.facility_summary?.data_quality_index ?? 100}%</strong>
               </span>

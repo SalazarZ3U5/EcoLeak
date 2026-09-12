@@ -58,10 +58,6 @@ export default function SimpleHowItWorks() {
     <section className="section" id="how">
       <div className="container">
         <div className="section-header">
-          <div className="section-tag">
-            <span></span>
-            THE CIRCULAR CARBON PIPELINE
-          </div>
           <h2>From plant process data to high-ROI circular alternatives.</h2>
           <p>
             No complex consulting fees. A guided intelligence tool designed for SMEs, factory operators, and consultants to pinpoint emission hotspots and quantify payback.

@@ -6,10 +6,6 @@ export default function ImpactROI({ onOpenAssessment }) {
     <section className="section" id="impact">
       <div className="container">
         <div className="section-header">
-          <div className="section-tag">
-            <span></span>
-            PROVEN COMMERCIAL PERFORMANCE
-          </div>
           <h2>
             Decarbonization that pays for itself.
           </h2>

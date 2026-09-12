@@ -19,10 +19,6 @@ export default function SimpleCalculator({ onOpenAssessment }) {
     <section className="section" id="calculator" style={{ background: '#f2f7f4' }}>
       <div className="container">
         <div className="section-header center">
-          <div className="section-tag">
-            <span></span>
-            INTERACTIVE ROI LEDGER
-          </div>
           <h2>
             Quantify your factory's closed-loop upside.
           </h2>

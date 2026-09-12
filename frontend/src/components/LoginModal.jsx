@@ -26,9 +26,6 @@ export default function LoginModal({ isOpen, onClose }) {
 
         {!loggedIn ? (
           <div>
-            <div className="modal-tag">
-              OPERATOR CONSOLE
-            </div>
             <h2>Sign In</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '6px' }}>
               Access your facility's utility data and intervention ledger.
@@ -64,7 +61,7 @@ export default function LoginModal({ isOpen, onClose }) {
               </div>
 
               <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%', marginTop: '8px' }}>
-                Sign In to Console <ArrowRight size={16} />
+                Sign In <ArrowRight size={16} />
               </button>
             </form>
           </div>

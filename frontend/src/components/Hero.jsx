@@ -16,11 +16,6 @@ export default function Hero({ onOpenAssessment }) {
         <div className="hero-editorial-grid">
           {/* Headline & Pitch */}
           <div className="hero-text-col">
-            <div className="section-tag">
-              <span></span>
-              THEME: CIRCULAR CARBON ECOSYSTEM
-            </div>
-
             <h1 style={{ fontSize: 'clamp(32px, 4vw, 48px)', lineHeight: 1.15 }}>
               Industrial Emission <br />
               <span className="gradient-text">Leak-Point Detector</span> &amp; <br />

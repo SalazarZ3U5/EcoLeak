@@ -24,21 +24,113 @@ from backend.services import groq_service, gemini_service
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are EcoBot, the senior concise industrial sustainability and carbon intelligence assistant for EcoLeak.
+SYSTEM_PROMPT = """You are EcoBot, the industrial sustainability and carbon intelligence assistant for EcoLeak.
 
-CORE DOMAINS:
-- Corporate Sustainability & CSR (Section 135 Indian Companies Act 2% net profit mandate, Schedule VII environmental projects, CSR compliance).
-- ESG & Statutory Frameworks (SEBI BRSR Core, GHG Protocol Scopes 1-3, ISO 14064, CPCB/SPCB Consent to Operate Red/Orange/Green/White categories).
-- Industrial Decarbonization & Circular Economy (virgin vs recycled polymers, heat recovery, process optimization).
-- Engineering Math (Payback Period = CAPEX / OPEX Savings * 12 months, CEA Grid Factor = 0.716 kg CO2e/kWh, Diesel = 2.687 kg CO2e/L).
+CORE DOMAINS — answer only these:
+- Industrial Carbon Accounting: Scope 1 (direct combustion), Scope 2 (electricity), Scope 3 (supply chain). Provide emission factors and step-by-step calculations.
+- ESG & Statutory Compliance: SEBI BRSR Core, GHG Protocol, ISO 14064, CPCB/SPCB categories, Section 135 Companies Act CSR mandate.
+- Circular Economy: virgin vs. recycled polymer substitution, heat recovery, avoided-emission modeling, payback analysis.
+- Emission Constants: CEA Grid = 0.716 kg CO2e/kWh | Diesel = 2.687 kg CO2e/L | LPG = 2.983 kg CO2e/kg.
+- Financial Engineering Terms (IN SCOPE): CAPEX (Capital Expenditure), OPEX (Operating Expenditure), MSR (Minimum Statutory Reserve / Material Substitution Rate), ROI, IRR, NPV, WACC, Payback Period, Avoided Emissions, Carbon Credit, LCOE. Always answer definitions and calculations for these terms.
 
-CRITICAL CONCISENESS & FORMATTING RULES:
-- BE STRICTLY CONCISE: Limit responses to 2–4 crisp bullet points or short sentences (under 100 words total).
-- NEVER produce sprawling multi-table essays or overwhelming walls of text. Deliver immediate, high-impact value.
-- For math questions: state the formula, substitute the numbers in one line, and give the final result clearly in bold.
-- For conceptual questions: explain the core definition, legal/industry relevance, and practical application directly.
-- Maintain a formal, enterprise-grade engineering tone.
+OUT-OF-SCOPE: Refuse academic physics, school chemistry, general math homework, or unrelated topics in one sentence.
+
+FORMAT — MANDATORY:
+- MAX 4-5 bullet points for any conceptual answer. Do NOT write paragraphs or essays.
+- Each bullet: one clear, complete sentence. No sub-bullets unless critical.
+- Math queries: formula line → calculation line → **bold result**. Done.
+- No raw LaTeX. Plain text formulas only.
+- End EVERY response with: ⚠️ AI can make mistakes. Verify critical calculations independently.
 """
+
+# ---------------------------------------------------------------------------
+# Local definitional lookup for key EcoLeak financial & sustainability terms
+# (prevents LLM refusal on common acronym queries)
+# ---------------------------------------------------------------------------
+_TERM_DEFINITIONS: dict[str, str] = {
+    "capex": (
+        "### CAPEX — Capital Expenditure\n\n"
+        "• **Definition:** One-time upfront investment in assets — machinery, solar panels, heat recovery systems, ETP upgrades.\n"
+        "• **Role in EcoLeak:** CAPEX is used to calculate the Payback Period for green interventions.\n"
+        "• **Formula:** Payback (Months) = (CAPEX / Annual OPEX Savings) × 12\n"
+        "• **Example:** CAPEX = ₹50 L, Annual Savings = ₹10 L → Payback = **60 months (5 years)**\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "opex": (
+        "### OPEX — Operating Expenditure\n\n"
+        "• **Definition:** Recurring day-to-day costs — energy bills, fuel, maintenance, consumables.\n"
+        "• **Role in EcoLeak:** OPEX savings from a green intervention drive the payback calculation.\n"
+        "• **Formula:** Net Annual Saving = Baseline OPEX − Post-Intervention OPEX\n"
+        "• **Tip:** Replacing diesel DG sets with grid power or solar reduces OPEX by 30–60% typically.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "msr": (
+        "### MSR — Material Substitution Rate\n\n"
+        "• **Definition:** The percentage of virgin material replaced by recycled/alternative feedstock in a production process.\n"
+        "• **Formula:** MSR (%) = (Recycled Input / Total Input) × 100\n"
+        "• **Emission Impact:** MSR directly reduces Scope 3 emissions — e.g. substituting 60% virgin HDPE with PCR-HDPE saves ~0.93 kg CO₂e per kg.\n"
+        "• **EcoLeak Use:** MSR is a core KPI in the Circular Intervention dashboard.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "roi": (
+        "### ROI — Return on Investment\n\n"
+        "• **Definition:** Financial return earned relative to investment cost, expressed as a percentage.\n"
+        "• **Formula:** ROI (%) = ((Net Benefit / CAPEX) × 100)\n"
+        "• **Green ROI:** Includes both cost savings (OPEX) and carbon credit revenue from avoided emissions.\n"
+        "• **Example:** ₹10 L savings on ₹50 L CAPEX = **ROI of 20% per year**.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "irr": (
+        "### IRR — Internal Rate of Return\n\n"
+        "• **Definition:** The discount rate at which a project's NPV equals zero — the break-even return rate.\n"
+        "• **Rule of Thumb:** Green interventions with IRR > 15% are considered commercially viable in Indian industry.\n"
+        "• **Usage:** Compare IRR against WACC; if IRR > WACC, the project creates value.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "npv": (
+        "### NPV — Net Present Value\n\n"
+        "• **Definition:** Present value of future cash flows (OPEX savings + carbon credits) minus CAPEX.\n"
+        "• **Formula:** NPV = Σ [Cash Flow_t / (1 + r)^t] − CAPEX\n"
+        "• **Decision Rule:** NPV > 0 → intervention is financially justified.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "wacc": (
+        "### WACC — Weighted Average Cost of Capital\n\n"
+        "• **Definition:** Blended cost of debt and equity used to discount future cash flows in a project appraisal.\n"
+        "• **Typical Range:** 10–14% for Indian industrial sustainability projects.\n"
+        "• **Usage:** IRR must exceed WACC for a green capex project to be approved by the CFO.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "carbon credit": (
+        "### Carbon Credit\n\n"
+        "• **Definition:** A tradeable certificate representing 1 tonne CO₂e of avoided or removed emissions.\n"
+        "• **Indian Market:** Traded on the Indian Carbon Market (ICM) under BEE's PAT scheme; voluntary credits also traded via VERRA/VCS.\n"
+        "• **Price Range:** ~₹800–2,500 per tonne CO₂e (varies by project type and vintage).\n"
+        "• **EcoLeak:** Circular interventions generate avoided-emission credits claimable under Scope 3 reductions.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+    "avoided emissions": (
+        "### Avoided Emissions\n\n"
+        "• **Definition:** CO₂e reductions achieved by switching from a high-emission baseline to a lower-emission alternative.\n"
+        "• **Formula:** Avoided Emissions = Quantity × (EF_virgin − EF_recycled)\n"
+        "• **Example:** 60,000 kg HDPE switch → 60,000 × (2.05 − 0.52) = **91,800 kg CO₂e/month avoided**.\n"
+        "• **Standard:** GHG Protocol Scope 3 Category 1 / 11 methodology.\n\n"
+        "⚠️ AI can make mistakes. Verify critical calculations independently."
+    ),
+}
+
+
+def _lookup_term(query: str) -> Optional[str]:
+    """Check if query is a simple 'what is X' definition for a known EcoLeak term."""
+    q = query.lower().strip()
+    # Strip question prefixes
+    for prefix in ("what is", "what's", "whats", "define", "explain", "tell me about", "meaning of", "what does", "mean"):
+        q = q.replace(prefix, "").strip(" ?")
+    q = q.strip(" ?")
+    for term, definition in _TERM_DEFINITIONS.items():
+        if term in q or q == term:
+            return definition
+    return None
 
 
 def _solve_math_locally(query: str) -> Optional[str]:
@@ -56,16 +148,12 @@ def _solve_math_locally(query: str) -> Optional[str]:
             co2e_kg = kwh * 0.716
             co2e_mt = co2e_kg / 1000.0
             return (
-                f"### Scope 2 Electricity Emission Calculation\n\n"
-                f"**Formula:**\n"
-                f"$$\\text{{Emissions (kg CO}}_2\\text{{e)}} = \\text{{Consumption (kWh)}} \\times \\text{{Emission Factor (CEA India)}}$$\n\n"
-                f"**Calculation:**\n"
-                f"- Input Energy: **{kwh:,.2f} kWh**\n"
-                f"- CEA Grid Factor: **0.716 kg CO₂e / kWh**\n"
-                f"- Direct Math: `{kwh:,.2f} × 0.716` = **{co2e_kg:,.2f} kg CO₂e**\n\n"
-                f"**Final Result:**\n"
-                f"- **{co2e_kg:,.2f} kg CO₂e** (~**{co2e_mt:,.3f} Metric Tons CO₂e**)\n\n"
-                f"*Note: Benchmark derived from Central Electricity Authority (CEA) CO₂ Baseline Database for the Indian Power Grid.*"
+                f"### Scope 2 Electricity Calculation\n\n"
+                f"• **Formula:** `Emissions = Consumption (kWh) × 0.716 (CEA India Factor)`\n"
+                f"• **Calculation:** `{kwh:,.2f} kWh × 0.716` = **{co2e_kg:,.2f} kg CO₂e**\n"
+                f"• **Result:** **{co2e_kg:,.2f} kg CO₂e** (~**{co2e_mt:,.3f} MT CO₂e**)\n\n"
+                f"*Source: Central Electricity Authority (CEA) Baseline v19.*\n\n"
+                f"⚠️ AI can make mistakes. Verify critical calculations independently."
             )
         except Exception:
             pass
@@ -79,15 +167,11 @@ def _solve_math_locally(query: str) -> Optional[str]:
             co2e_kg = liters * 2.687
             co2e_mt = co2e_kg / 1000.0
             return (
-                f"### Scope 1 Diesel Combustion Calculation\n\n"
-                f"**Formula:**\n"
-                f"$$\\text{{Emissions (kg CO}}_2\\text{{e)}} = \\text{{Volume (Liters)}} \\times \\text{{Emission Factor (IPCC / DEFRA)}}$$\n\n"
-                f"**Calculation:**\n"
-                f"- Fuel Consumed: **{liters:,.2f} Liters of Diesel**\n"
-                f"- Emission Factor: **2.687 kg CO₂e / Liter**\n"
-                f"- Direct Math: `{liters:,.2f} × 2.687` = **{co2e_kg:,.2f} kg CO₂e**\n\n"
-                f"**Final Result:**\n"
-                f"- **{co2e_kg:,.2f} kg CO₂e** (~**{co2e_mt:,.3f} Metric Tons CO₂e**)"
+                f"### Scope 1 Diesel Calculation\n\n"
+                f"• **Formula:** `Emissions = Volume (L) × 2.687 kg CO₂e/L (IPCC Factor)`\n"
+                f"• **Calculation:** `{liters:,.2f} L × 2.687` = **{co2e_kg:,.2f} kg CO₂e**\n"
+                f"• **Result:** **{co2e_kg:,.2f} kg CO₂e** (~**{co2e_mt:,.3f} MT CO₂e**)\n\n"
+                f"⚠️ AI can make mistakes. Verify critical calculations independently."
             )
         except Exception:
             pass
@@ -103,16 +187,11 @@ def _solve_math_locally(query: str) -> Optional[str]:
                 months = (capex / opex) * 12.0
                 years = capex / opex
                 return (
-                    f"### Circular Intervention Payback Period Calculation\n\n"
-                    f"**Formula:**\n"
-                    f"$$\\text{{Payback Period (Months)}} = \\left( \\frac{{\\text{{Capital Investment (CAPEX)}}}}{{\\text{{Annual Recurring Savings (OPEX)}}}} \\right) \\times 12$$\n\n"
-                    f"**Calculation:**\n"
-                    f"- Upfront CAPEX: **₹{capex:,.2f}**\n"
-                    f"- Annual OPEX Savings: **₹{opex:,.2f} / year**\n"
-                    f"- Payback in Years: `{capex:,.2f} / {opex:,.2f}` = **{years:.2f} Years**\n"
-                    f"- Payback in Months: `{years:.2f} × 12` = **{months:.1f} Months**\n\n"
-                    f"**Assessment:**\n"
-                    f"Interventions with a payback period under **12–18 months** are classified as **High Feasibility / Fast-Payback Circular Projects**."
+                    f"### Payback Period Calculation\n\n"
+                    f"• **Formula:** `Payback (Months) = (CAPEX / Annual OPEX Savings) × 12`\n"
+                    f"• **Calculation:** `(₹{capex:,.2f} / ₹{opex:,.2f}) × 12` = **{months:.1f} Months** ({years:.2f} Years)\n"
+                    f"• **Verdict:** Payback under 18 months qualifies as **High Feasibility Fast Payback**.\n\n"
+                    f"⚠️ AI can make mistakes. Verify critical calculations independently."
                 )
 
     return None
@@ -142,8 +221,24 @@ def chat_with_assistant(
     if math_ans:
         return {"response": math_ans, "source": "math_solver"}
 
-    # Guardrail check for completely off-topic inputs
+    # Local term definition lookup (CAPEX, MSR, OPEX, ROI, etc.)
+    term_ans = _lookup_term(message)
+    if term_ans:
+        return {"response": term_ans, "source": "term_lookup"}
+
+    # Guardrail check for academic physics or school homework
     q_low = message.lower().strip()
+    physics_patterns = [
+        r"\b(gravity|gravitational|acceleration|velocity|momentum|kinetic energy|potential energy|f\s*=\s*m\s*a|newtons?'?\s*(law|second|first|third|laws)|projectile|photoelectric|schrodinger|electromagnetism|centripetal|optics|lens formula|refraction|diffraction|quantum physics|physics problem|physics question|thermodynamics|entropy|ohm'?s law|coulomb|electromagnetic)\b"
+    ]
+    for pattern in physics_patterns:
+        if re.search(pattern, q_low) and not any(k in q_low for k in ["carbon", "emission", "ecoleak", "scope 1", "scope 2", "scope 3", "waste", "boiler", "kilowatt", "kwh", "plant", "fuel"]):
+            return {
+                "response": "I am EcoBot, specialized exclusively in industrial emission accounting and environmental compliance for the EcoLeak platform. I do not answer general academic physics or school homework questions.",
+                "source": "guardrail",
+            }
+
+    # Guardrail check for completely off-topic inputs
     off_topic_patterns = [
         r"\b(recipe|bake|cook|movie|hollywood|bollywood|cricket|football|fifa|minecraft|fortnite|joke|dating|horoscope)\b"
     ]
@@ -194,13 +289,19 @@ def chat_with_assistant(
                     model=groq_service.get_model(),
                     messages=messages,
                     temperature=0.2,
-                    max_tokens=280,
+                    max_tokens=600,
                 )
-                content = resp.choices[0].message.content.strip()
+                content = (resp.choices[0].message.content or "").strip()
                 if content:
                     return {"response": content, "source": f"Groq ({groq_service.get_model()})"}
+                else:
+                    logger.warning("Groq returned empty content — falling back to Gemini")
         except Exception as groq_err:
-            logger.warning("Groq EcoBot chat failed: %s, falling back to Gemini", groq_err)
+            err_msg = str(groq_err)
+            if "model output" in err_msg.lower() or "empty" in err_msg.lower() or "finish_reason" in err_msg.lower():
+                logger.warning("Groq model returned empty output (likely content-filtered): %s — falling back to Gemini", err_msg)
+            else:
+                logger.warning("Groq EcoBot chat failed: %s — falling back to Gemini", groq_err)
 
     # 2. Try Gemini fallback
     if gemini_service.is_configured():

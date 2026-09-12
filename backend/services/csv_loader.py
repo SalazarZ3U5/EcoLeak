@@ -27,6 +27,8 @@ _DATA_DIR = _PROJECT_ROOT / "data"
 
 _EMISSION_FACTORS_PATH = _DATA_DIR / "emission_factors.csv"
 _CIRCULAR_INTERVENTIONS_PATH = _DATA_DIR / "circular_interventions.csv"
+_CIRCULAR_INTERVENTIONS_INR_PATH = _DATA_DIR / "circular_interventions_inr_template.csv"
+_CIRCULAR_INTERVENTIONS_INR_ALT_PATH = _DATA_DIR / "circular_interventions_inr.csv"
 
 # ---------------------------------------------------------------------------
 # Required columns
@@ -48,12 +50,30 @@ _CIRCULAR_INTERVENTION_COLUMNS = [
     "payback_months",
 ]
 
+_CIRCULAR_INR_COLUMNS = [
+    "virgin_material_key",
+    "circular_alternative_key",
+    "unit",
+    "virgin_co2e_per_unit",
+    "recycled_co2e_per_unit",
+    "virgin_price_inr",
+    "recycled_price_inr",
+    "base_capex_inr",
+    "base_capacity",
+    "max_recommended_sub_pct",
+    "payback_months",
+    "feasibility_score",
+    "technical_difficulty",
+    "regulatory_standard",
+]
+
 # ---------------------------------------------------------------------------
 # Module-level cache
 # ---------------------------------------------------------------------------
 
 _emission_factors_df: pd.DataFrame | None = None
 _circular_interventions_df: pd.DataFrame | None = None
+_circular_interventions_inr_df: pd.DataFrame | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -84,9 +104,9 @@ def _validate_columns(df: pd.DataFrame, required: list[str], file_name: str) -> 
 
 def _strip_string_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Strip whitespace from all string/object columns."""
-    str_cols = df.select_dtypes(include=["object"]).columns
+    str_cols = df.select_dtypes(include=["object", "string"]).columns
     for col in str_cols:
-        df[col] = df[col].str.strip()
+        df[col] = df[col].astype(str).str.strip()
     return df
 
 
@@ -155,6 +175,44 @@ def _load_circular_interventions() -> pd.DataFrame:
     return df
 
 
+def _load_circular_interventions_inr() -> pd.DataFrame:
+    """Load and validate circular_interventions_inr_template.csv."""
+    path = _CIRCULAR_INTERVENTIONS_INR_PATH
+    if not path.exists():
+        path = _CIRCULAR_INTERVENTIONS_INR_ALT_PATH
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Circular interventions INR file not found at {path} or {_CIRCULAR_INTERVENTIONS_INR_PATH}"
+        )
+
+    logger.info("Loading circular interventions INR from %s", path)
+    df = pd.read_csv(path, sep="\t")
+    df = _normalize_headers(df)
+
+    logger.debug("Circular interventions INR columns: %s", [repr(c) for c in df.columns])
+    _validate_columns(df, _CIRCULAR_INR_COLUMNS, path.name)
+
+    df = _strip_string_columns(df)
+    numeric_cols = [
+        "virgin_co2e_per_unit",
+        "recycled_co2e_per_unit",
+        "virgin_price_inr",
+        "recycled_price_inr",
+        "base_capex_inr",
+        "base_capacity",
+        "max_recommended_sub_pct",
+        "payback_months",
+        "feasibility_score",
+    ]
+    df = _coerce_numeric(df, numeric_cols, path.name)
+
+    # Drop completely empty rows
+    df = df.dropna(subset=["virgin_material_key"]).reset_index(drop=True)
+
+    logger.info("Loaded %d circular interventions INR", len(df))
+    return df
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
@@ -168,18 +226,29 @@ def get_emission_factors() -> pd.DataFrame:
 
 
 def get_circular_interventions() -> pd.DataFrame:
-    """Return the circular interventions DataFrame (cached after first load)."""
+    """Return the legacy circular interventions DataFrame (cached after first load)."""
     global _circular_interventions_df
     if _circular_interventions_df is None:
         _circular_interventions_df = _load_circular_interventions()
     return _circular_interventions_df
 
 
+def get_circular_interventions_inr() -> pd.DataFrame:
+    """Return the circular interventions INR DataFrame (cached after first load)."""
+    global _circular_interventions_inr_df
+    if _circular_interventions_inr_df is None:
+        _circular_interventions_inr_df = _load_circular_interventions_inr()
+    return _circular_interventions_inr_df
+
+
 def reload_data() -> None:
     """Force reload of all CSV data (useful for testing)."""
-    global _emission_factors_df, _circular_interventions_df
+    global _emission_factors_df, _circular_interventions_df, _circular_interventions_inr_df
     _emission_factors_df = None
     _circular_interventions_df = None
+    _circular_interventions_inr_df = None
     get_emission_factors()
     get_circular_interventions()
+    get_circular_interventions_inr()
     logger.info("CSV data reloaded successfully")
+

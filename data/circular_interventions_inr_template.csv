@@ -1,0 +1,21 @@
+virgin_material_key	circular_alternative_key	unit	virgin_co2e_per_unit	recycled_co2e_per_unit	virgin_price_inr	recycled_price_inr	base_capex_inr	base_capacity	max_recommended_sub_pct	payback_months	feasibility_score	technical_difficulty	regulatory_standard
+virgin_hdpe_plastic	recycled_hdpe_flakes	kg	3.093	1.768	112	68	336000	50000	70	8	88	Low	ASTM D5203 / BIS
+virgin_pet_plastic	rpet_regrind	kg	3.862	2.212	102	72	546000	50000	60	10	82	Medium	EFSA / FDA food-grade bottle-to-bottle
+virgin_plastic_pellets	recycled_plastic_pellets	kg	3.171	1.573	110	65	294000	50000	75	6	86	Low	BIS / ASTM blow molding
+virgin_pp_plastic	recycled_pp_granules	kg	2.575	1.310	112	82	252000	50000	70	8	87	Low	Automotive battery casing approved
+virgin_ldpe_plastic	recycled_ldpe_pellets	kg	2.964	1.096	125	78	235000	40000	65	7	84	Medium	Shrink & agricultural mulch film certified
+color_additives	bio_carrier_masterbatch	kg	2.800	1.100	280	220	100000	10000	80	5	85	Low	RoHS & REACH compliant
+packaging_material	recycled_corrugated_packaging	kg	1.200	1.097	80	48	126000	25000	100	4	95	Low	FSC Recycled 3-ply/5-ply
+virgin_paper_kraft	recycled_kraft_paper	kg	1.344	1.049	62	36	336000	50000	100	9	94	Low	FSC packaging approved
+virgin_steel	electric_arc_scrap_steel	kg	2.500	0.500	72	34	1260000	100000	100	24	94	Low	IS 1786 / ASTM A615 structural steel
+virgin_aluminum	recycled_scrap_aluminum	kg	10.100	0.260	285	185	1008000	50000	90	18	91	Low	IS 733 / ASTM B221 extrusion certified
+virgin_copper	recycled_scrap_copper	kg	4.200	0.850	950	780	1512000	50000	95	18	93	Medium	ASTM B3 electrical busbar & wire
+virgin_glass	recycled_cullet_glass	kg	1.403	0.823	42	18	420000	100000	80	12	90	Low	Container glass circularity certified
+industrial_lubricant	re_refined_lubricant	kg	1.200	0.350	110	70	67000	10000	100	3	92	Low	ISO VG 46/68 industrial machinery approved
+diesel_fuel	bio_diesel_b20	l	2.680	1.850	98	96	85000	10000	100	6	90	Low	IS 15607 Biodiesel blend specification
+petrol	ethanol_e20_blend	l	2.310	1.720	102	102	60000	10000	100	5	92	Low	MoP&NG E20 mandate standard
+natural_gas	compressed_biogas_cbg	m3	1.960	0.450	62	42	250000	20000	100	9	85	Medium	SATAT initiative / IS 16087 CBG standard
+lpg	biomass_pellets_industrial	kg	2.983	0.350	90	11	450000	30000	90	7	80	Medium	MNRE thermal boiler co-firing standard
+grid_electricity	onsite_rooftop_solar	kWh	0.710	0.045	8.5	3.5	3800000	100000	80	36	95	Low	CEA grid-interactive solar standards
+water_supply	recycled_effluent_ro_water	m3	0.149	0.035	45	22	650000	50000	80	14	88	Medium	CPCB Zero Liquid Discharge (ZLD) guidelines
+waste_plastic_incin	waste_plastic_pyrolysis_oil	kg	2.750	0.400	18	-12	850000	40000	90	16	78	High	CPCB Plastic Waste Management Rules

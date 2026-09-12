@@ -43,8 +43,8 @@ class TestElectricityEmission:
             raw_name="grid electricity",
         )
         assert result.status == "resolved"
-        assert result.co2e_kg == pytest.approx(7700.0)
-        assert result.emission_factor == pytest.approx(0.385)
+        assert result.co2e_kg == pytest.approx(14200.0)
+        assert result.emission_factor == pytest.approx(0.710)
         assert result.scope == "Scope 2"
 
 

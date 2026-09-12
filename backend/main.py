@@ -55,8 +55,8 @@ async def lifespan(app: FastAPI):
     try:
         csv_loader.reload_data()
         ef_count = len(csv_loader.get_emission_factors())
-        ci_count = len(csv_loader.get_circular_interventions())
-        logger.info("CSV data loaded: %d emission factors, %d circular interventions", ef_count, ci_count)
+        ci_inr_count = len(csv_loader.get_circular_interventions_inr())
+        logger.info("CSV data loaded: %d emission factors, %d circular interventions (INR)", ef_count, ci_inr_count)
     except Exception as e:
         logger.error("Failed to load CSV data: %s", e)
         raise

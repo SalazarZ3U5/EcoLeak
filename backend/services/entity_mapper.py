@@ -166,9 +166,36 @@ CATALOG: dict[str, tuple[ActivityCategory, list[str]]] = {
         "scrap steel", "recycled steel", "steel scrap", "eaf scrap steel",
         "shredded steel scrap", "recycled scrap steel",
     ]),
+    "electric_arc_scrap_steel": (ActivityCategory.RECYCLED, [
+        "electric arc scrap steel", "eaf steel scrap", "eaf scrap",
+    ]),
     "recycled_aluminum": (ActivityCategory.RECYCLED, [
         "recycled aluminum", "recycled aluminium", "secondary aluminum",
         "secondary aluminium", "aluminum scrap", "aluminium scrap", "scrap aluminum",
+    ]),
+    "recycled_scrap_aluminum": (ActivityCategory.RECYCLED, [
+        "recycled scrap aluminum", "recycled scrap aluminium", "secondary scrap aluminum",
+    ]),
+    "bio_diesel_b20": (ActivityCategory.RECYCLED, [
+        "bio diesel b20", "biodiesel b20", "b20 blend", "b20 diesel",
+    ]),
+    "ethanol_e20_blend": (ActivityCategory.RECYCLED, [
+        "ethanol e20", "e20 blend", "ethanol e20 blend", "e20 petrol",
+    ]),
+    "compressed_biogas_cbg": (ActivityCategory.RECYCLED, [
+        "compressed biogas", "cbg", "bio cng", "biomethane cbg",
+    ]),
+    "biomass_pellets_industrial": (ActivityCategory.RECYCLED, [
+        "biomass pellets", "industrial biomass pellets", "agro pellets", "boiler pellets",
+    ]),
+    "onsite_rooftop_solar": (ActivityCategory.RECYCLED, [
+        "rooftop solar", "solar rooftop", "onsite solar", "captive solar", "solar ppa",
+    ]),
+    "recycled_effluent_ro_water": (ActivityCategory.RECYCLED, [
+        "recycled water", "ro water", "treated effluent", "recycled effluent ro water",
+    ]),
+    "waste_plastic_pyrolysis_oil": (ActivityCategory.RECYCLED, [
+        "pyrolysis oil", "plastic pyrolysis oil", "waste plastic pyrolysis oil",
     ]),
 
     # --- Waste Streams (Scope 3 Cat 5) ---

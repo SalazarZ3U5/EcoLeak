@@ -31,14 +31,19 @@ async def database_status():
         ef_loaded = False
         ef_count = 0
 
-    # Circular interventions
+    # Circular interventions (prioritize INR dataset)
     try:
-        ci_df = csv_loader.get_circular_interventions()
+        ci_df = csv_loader.get_circular_interventions_inr()
         ci_loaded = True
         ci_count = len(ci_df)
     except Exception:
-        ci_loaded = False
-        ci_count = 0
+        try:
+            ci_df = csv_loader.get_circular_interventions()
+            ci_loaded = True
+            ci_count = len(ci_df)
+        except Exception:
+            ci_loaded = False
+            ci_count = 0
 
     return DatabaseStatus(
         emission_factors_loaded=ef_loaded,

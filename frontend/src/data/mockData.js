@@ -79,7 +79,7 @@ export const HOW_IT_WORKS_STEPS = [
     step: '02',
     title: 'Pinpoint Emission Leak Points',
     subtitle: 'Thermal & Process Analytics',
-    desc: 'The CarbonLoop engine isolates high-intensity thermal losses, idle motors, and unrecovered steam leaks with pinpoint sub-process granularity.',
+    desc: 'The EcoLeak engine isolates high-intensity thermal losses, idle motors, and unrecovered steam leaks with pinpoint sub-process granularity.',
     stat: '±3% precision',
     tag: 'GHG Protocol Aligned'
   },

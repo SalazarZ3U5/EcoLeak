@@ -11,7 +11,7 @@ export default function Footer() {
               <span></span>
             </div>
             <strong style={{ color: 'var(--text-main)', fontSize: '15px' }}>
-              Carbon<span style={{ color: 'var(--mint)' }}>Loop</span> AI
+              Eco<span style={{ color: 'var(--mint)' }}>Leak</span>
             </strong>
             <span style={{ color: 'var(--text-dim)', fontSize: '13px' }}>— Find emissions. Close the loop. Save money.</span>
           </div>
@@ -24,7 +24,7 @@ export default function Footer() {
           </div>
 
           <div style={{ color: 'var(--text-dim)', fontSize: '12px' }}>
-            © {new Date().getFullYear()} CarbonLoop AI. Built for factories & industrial SMEs.
+            © {new Date().getFullYear()} EcoLeak. Built for factories & industrial SMEs.
           </div>
         </div>
       </div>

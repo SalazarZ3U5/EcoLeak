@@ -28,7 +28,7 @@ export default function Hero({ onOpenAssessment }) {
             </h1>
 
             <p className="hero-subtitle">
-              Most factories lose 20% to 35% of their energy as unrecovered waste heat and process friction. CarbonLoop pinpoints your hidden leak points and discovers circular interventions that pay for themselves.
+              Most factories lose 20% to 35% of their energy as unrecovered waste heat and process friction. EcoLeak pinpoints your hidden leak points and discovers circular interventions that pay for themselves.
             </p>
 
             <div className="hero-actions">

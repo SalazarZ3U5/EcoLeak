@@ -15,13 +15,13 @@ export default function Navbar({ onOpenAssessment, onOpenLogin }) {
   return (
     <header className={`header-nav ${scrolled ? 'nav-scrolled' : ''}`}>
       <div className="container nav-inner-flex">
-        <a href="#top" className="brand-link" aria-label="CarbonLoop Home">
+        <a href="#top" className="brand-link" aria-label="EcoLeak Home" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
           <div className="brand-mark">
             <span></span>
             <span></span>
           </div>
           <span className="brand-text">
-            Carbon<span className="brand-accent">Loop</span>
+            Eco<span className="brand-accent">Leak</span>
           </span>
         </a>
 
@@ -36,12 +36,14 @@ export default function Navbar({ onOpenAssessment, onOpenLogin }) {
           <button 
             className="btn btn-ghost"
             onClick={onOpenLogin}
+            id="nav-signin-btn"
           >
             Operator Sign In
           </button>
           <button 
             className="btn btn-primary"
             onClick={onOpenAssessment}
+            id="nav-assessment-btn"
           >
             Start Free Assessment <ArrowUpRight size={15} />
           </button>

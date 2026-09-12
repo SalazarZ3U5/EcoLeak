@@ -10,8 +10,14 @@ on startup. Run with:
 from __future__ import annotations
 
 import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# Ensure project root is in sys.path so 'backend' can be imported whether run from root or backend/
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -43,7 +49,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load CSV data and sync ChromaDB on startup."""
-    logger.info("=== Starting Industrial Emission Detector ===")
+    logger.info("=== Starting EcoLeak Platform ===")
 
     # Stage 1: Load CSV data
     try:
@@ -63,9 +69,9 @@ async def lifespan(app: FastAPI):
         logger.error("Failed to sync ChromaDB: %s", e)
         # Non-fatal — circular recommendations will be degraded
 
-    logger.info("=== Startup complete ===")
+    logger.info("=== EcoLeak Startup complete ===")
     yield
-    logger.info("=== Shutting down ===")
+    logger.info("=== EcoLeak Shutting down ===")
 
 
 # ---------------------------------------------------------------------------
@@ -73,7 +79,7 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="Industrial Emission Leak-Point Detector",
+    title="EcoLeak — Industrial Emission Leak-Point Detector",
     description=(
         "Detects carbon emission hotspots for SME factories and recommends "
         "circular economy alternatives with CO2e savings and financial impact."
@@ -125,4 +131,9 @@ elif _FRONTEND_DIR.exists():
         return FileResponse(str(_FRONTEND_DIR / "index.html"))
 
     logger.info("Frontend mounted from %s", _FRONTEND_DIR)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=8000, reload=True)
 

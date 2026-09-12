@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, logoutFirebase } from './services/firebase';
 import { logoutSupabase } from './services/supabase';
@@ -11,23 +11,99 @@ import SimpleCalculator from './components/SimpleCalculator';
 import ImpactROI from './components/ImpactROI';
 import Footer from './components/Footer';
 import Dashboard from './components/Dashboard';
-import AuthPage from './components/AuthPage';
-import EcoBotChat from './components/EcoBotChat';
+import LoginPage from './components/LoginPage';
+import SignupPage from './components/SignupPage';
+import { assignAvatarToUser } from './services/avatarService';
+import { syncProfileToSupabase } from './services/api';
+
+// Parse initial view and section from URL pathname and hash
+const parseLocationRoute = () => {
+  const path = (window.location.pathname || '/').toLowerCase();
+  const hash = (window.location.hash || '').toLowerCase().replace('#', '');
+  const route = hash || path;
+
+  if (route.includes('copilot') || route.includes('ecobot') || route.includes('chat')) {
+    return { view: 'dashboard', section: 'copilot' };
+  }
+  if (route.includes('plant') || route.includes('facility')) {
+    return { view: 'dashboard', section: 'plant' };
+  }
+  if (route.includes('operator') || route.includes('profile')) {
+    return { view: 'dashboard', section: 'profile' };
+  }
+  if (route.includes('login') || route.includes('signin')) {
+    return { view: 'login', section: 'overview' };
+  }
+  if (route.includes('signup') || route.includes('register')) {
+    return { view: 'signup', section: 'overview' };
+  }
+  if (route.includes('dashboard') || route.includes('app')) {
+    let sec = 'overview';
+    if (route.includes('copilot') || route.includes('ecobot') || route.includes('chat')) sec = 'copilot';
+    else if (route.includes('plant')) sec = 'plant';
+    else if (route.includes('leaks')) sec = 'leaks';
+    else if (route.includes('circular') || route.includes('solutions')) sec = 'circular';
+    else if (route.includes('report')) sec = 'report';
+    else if (route.includes('input') || route.includes('audit')) sec = 'input';
+    return { view: 'dashboard', section: sec };
+  }
+  return { view: 'landing', section: 'overview' };
+};
+
+// Sync browser URL bar with active view and section
+const syncBrowserUrl = (v, s) => {
+  let targetUrl = '/';
+  if (v === 'login') targetUrl = '/login';
+  else if (v === 'signup') targetUrl = '/signup';
+  else if (v === 'dashboard') {
+    if (s === 'profile') targetUrl = '/operator';
+    else if (s === 'plant') targetUrl = '/plant';
+    else if (s === 'copilot' || s === 'ecobot' || s === 'chat') targetUrl = '/copilot';
+    else if (s === 'overview') targetUrl = '/dashboard';
+    else targetUrl = `/dashboard/${s}`;
+  }
+
+  try {
+    if (window.location.pathname !== targetUrl) {
+      window.history.pushState({ view: v, section: s }, '', targetUrl);
+    }
+  } catch {
+    try {
+      window.location.hash = targetUrl.replace('/', '');
+    } catch {}
+  }
+};
 
 export default function App() {
-  // 'landing' | 'dashboard' | 'auth'
-  const [view, setView] = useState('landing');
-  const [dashSection, setDashSection] = useState('input');
-  const [authInitialTab, setAuthInitialTab] = useState('signin');
-  const [isEcoBotOpen, setIsEcoBotOpen] = useState(false);
   const [authUser, setAuthUser] = useState(() => {
     try {
       const saved = localStorage.getItem('ecoleak_auth_user');
-      return saved ? JSON.parse(saved) : null;
+      return saved ? assignAvatarToUser(JSON.parse(saved)) : null;
     } catch {
       return null;
     }
   });
+
+  const initialRoute = parseLocationRoute();
+  const [view, setView] = useState(() => {
+    // If user is accessing /operator or /dashboard while unauthenticated, show login with intent
+    if (!authUser && initialRoute.view === 'dashboard') {
+      return 'login';
+    }
+    return initialRoute.view;
+  });
+  const [dashSection, setDashSection] = useState(initialRoute.section);
+
+  // Synchronize browser history (Back / Forward buttons)
+  useEffect(() => {
+    const handlePopState = () => {
+      const { view: v, section: s } = parseLocationRoute();
+      setView(v);
+      setDashSection(s);
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   // Keep state synchronized with Firebase Auth in real time
   useEffect(() => {
@@ -35,11 +111,10 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
       if (fbUser) {
         setAuthUser((prev) => {
-          const updated = {
+          const raw = {
             uid: fbUser.uid,
             name: fbUser.displayName || prev?.name || (fbUser.email ? fbUser.email.split('@')[0] : 'Operator'),
             email: fbUser.email || prev?.email || '',
-            picture: fbUser.photoURL || prev?.picture || '',
             facilityName: prev?.facilityName || 'GreenPack Plastics Plant',
             location: prev?.location || 'MIDC Chakan Industrial Area, Pune, Maharashtra',
             regId: prev?.regId || 'MH-SPCB/PUN/CTO-2026/0894',
@@ -49,7 +124,9 @@ export default function App() {
             role: prev?.role || 'Plant Manager',
             authMethod: prev?.authMethod || 'firebase-google',
           };
+          const updated = assignAvatarToUser(raw);
           localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
+          syncProfileToSupabase(updated).catch((e) => console.debug('Supabase profile sync note:', e));
           return updated;
         });
       }
@@ -57,30 +134,66 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  const openDashboard = (section = 'input') => {
+  const openDashboard = (section = 'overview') => {
     if (!authUser) {
-      setAuthInitialTab('signin');
-      setView('auth');
+      setView('login');
+      syncBrowserUrl('login', 'overview');
       return;
     }
     setDashSection(section);
     setView('dashboard');
+    syncBrowserUrl('dashboard', section);
   };
 
-  const openAuth = (tab = 'signin') => {
-    setAuthInitialTab(tab);
-    setView('auth');
+  const openOperatorProfile = () => {
+    if (!authUser) {
+      setView('login');
+      setDashSection('profile');
+      syncBrowserUrl('login', 'overview');
+      return;
+    }
+    setDashSection('profile');
+    setView('dashboard');
+    syncBrowserUrl('dashboard', 'profile');
   };
+
+  const openLogin = () => {
+    setView('login');
+    syncBrowserUrl('login', 'overview');
+  };
+
+  const openSignup = () => {
+    setView('signup');
+    syncBrowserUrl('signup', 'overview');
+  };
+
+  const openLanding = () => {
+    setView('landing');
+    syncBrowserUrl('landing', 'overview');
+  };
+
+  const handleSectionChange = useCallback((newSection) => {
+    setDashSection(newSection);
+    syncBrowserUrl('dashboard', newSection);
+  }, []);
 
   const handleAuthSuccess = (user) => {
-    setAuthUser(user);
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(user));
+    const updated = assignAvatarToUser(user);
+    setAuthUser(updated);
+    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
+    syncProfileToSupabase(updated).catch((e) => console.debug('Supabase profile sync note:', e));
+    // If user arrived intending to view the operator profile, route them there directly
+    const targetSec = dashSection === 'profile' ? 'profile' : (dashSection || 'overview');
+    setDashSection(targetSec);
     setView('dashboard');
+    syncBrowserUrl('dashboard', targetSec);
   };
 
   const handleUpdateUser = (updatedUser) => {
-    setAuthUser(updatedUser);
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updatedUser));
+    const updated = assignAvatarToUser(updatedUser);
+    setAuthUser(updated);
+    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
+    syncProfileToSupabase(updated).catch((e) => console.debug('Supabase profile sync note:', e));
   };
 
   const handleSignOut = async () => {
@@ -92,17 +205,15 @@ export default function App() {
     } catch (e) {
       console.warn('Sign out cleanup note:', e);
     }
-    // Instantly redirect away from the dashboard to the landing page
-    setView('landing');
+    openLanding();
   };
 
   const handleOpenEcoBot = () => {
     if (!authUser) {
-      setAuthInitialTab('signin');
-      setView('auth');
+      openLogin();
       return;
     }
-    setIsEcoBotOpen(true);
+    openDashboard('copilot');
   };
 
   const plantContext = authUser ? {
@@ -113,47 +224,59 @@ export default function App() {
 
   return (
     <>
-      {view === 'auth' && (
-        <AuthPage
-          initialTab={authInitialTab}
+      {/* ── Login Portal (Standalone Page with Navbar) ────────────────────── */}
+      {view === 'login' && (
+        <LoginPage
           authUser={authUser}
           onAuthSuccess={handleAuthSuccess}
           onUpdateUser={handleUpdateUser}
           onSignOut={handleSignOut}
-          onBack={() => setView('landing')}
-          onOpenDashboard={() => {
-            if (!authUser) {
-              setView('auth');
-            } else {
-              setView('dashboard');
-            }
-          }}
+          onBack={openLanding}
+          onOpenDashboard={() => openDashboard('overview')}
+          onNavigateToSignup={openSignup}
         />
       )}
 
+      {/* ── Register / Signup Portal (Standalone Page with Navbar) ────────── */}
+      {view === 'signup' && (
+        <SignupPage
+          authUser={authUser}
+          onAuthSuccess={handleAuthSuccess}
+          onUpdateUser={handleUpdateUser}
+          onSignOut={handleSignOut}
+          onBack={openLanding}
+          onOpenDashboard={() => openDashboard('overview')}
+          onNavigateToLogin={openLogin}
+        />
+      )}
+
+      {/* ── Integrated Dashboard (STRICTLY NO NAVBAR - Contains Operator Profile) ── */}
       {view === 'dashboard' && (
         !authUser ? (
-          <AuthPage
-            initialTab="signin"
+          <LoginPage
             authUser={null}
             onAuthSuccess={handleAuthSuccess}
             onSignOut={handleSignOut}
-            onBack={() => setView('landing')}
-            onOpenDashboard={() => setView('dashboard')}
+            onBack={openLanding}
+            onOpenDashboard={() => openDashboard('overview')}
+            onNavigateToSignup={openSignup}
           />
         ) : (
           <Dashboard
             initialSection={dashSection}
-            onBack={() => setView('landing')}
+            onBack={openLanding}
             authUser={authUser}
+            onUpdateUser={handleUpdateUser}
             onSignOut={handleSignOut}
-            onOpenAuth={() => openAuth('signin')}
+            onOpenAuth={openLogin}
+            onOpenProfile={openOperatorProfile}
             onOpenEcoBot={handleOpenEcoBot}
-            isEcoBotOpen={isEcoBotOpen}
+            onSectionChange={handleSectionChange}
           />
         )
       )}
 
+      {/* ── Landing Page (Has Navbar) ─────────────────────────────────────── */}
       {view === 'landing' && (
         <div className="app-root">
           <AnimatedBackground />
@@ -161,8 +284,10 @@ export default function App() {
 
           <Navbar
             authUser={authUser}
-            onOpenAssessment={() => openDashboard('input')}
-            onOpenLogin={() => openAuth('signin')}
+            onOpenApp={() => openDashboard('overview')}
+            onOpenSignIn={openLogin}
+            onOpenSignUp={openSignup}
+            onBack={openLanding}
           />
 
           <main>
@@ -180,16 +305,6 @@ export default function App() {
           <Footer />
         </div>
       )}
-
-      {/* Exclusive EcoBot AI Assistant (triggered via workflow pipeline buttons, authenticated only) */}
-      <EcoBotChat
-        isOpen={isEcoBotOpen}
-        onClose={() => setIsEcoBotOpen(false)}
-        activePlantContext={plantContext}
-        authUser={authUser}
-        onOpenAuth={() => openAuth('signin')}
-      />
     </>
   );
 }
-

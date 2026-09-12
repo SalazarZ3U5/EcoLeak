@@ -43,7 +43,7 @@ Small and medium-sized manufacturing facilities (plastics moulding, metal fabric
 EcoLeak bridges this gap with a **Deterministic-First Architecture**:
 - **Multi-Modal AI Ingestion:** PyPDF, Groq (`openai/gpt-oss-120b`), and Google Gemini (`gemini-3.6-flash`) parse messy bills, delivery slips, and natural conversational text.
 - **100% Deterministic Local Math Core:** Zero LLMs perform arithmetic or select emission factors. Python physics engines compute Scope 1–3 emissions, identify Pareto 80/20 leak points, and apply Williams' 0.65 Rule to dynamically scale CAPEX and payback timelines in **Indian Rupees (₹ INR)**.
-- **EcoBot AI Copilot:** An exclusive, authenticated operational assistant integrated directly above the factory workflow pipeline to assist plant managers with formula derivations, SPCB compliance thresholds, and substitution mechanics.
+- **EcoBot AI Copilot:** An operational assistant integrated into the platform to assist plant managers with formula derivations, SPCB compliance thresholds, and substitution mechanics.
 
 ---
 
@@ -57,7 +57,7 @@ EcoLeak bridges this gap with a **Deterministic-First Architecture**:
 ---
 
 ### 2. Step 1 — Plant Process Data Ingestion
-> Granular input of electricity, backup fuels, virgin polymers, metals, chemicals, and process scrap. Features 1-click SME factory benchmarks (Plastic Moulding, Metal Fabrication, Packaging SME, Textile Mill) alongside OCR PDF utility bill extraction and conversational prompt ingestion. Note the exclusive **EcoBot AI** launcher stationed directly on the workflow bar.
+> Granular input of electricity, backup fuels, virgin polymers, metals, chemicals, and process scrap. Features 1-click SME factory benchmarks (Plastic Moulding, Metal Fabrication, Packaging SME, Textile Mill) alongside OCR PDF utility bill extraction and conversational prompt ingestion.
 
 ![Process Data Input](docs/screenshots/02_process_data_input.png)
 
@@ -84,8 +84,8 @@ EcoLeak bridges this gap with a **Deterministic-First Architecture**:
 
 ---
 
-### 6. EcoBot AI — Exclusive Operator Intelligence Copilot
-> Authenticated AI assistant exclusively accessible to verified factory operators. Resolves official Indian emission math (CEA grid electricity factors, diesel stoichiometric mass-to-volume density), explains SPCB Orange/Red category pollution index criteria, and guides circular polymer replacement ratios.
+### 6. EcoBot AI — Operator Intelligence Copilot
+> AI assistant accessible to factory operators. Resolves official Indian emission math (CEA grid electricity factors, diesel stoichiometric mass-to-volume density), explains SPCB Orange/Red category pollution index criteria, and guides circular polymer replacement ratios.
 
 <div align="center">
   <img src="docs/screenshots/06_ecobot_ai_assistant.png" alt="EcoBot AI Assistant" width="550" />
@@ -148,7 +148,7 @@ flowchart TD
     subgraph Delivery["5. Executive Interface & Intelligence"]
         K --> L1["Interactive React Dashboard"]
         K --> L2["Audit-Ready PDF Export"]
-        SEC --> ECOBOT["Exclusive EcoBot AI Copilot"]
+        SEC --> ECOBOT["EcoBot AI Copilot"]
     end
 ```
 
@@ -267,12 +267,12 @@ EcoLeak/
 │       │   ├── AnimatedBackground.jsx # Canvas mesh and dynamic particle effects
 │       │   ├── AuthPage.jsx           # Firebase & Supabase authentication modal
 │       │   ├── Dashboard.jsx          # Core audit dashboard with interactive sections
-│       │   ├── EcoBotChat.jsx         # Exclusive EcoBot AI assistant modal & math engine
+│       │   ├── EcoBotChat.jsx         # EcoBot AI assistant modal & math engine
 │       │   ├── Hero.jsx               # Landing page hero with live loop balancer
 │       │   ├── ImpactROI.jsx          # Projected carbon savings showcase
 │       │   ├── Navbar.jsx             # Top bar with operator authentication indicators
 │       │   ├── SimpleCalculator.jsx   # Quick interactive carbon estimator
-│       │   ├── SimpleHowItWorks.jsx   # 3-step pipeline with exclusive EcoBot launcher
+│       │   ├── SimpleHowItWorks.jsx   # 3-step pipeline with EcoBot launcher
 │       │   └── Ticker.jsx             # Real-time industrial telemetry ticker
 │       └── services/
 │           ├── api.js                 # API client with automatic Bearer token injection

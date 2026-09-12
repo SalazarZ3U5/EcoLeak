@@ -9,9 +9,11 @@ import {
   analyzeDocument, 
   analyzeChat, 
   formatINR, 
-  formatCO2e 
+  formatCO2e,
+  formatDisplayName
 } from '../services/api';
 import { INDUSTRY_PRESETS } from '../data/mockData';
+import JargonTooltip from './JargonTooltip';
 
 // Real industrial benchmark presets matching hackout's verified databases
 const PRESET_SCENARIOS = {
@@ -534,13 +536,13 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '8px' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>
-                DQI: <strong>{auditResult.facility_summary?.data_quality_index ?? 100}%</strong>
+                <JargonTooltip term="DQI">DQI</JargonTooltip>: <strong>{auditResult.facility_summary?.data_quality_index ?? 100}%</strong>
               </span>
             </div>
 
             <h2>{auditResult.facility_summary?.industry} Facility Audit</h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', marginTop: '2px' }}>
-              Calculated using localized emission factors and deterministic ISO 14064-1 accounting.
+              Calculated using localized emission factors and deterministic <JargonTooltip term="ISO 14064-1">ISO 14064-1</JargonTooltip> accounting.
             </p>
 
             {/* Top Stat Summary Grid */}
@@ -554,10 +556,10 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
               <div style={{ background: 'var(--bg-subtle)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--line)' }}>
                 <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase' }}>Total Emissions</span>
                 <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-primary)', marginTop: '4px' }}>
-                  {formatCO2e(auditResult.facility_summary?.total_emissions_kg_co2e, true)}
+                  <JargonTooltip term="CO2e">{formatCO2e(auditResult.facility_summary?.total_emissions_kg_co2e, true)}</JargonTooltip>
                 </div>
                 <small style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  {Math.round(auditResult.facility_summary?.total_emissions_kg_co2e ?? 0).toLocaleString()} kg CO₂e
+                  {Math.round(auditResult.facility_summary?.total_emissions_kg_co2e ?? 0).toLocaleString()} <JargonTooltip term="CO2e">kg CO₂e</JargonTooltip>
                 </small>
               </div>
 
@@ -568,11 +570,15 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                     ? formatCO2e(auditResult.circular_recommendations.reduce((acc, r) => acc + (r.co2e_savings_kg || 0), 0), true)
                     : '0 kg CO₂e'}
                 </div>
-                <small style={{ fontSize: '11px', color: 'var(--mint-hover)' }}>Closed-loop savings</small>
+                <small style={{ fontSize: '11px', color: 'var(--mint-hover)' }}>
+                  <JargonTooltip term="Closed-Loop">Closed-loop savings</JargonTooltip>
+                </small>
               </div>
 
               <div style={{ background: 'var(--bg-subtle)', padding: '14px', borderRadius: 'var(--radius-md)', border: '1px solid var(--line)' }}>
-                <span style={{ fontSize: '11px', color: 'var(--cyan-fresh)', fontWeight: 700, textTransform: 'uppercase' }}>Annual OPEX Upside</span>
+                <span style={{ fontSize: '11px', color: 'var(--cyan-fresh)', fontWeight: 700, textTransform: 'uppercase' }}>
+                  Annual <JargonTooltip term="OPEX">OPEX Upside</JargonTooltip>
+                </span>
                 <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--cyan-fresh)', marginTop: '4px' }}>
                   {auditResult.circular_recommendations?.length > 0 
                     ? formatINR(auditResult.circular_recommendations.reduce((acc, r) => acc + (r.annual_opex_savings_inr || 0), 0), true) + '/yr'
@@ -591,11 +597,13 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
               marginBottom: '20px'
             }}>
               <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '10px' }}>
-                GHG PROTOCOL SCOPE BREAKDOWN:
+                <JargonTooltip term="GHG Protocol">GHG PROTOCOL</JargonTooltip> SCOPE BREAKDOWN:
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
                 <div style={{ padding: '10px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-subtle)' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--rose)', fontWeight: 700 }}>Scope 1 (Direct Fuel)</span>
+                  <span style={{ fontSize: '11px', color: 'var(--rose)', fontWeight: 700 }}>
+                    <JargonTooltip term="Scope 1">Scope 1 (Direct Fuel)</JargonTooltip>
+                  </span>
                   <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>
                     {formatCO2e(auditResult.facility_summary?.scope_breakdown?.scope_1_kg)}
                   </div>
@@ -605,7 +613,9 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                 </div>
 
                 <div style={{ padding: '10px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-subtle)' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--amber)', fontWeight: 700 }}>Scope 2 (Electricity)</span>
+                  <span style={{ fontSize: '11px', color: 'var(--amber)', fontWeight: 700 }}>
+                    <JargonTooltip term="Scope 2">Scope 2 (Electricity)</JargonTooltip>
+                  </span>
                   <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>
                     {formatCO2e(auditResult.facility_summary?.scope_breakdown?.scope_2_kg)}
                   </div>
@@ -615,7 +625,9 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                 </div>
 
                 <div style={{ padding: '10px', borderRadius: 'var(--radius-sm)', background: 'var(--bg-subtle)' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--mint-hover)', fontWeight: 700 }}>Scope 3 (Materials &amp; Waste)</span>
+                  <span style={{ fontSize: '11px', color: 'var(--mint-hover)', fontWeight: 700 }}>
+                    <JargonTooltip term="Scope 3">Scope 3 (Materials &amp; Waste)</JargonTooltip>
+                  </span>
                   <div style={{ fontSize: '16px', fontWeight: 800, marginTop: '2px' }}>
                     {formatCO2e(auditResult.facility_summary?.scope_breakdown?.scope_3_kg)}
                   </div>
@@ -636,7 +648,7 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                 marginBottom: '20px'
               }}>
                 <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--rose)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertTriangle size={16} /> PARETO HOTSPOT LEAK POINTS DETECTED:
+                  <AlertTriangle size={16} /> <JargonTooltip term="Pareto 80/20">PARETO</JargonTooltip> <JargonTooltip term="Leak Point">HOTSPOT LEAK POINTS</JargonTooltip> DETECTED:
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
                   {auditResult.leak_points.map((lp, i) => (
@@ -652,7 +664,7 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                         fontWeight: 700
                       }}
                     >
-                      {lp.raw_name || lp.activity_key} — {lp.share_percent ?? lp.percent_of_total}% of plant emissions [{(lp.hotspot_tier || lp.leak_point_severity || 'HIGH').toUpperCase()}]
+                      {formatDisplayName(lp.raw_name || lp.activity_key)} — {lp.share_percent ?? lp.percent_of_total}% of plant emissions [{(lp.hotspot_tier || lp.leak_point_severity || 'HIGH').toUpperCase()}]
                     </span>
                   ))}
                 </div>
@@ -684,7 +696,7 @@ export default function AssessmentModal({ isOpen, onClose, initialIndustry = 'Pl
                             CIRCULAR SUBSTITUTION
                           </span>
                           <h4 style={{ fontSize: '16px', color: 'var(--emerald-deep)', marginTop: '2px' }}>
-                            {rec.target_activity?.replace(/_/g, ' ')} &rarr; <strong style={{ color: 'var(--mint-hover)' }}>{rec.alternative?.replace(/_/g, ' ')}</strong>
+                            {formatDisplayName(rec.target_activity)} &rarr; <strong style={{ color: 'var(--mint-hover)' }}>{formatDisplayName(rec.alternative)}</strong>
                           </h4>
                         </div>
                         <div style={{

@@ -130,8 +130,13 @@ if _DIST_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
 
     @app.get("/")
-    async def serve_frontend():
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str = ""):
         """Serve the built React SPA."""
+        # Never intercept API or health endpoints
+        if full_path.startswith("api") or full_path.startswith("health") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Endpoint not found")
         return FileResponse(str(_DIST_DIR / "index.html"))
 
     logger.info("React SPA frontend mounted from %s", _DIST_DIR)
@@ -139,8 +144,12 @@ elif _FRONTEND_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(_FRONTEND_DIR)), name="static")
 
     @app.get("/")
-    async def serve_frontend():
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str = ""):
         """Serve the frontend SPA."""
+        if full_path.startswith("api") or full_path.startswith("health") or full_path.startswith("docs") or full_path.startswith("openapi.json"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Endpoint not found")
         return FileResponse(str(_FRONTEND_DIR / "index.html"))
 
     logger.info("Frontend mounted from %s", _FRONTEND_DIR)

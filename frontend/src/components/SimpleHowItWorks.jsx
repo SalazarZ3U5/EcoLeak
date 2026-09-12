@@ -66,10 +66,10 @@ export default function SimpleHowItWorks({ onOpenAssessment, onOpenEcoBot, authU
           </p>
         </div>
 
-        {/* Exclusive AI Bot banner above workflow pipeline */}
+        {/* AI Bot banner above workflow pipeline */}
         <div className="pipeline-exclusive-ai-strip">
           <div className="pipeline-ai-info">
-            <span className="pipeline-ai-badge">EXCLUSIVE OPERATOR AI</span>
+            <span className="pipeline-ai-badge">OPERATOR AI COPILOT</span>
             <p>Need real-time engineering calculations or official Indian emission formula guidance?</p>
           </div>
           <button

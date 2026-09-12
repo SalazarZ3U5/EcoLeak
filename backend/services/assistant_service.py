@@ -152,7 +152,7 @@ def chat_with_assistant(
             return {
                 "response": (
                     "This inquiry falls outside the operational scope of the EcoLeak platform.\n\n"
-                    "EcoLeak Assistant is designated exclusively for:\n"
+                    "EcoLeak Assistant is designated for:\n"
                     "• Industrial carbon accounting and emission calculations (Scope 1, Scope 2, Scope 3)\n"
                     "• Statutory compliance verification (CPCB/SPCB Consent to Operate, BRSR Core, ISO 14064)\n"
                     "• Financial payback and circular intervention modeling (CAPEX, OPEX savings, ROI)\n\n"

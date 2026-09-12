@@ -150,9 +150,11 @@ def run_analysis_pipeline(
         for lp in leak_points:
             warnings.append(f"No circular alternative found for '{lp.activity_key}'.")
 
+    # Only fallback to generate if not already recommended
+    existing_targets = {r.target_activity for r in recommendations}
     for lp in leak_points:
-        # Check if activity is a virgin material hotspot
-        if lp.category == ActivityCategory.MATERIAL or lp.activity_key.startswith("virgin_"):
+        # Check if activity is a virgin material hotspot and not already recommended
+        if (lp.category == ActivityCategory.MATERIAL or lp.activity_key.startswith("virgin_")) and lp.activity_key not in existing_targets:
             qty_kg = lp.normalized_quantity if lp.normalized_unit == "kg" else lp.quantity
             rec = circular_engine.recommend(
                 material_key=lp.activity_key,
@@ -160,6 +162,7 @@ def run_analysis_pipeline(
             )
             if rec is not None:
                 recommendations.append(rec)
+                existing_targets.add(lp.activity_key)
             else:
                 warnings.append(
                     f"No circular alternative found for '{lp.activity_key}'."

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { INDUSTRY_PRESETS } from '../data/mockData';
 import { useTilt } from '../hooks/useTilt';
+import JargonTooltip from './JargonTooltip';
 
 export default function SimpleCalculator({ onOpenAssessment }) {
   const [selectedIndustry, setSelectedIndustry] = useState('Plastic manufacturing');
@@ -86,7 +87,7 @@ export default function SimpleCalculator({ onOpenAssessment }) {
               <div className="ledger-breakdown-list">
                 <div className="ledger-breakdown-row">
                   <div className="row-left">
-                    <span className="row-tag leak">LEAK POINT</span>
+                    <span className="row-tag leak"><JargonTooltip term="Leak Point">LEAK POINT</JargonTooltip></span>
                     <span>{preset.leakPoint}</span>
                   </div>
                   <span className="row-val" style={{ color: 'var(--rose)' }}>High Intensity</span>
@@ -94,7 +95,7 @@ export default function SimpleCalculator({ onOpenAssessment }) {
 
                 <div className="ledger-breakdown-row">
                   <div className="row-left">
-                    <span className="row-tag closed">CIRCULAR FIX</span>
+                    <span className="row-tag closed"><JargonTooltip term="Circular Economy">CIRCULAR FIX</JargonTooltip></span>
                     <span>{preset.circularIntervention}</span>
                   </div>
                   <span className="row-val" style={{ color: 'var(--mint-hover)' }}>Verified Match</span>
@@ -117,19 +118,23 @@ export default function SimpleCalculator({ onOpenAssessment }) {
 
                 <div className="big-net-savings">
                   <strong className="big-net-num">₹{netSavingsLakh} Lakh</strong>
-                  <span className="big-net-label">Projected Annual OPEX Savings</span>
+                  <span className="big-net-label">Projected Annual <JargonTooltip term="OPEX">OPEX Savings</JargonTooltip></span>
                 </div>
 
                 <div className="summary-stat-grid">
                   <div className="stat-item">
                     <small>Emissions Abatement</small>
-                    <strong style={{ color: 'var(--mint-hover)' }}>−{preset.reduction} CO₂</strong>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>~{co2CutTons} tCO₂e/yr cut</span>
+                    <strong style={{ color: 'var(--mint-hover)' }}>−{preset.reduction} <JargonTooltip term="CO2">CO₂</JargonTooltip></strong>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      ~{co2CutTons} <JargonTooltip term="tCO2e">tCO₂e</JargonTooltip>/yr cut
+                    </span>
                   </div>
                   <div className="stat-item">
-                    <small>CapEx Amortization</small>
+                    <small><JargonTooltip term="CAPEX">CapEx</JargonTooltip> Amortization</small>
                     <strong>{preset.payback}</strong>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Payback breakeven</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      <JargonTooltip term="Payback Period">Payback</JargonTooltip> breakeven
+                    </span>
                   </div>
                 </div>
               </div>

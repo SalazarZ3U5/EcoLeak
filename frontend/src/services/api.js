@@ -5,6 +5,7 @@
  */
 
 import { auth } from './firebase';
+import { supabase } from './supabase';
 
 const API_BASE = '';
 
@@ -52,6 +53,64 @@ export function formatCO2e(kg, preferTonnes = false) {
     return `${(val / 1000).toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 2 })} tCO₂e`;
   }
   return `${Math.round(val).toLocaleString()} kg CO₂e`;
+}
+
+export const KNOWN_DISPLAY_NAMES = {
+  // Virgin Feedstocks
+  'virgin_plastic_pellets': 'Virgin Plastic Pellets',
+  'virgin_hdpe_plastic': 'Virgin HDPE Plastic',
+  'virgin_pet_plastic': 'Virgin PET Polymer',
+  'virgin_pp_plastic': 'Virgin PP Plastic',
+  'virgin_ldpe_plastic': 'Virgin LDPE Film Resin',
+  'virgin_steel': 'Virgin Structural Steel',
+  'virgin_aluminum': 'Virgin Primary Aluminum',
+  'virgin_copper': 'Virgin Copper Cathode',
+  'virgin_glass': 'Virgin Container Glass',
+  'virgin_paper_kraft': 'Virgin Kraft Paper',
+  'color_additives': 'Color Additives & Pigments',
+  'packaging_material': 'Packaging Material',
+  'industrial_lubricant': 'Industrial Machinery Lubricant',
+  'waste_cardboard': 'Waste Cardboard Scrap',
+  'grid_electricity': 'Grid Electricity',
+  'diesel_fuel': 'Diesel Fuel',
+  'lpg_fuel': 'LPG Fuel',
+  'natural_gas': 'Natural Gas (PNG)',
+  'coal_fuel': 'Industrial Coal',
+
+  // Circular Alternatives
+  'recycled_plastic_pellets': 'Recycled Polymer Pellets (PCR)',
+  'recycled_hdpe_flakes': 'Recycled HDPE Flakes & Regrind',
+  'rpet_regrind': 'Recycled PET Regrind (rPET)',
+  'recycled_pp_granules': 'Recycled Polypropylene Granules',
+  'recycled_ldpe_pellets': 'Recycled LDPE Film Pellets',
+  'bio_carrier_masterbatch': 'Bio-Carrier Masterbatch',
+  'recycled_corrugated_packaging': 'Recycled Corrugated Packaging',
+  'electric_arc_scrap_steel': 'Electric Arc Scrap Steel (EAF)',
+  'recycled_scrap_aluminum': 'Recycled Secondary Aluminum Ingot',
+  'recycled_scrap_copper': 'Recycled Secondary Copper',
+  'recycled_cullet_glass': 'Recycled Cullet Glass',
+  'recycled_kraft_paper': 'Recycled Kraft Paper Pulp',
+  'closed_loop_recycled_cardboard': 'Closed-Loop Recycled Cardboard',
+  're_refined_lubricant': 'Re-Refined Machinery Lubricant (API Group II)',
+};
+
+export function formatDisplayName(text) {
+  if (!text) return '';
+  const trimmed = String(text).trim();
+  const lower = trimmed.toLowerCase();
+  if (KNOWN_DISPLAY_NAMES[lower]) return KNOWN_DISPLAY_NAMES[lower];
+  if (!trimmed.includes('_')) return trimmed;
+  return trimmed
+    .split('_')
+    .filter(Boolean)
+    .map(w => {
+      const wLower = w.toLowerCase();
+      if (['pcr', 'rpet', 'hdpe', 'ldpe', 'pp', 'pvc', 'eaf', 'lpg', 'png', 'cng', 'ppa', 'vfd', 'api'].includes(wLower)) {
+        return w.toUpperCase();
+      }
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    })
+    .join(' ');
 }
 
 // ─── Verified Emission Factors (CEA / IPCC / GHG Protocol) ─────────────────────
@@ -529,5 +588,132 @@ export async function askEcoBotAssistant(message, history = [], context = null) 
     response: `Welcome to EcoLeak Assistant.\n\nI assist with industrial emission calculations, Scope 1–3 carbon accounting, and regulatory compliance math.\n\nEnter an activity value, fuel quantity, or project inquiry to begin.`,
     source: 'local_math'
   };
+}
+
+/**
+ * Persist an audit record to Supabase assessments table.
+ */
+export async function saveAuditToSupabase(auditResult, user = null) {
+  if (!supabase || !auditResult) return null;
+  try {
+    const summary = auditResult.facility_summary || {};
+    const breakdown = summary.scope_breakdown || {};
+    const total_emissions = Number(summary.total_emissions_kg_co2e || 0);
+    const s1 = Number(breakdown.scope_1_kg || 0);
+    const s2 = Number(breakdown.scope_2_kg || 0);
+    const s3 = Number(breakdown.scope_3_kg || 0);
+
+    const s1_pct = breakdown.scope_1_pct !== undefined 
+      ? Number(breakdown.scope_1_pct) 
+      : (total_emissions > 0 ? Number(((s1 / total_emissions) * 100).toFixed(1)) : 0);
+    const s2_pct = breakdown.scope_2_pct !== undefined 
+      ? Number(breakdown.scope_2_pct) 
+      : (total_emissions > 0 ? Number(((s2 / total_emissions) * 100).toFixed(1)) : 0);
+    const s3_pct = breakdown.scope_3_pct !== undefined 
+      ? Number(breakdown.scope_3_pct) 
+      : (total_emissions > 0 ? Number(((s3 / total_emissions) * 100).toFixed(1)) : 0);
+
+    const row = {
+      title: `${summary.industry || 'Plant'} Carbon Audit`,
+      industry: summary.industry || 'Manufacturing SME',
+      status: 'completed',
+      total_emissions_kg_co2e: Number(total_emissions.toFixed(2)),
+      scope_1_kg: Number(s1.toFixed(2)),
+      scope_2_kg: Number(s2.toFixed(2)),
+      scope_3_kg: Number(s3.toFixed(2)),
+      scope_1_pct: s1_pct,
+      scope_2_pct: s2_pct,
+      scope_3_pct: s3_pct,
+      data_quality_index: Number((summary.data_quality_index || 98.0).toFixed(1)),
+      raw_inputs: {
+        operator_name: user?.name || 'Plant Operator',
+        operator_email: user?.email || '',
+        facility_name: user?.facilityName || '',
+        leak_points: (auditResult.leak_points || []).slice(0, 15),
+        circular_recommendations: (auditResult.circular_recommendations || []).slice(0, 10)
+      },
+    };
+
+    const { data, error } = await supabase.from('assessments').insert([row]).select();
+    if (error) {
+      console.warn('Supabase assessment direct insert note:', error.message);
+      return null;
+    }
+    console.info('Audit successfully synchronized to Supabase assessments table:', data?.[0]?.id);
+    return data?.[0];
+  } catch (err) {
+    console.warn('Supabase persistence note:', err);
+    return null;
+  }
+}
+
+/**
+ * Persist an operator profile to Supabase profiles table.
+ */
+export async function syncProfileToSupabase(user) {
+  if (!supabase || !user) return null;
+  try {
+    const row = {
+      auth_uid: user.uid || user.email || ('user-' + Date.now()),
+      email: user.email || '',
+      full_name: user.name || 'Plant Operator',
+      role: user.role || 'Plant Manager',
+      facility_name: user.facilityName || 'Manufacturing Facility',
+      avatar_url: user.avatarId || 'pfp-ops-director',
+    };
+    const { data, error } = await supabase.from('profiles').upsert([row], { onConflict: 'auth_uid' }).select();
+    if (error) {
+      console.warn('Supabase profile sync note:', error.message);
+      return null;
+    }
+    console.info('Operator profile synchronized to Supabase profiles table:', data?.[0]?.id);
+    return data?.[0];
+  } catch (err) {
+    console.warn('Supabase profile sync note:', err);
+    return null;
+  }
+}
+
+/**
+ * Fetch saved audit history for the authenticated operator from Supabase assessments.
+ */
+export async function fetchUserAudits() {
+  if (supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('assessments')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(15);
+      if (!error && data && data.length > 0) {
+        return data.map(r => ({
+          ...r,
+          total_co2e_kg: r.total_emissions_kg_co2e || 0,
+          data_quality: r.data_quality_index || 98.0
+        }));
+      }
+    } catch (err) {
+      console.warn('Supabase fetch note:', err);
+    }
+  }
+
+  // Fallback to backend API
+  try {
+    const authHeaders = await getAuthHeaders();
+    const res = await fetch(`${API_BASE}/api/audits`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.audits || [];
+    }
+  } catch (err) {
+    console.debug('Failed to fetch audits from API, returning local history:', err);
+  }
+  return [];
 }
 

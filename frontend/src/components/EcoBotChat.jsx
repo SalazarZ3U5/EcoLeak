@@ -217,7 +217,7 @@ export default function EcoBotChat({
             </div>
             <h3 className="ecobot-gate-title">Operator Authentication Required</h3>
             <p className="ecobot-gate-desc">
-              EcoBot AI Copilot is exclusively available to authenticated industrial operators. Please sign in or register to access real-time emission calculations and circular interventions.
+              EcoBot AI Copilot is available to authenticated industrial operators. Please sign in or register to access real-time emission calculations and circular interventions.
             </p>
             <button
               type="button"

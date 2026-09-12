@@ -17,7 +17,7 @@ export default function Footer() {
           </div>
 
           <div style={{ display: 'flex', gap: '24px', fontSize: '13px' }}>
-            <a href="#top" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Overview</a>
+            <a href="#top" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Home</a>
             <a href="#how" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>How It Works</a>
             <a href="#calculator" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Calculator</a>
             <a href="#impact" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Impact</a>

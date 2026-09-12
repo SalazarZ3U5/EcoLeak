@@ -13,10 +13,16 @@ import {
   analyzeDocument,
   analyzeChat,
   formatINR,
-  formatCO2e
+  formatCO2e,
+  formatDisplayName,
+  saveAuditToSupabase
 } from '../services/api';
 import { INDUSTRY_PRESETS } from '../data/mockData';
 import { CuteEcoBotIcon } from './EcoBotChat';
+import EcoBotDashboardPage from './EcoBotDashboardPage';
+import OperatorProfilePage from './OperatorProfilePage';
+import { UserPfp } from '../services/avatarService';
+import JargonTooltip, { JargonIcon } from './JargonTooltip';
 
 // ─── 1-Click Pre-filled Facility Profiles ─────────────────────────────────────
 const PRESET_SCENARIOS = {
@@ -101,22 +107,42 @@ const NAV_ITEMS = [
   { id: 'input',    icon: LayoutDashboard,   label: '1. Plant Process Data',    sub: 'Energy, Materials & Waste' },
   { id: 'leaks',    icon: AlertTriangle,     label: '2. Top Emission Leaks',    sub: 'Hotspot Detection' },
   { id: 'circular', icon: RefreshCw,         label: '3. Circular Solutions',     sub: 'Interventions & Cost Savings' },
-  { id: 'report',   icon: Download,          label: 'Executive Action Plan',     sub: 'Compliance & Export' },
+  { id: 'report',   icon: Download,          label: '4. Executive Action Plan', sub: 'Compliance & Export' },
+  { id: 'profile',  icon: User,              label: '5. Operator Profile',      sub: 'Plant Location & Consents' },
 ];
 
 export default function Dashboard({
   onBack,
   initialSection = 'input',
   authUser,
+  onUpdateUser,
   onSignOut,
   onOpenAuth,
   onOpenEcoBot,
-  isEcoBotOpen = false,
+  onSectionChange,
 }) {
-  const [activeSection, setActiveSection] = useState(
-    initialSection === 'audit' ? 'input' : (initialSection === 'results' ? 'leaks' : (initialSection === 'signin' ? 'input' : initialSection))
-  );
+  const parseSection = (sec) => {
+    if (sec === 'audit') return 'input';
+    if (sec === 'results') return 'leaks';
+    if (sec === 'signin') return 'input';
+    if (sec === 'operator') return 'profile';
+    if (sec === 'chat' || sec === 'ecobot' || sec === 'copilot') return 'copilot';
+    return sec || 'input';
+  };
+
+  const [activeSection, setActiveSection] = useState(() => parseSection(initialSection));
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  useEffect(() => {
+    if (initialSection) {
+      setActiveSection(parseSection(initialSection));
+    }
+  }, [initialSection]);
+
+  const handleSectionSelect = (sectionKey) => {
+    setActiveSection(sectionKey);
+    if (onSectionChange) onSectionChange(sectionKey);
+  };
 
   // Authentication guard: Dashboard is strictly inaccessible to logged-out users
   useEffect(() => {
@@ -227,7 +253,8 @@ export default function Dashboard({
     try {
       const res = await analyzeActivities({ industry, activities });
       setAuditResult(res);
-      setActiveSection('leaks');
+      saveAuditToSupabase(res, authUser).catch((e) => console.debug('Background Supabase save note:', e));
+      handleSectionSelect('leaks');
     } catch (err) {
       setError(err.message || 'Analysis could not be completed.');
     } finally {
@@ -246,7 +273,8 @@ export default function Dashboard({
     try {
       const res = await analyzeDocument(uploadFile, industry, uploadLanguage, sarvamApiKey);
       setAuditResult(res);
-      setActiveSection('leaks');
+      saveAuditToSupabase(res, authUser).catch((e) => console.debug('Background Supabase save note:', e));
+      handleSectionSelect('leaks');
     } catch (err) {
       setError(err.message || 'Document analysis failed.');
     } finally {
@@ -262,7 +290,8 @@ export default function Dashboard({
     try {
       const res = await analyzeChat(chatMessage);
       setAuditResult(res);
-      setActiveSection('leaks');
+      saveAuditToSupabase(res, authUser).catch((e) => console.debug('Background Supabase save note:', e));
+      handleSectionSelect('leaks');
     } catch (err) {
       setError(err.message || 'Plant narrative parsing failed.');
     } finally {
@@ -278,19 +307,24 @@ export default function Dashboard({
   const totalEmissions = auditResult?.facility_summary?.total_emissions_kg_co2e || 0;
   const rawRecs = auditResult?.circular_recommendations || [];
 
+  // Deduplicate recommendations by alternative and target_activity
+  const uniqueRecs = rawRecs.filter((rec, idx, self) =>
+    idx === self.findIndex(r => r.alternative === rec.alternative && r.target_activity === rec.target_activity)
+  );
+
   // Filter recommendations based on active pill
-  const filteredRecs = rawRecs.filter(r => {
+  const filteredRecs = uniqueRecs.filter(r => {
     if (activeRecFilter === 'high_impact') return r.co2e_reduction_percent >= 60;
     if (activeRecFilter === 'fast_payback') return (r.payback_months || 12) <= 8;
     return true;
   });
 
   const scaledMultiplier = circularRatio / 100;
-  const simulatedSavingsKg = Math.round(rawRecs.reduce((acc, r) => acc + (r.co2e_savings_kg || 0), 0) * scaledMultiplier);
-  const simulatedOpexSavings = Math.round(rawRecs.reduce((acc, r) => acc + (r.annual_opex_savings_inr || 0), 0) * scaledMultiplier);
-  const totalCapex = rawRecs.reduce((acc, r) => acc + (r.estimated_capex_inr || 0), 0);
-  const avgPaybackMonths = rawRecs.length > 0
-    ? Math.round(rawRecs.reduce((acc, r) => acc + (r.payback_months || 6), 0) / rawRecs.length)
+  const simulatedSavingsKg = Math.round(uniqueRecs.reduce((acc, r) => acc + (r.co2e_savings_kg || 0), 0) * scaledMultiplier);
+  const simulatedOpexSavings = Math.round(uniqueRecs.reduce((acc, r) => acc + (r.annual_opex_savings_inr || 0), 0) * scaledMultiplier);
+  const totalCapex = uniqueRecs.reduce((acc, r) => acc + (r.estimated_capex_inr || 0), 0);
+  const avgPaybackMonths = uniqueRecs.length > 0
+    ? Math.round(uniqueRecs.reduce((acc, r) => acc + (r.payback_months || 6), 0) / uniqueRecs.length)
     : 7;
 
   // ── RENDER STEP 1: Process Data Inputs ──────────────────────────────────────
@@ -401,7 +435,7 @@ export default function Dashboard({
               <div className="dash-form-group">
                 <label className="dash-label">
                   <Zap size={15} color="var(--mint-hover)" />
-                  Monthly Electricity (kWh)
+                  Monthly Electricity (<JargonTooltip term="kWh">kWh</JargonTooltip>)
                 </label>
                 <input
                   type="number"
@@ -418,7 +452,7 @@ export default function Dashboard({
               <div className="dash-form-group">
                 <label className="dash-label">
                   <Flame size={15} color="var(--rose)" />
-                  Primary Heating / Thermal Fuel
+                  Primary Heating / Thermal Fuel (<JargonTooltip term="Scope 1">Scope 1</JargonTooltip>)
                 </label>
                 <select
                   value={fuelType}
@@ -460,7 +494,7 @@ export default function Dashboard({
               <div className="dash-form-group">
                 <label className="dash-label">
                   <Layers size={15} color="var(--emerald-main)" />
-                  Primary Raw Material Feedstock
+                  Primary Raw Material Feedstock (<JargonTooltip term="Scope 3">Scope 3</JargonTooltip>)
                 </label>
                 <select
                   value={materialType}
@@ -767,21 +801,25 @@ export default function Dashboard({
         <div className="dash-kpi-grid">
           <div className="dash-kpi-card">
             <span className="kpi-label">Total Monthly Emissions</span>
-            <div className="kpi-value kpi-red">{formatCO2e(totalEmissions, true)}</div>
-            <small className="kpi-sub">{Math.round(totalEmissions).toLocaleString()} kg CO₂e / month</small>
+            <div className="kpi-value kpi-red">
+              <JargonTooltip term="CO2e">{formatCO2e(totalEmissions, true)}</JargonTooltip>
+            </div>
+            <small className="kpi-sub">
+              {Math.round(totalEmissions).toLocaleString()} <JargonTooltip term="CO2e">kg CO₂e</JargonTooltip> / month
+            </small>
           </div>
           <div className="dash-kpi-card">
-            <span className="kpi-label">Reducible by Circularity</span>
+            <span className="kpi-label">Reducible by <JargonTooltip term="Circular Economy">Circularity</JargonTooltip></span>
             <div className="kpi-value kpi-green">
-              {formatCO2e(simulatedSavingsKg, true)}
+              <JargonTooltip term="CO2e">{formatCO2e(simulatedSavingsKg, true)}</JargonTooltip>
               <span style={{ fontSize: '13px', marginLeft: '6px', fontWeight: 600 }}>
                 ({Math.round((simulatedSavingsKg / (totalEmissions || 1)) * 100)}% cut)
               </span>
             </div>
-            <small className="kpi-sub">Avoidable via closed-loop alternatives</small>
+            <small className="kpi-sub">Avoidable via <JargonTooltip term="Closed-Loop">closed-loop</JargonTooltip> alternatives</small>
           </div>
           <div className="dash-kpi-card">
-            <span className="kpi-label">Projected Annual Savings</span>
+            <span className="kpi-label">Projected Annual <JargonTooltip term="OPEX">OPEX Savings</JargonTooltip></span>
             <div className="kpi-value kpi-cyan">{formatINR(simulatedOpexSavings, true)}/yr</div>
             <small className="kpi-sub">Net operating expense saved</small>
           </div>
@@ -791,9 +829,11 @@ export default function Dashboard({
         <div className="dash-card elite-card">
           <div className="dash-card-label-row">
             <span className="dash-card-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-              <Flame size={14} color="var(--rose)" /> TOP EMISSION LEAK POINTS (RANKED BY SEVERITY)
+              <Flame size={14} color="var(--rose)" /> TOP <JargonTooltip term="Leak Point">EMISSION LEAK POINTS</JargonTooltip> (RANKED BY SEVERITY)
             </span>
-            <span className="badge-pill-danger">80/20 Rule Hotspot Analysis</span>
+            <span className="badge-pill-danger">
+              <JargonTooltip term="Pareto 80/20">80/20 Rule Hotspot Analysis</JargonTooltip>
+            </span>
           </div>
 
           <div className="leak-points-container">
@@ -803,12 +843,16 @@ export default function Dashboard({
                   <div className="leak-title-wrap">
                     <span className="leak-rank">#{idx + 1}</span>
                     <div>
-                      <strong className="leak-name">{lp.raw_name || lp.activity_key}</strong>
-                      <span className="leak-scope-tag">{lp.scope}</span>
+                      <strong className="leak-name">{formatDisplayName(lp.raw_name || lp.activity_key)}</strong>
+                      <span className="leak-scope-tag">
+                        <JargonTooltip term={lp.scope}>{lp.scope}</JargonTooltip>
+                      </span>
                     </div>
                   </div>
                   <div className="leak-stat-wrap">
-                    <span className="leak-qty">{formatCO2e(lp.co2e_kg ?? lp.emissions_kg)}</span>
+                    <span className="leak-qty">
+                      <JargonTooltip term="CO2e">{formatCO2e(lp.co2e_kg ?? lp.emissions_kg)}</JargonTooltip>
+                    </span>
                     <span className={`leak-tier-badge ${lp.share_percent >= 35 ? 'tier-critical' : 'tier-high'}`}>
                       {lp.share_percent}% of Total
                     </span>
@@ -830,7 +874,11 @@ export default function Dashboard({
 
                 <div className="leak-diagnostic-text">
                   <Info size={13} color="var(--text-muted)" />
-                  <span>{lp.diagnostic || `${lp.raw_name} accounts for ${lp.share_percent}% of your entire plant carbon footprint.`}</span>
+                  <span>
+                    {lp.diagnostic
+                      ? formatDisplayName(lp.diagnostic)
+                      : `${formatDisplayName(lp.raw_name || lp.activity_key)} accounts for ${lp.share_percent}% of your entire plant carbon footprint.`}
+                  </span>
                 </div>
               </div>
             ))}
@@ -842,17 +890,17 @@ export default function Dashboard({
           <div className="dash-card-label">EMISSION SOURCES BY ACTIVITY TYPE</div>
           <div className="dash-scope-grid">
             <div className="dash-scope-cell">
-              <span className="scope-label scope-1">On-Site Fuels (Scope 1)</span>
+              <span className="scope-label scope-1">On-Site Fuels (<JargonTooltip term="Scope 1">Scope 1</JargonTooltip>)</span>
               <div className="scope-value">{formatCO2e(scopeBreakdown.scope_1_kg)}</div>
               <span className="scope-pct">{scopeBreakdown.scope_1_pct ?? 0}% of footprint · Diesel, LPG, Gas</span>
             </div>
             <div className="dash-scope-cell">
-              <span className="scope-label scope-2">Purchased Power (Scope 2)</span>
+              <span className="scope-label scope-2">Purchased Power (<JargonTooltip term="Scope 2">Scope 2</JargonTooltip>)</span>
               <div className="scope-value">{formatCO2e(scopeBreakdown.scope_2_kg)}</div>
               <span className="scope-pct">{scopeBreakdown.scope_2_pct ?? 0}% of footprint · Grid Electricity</span>
             </div>
             <div className="dash-scope-cell">
-              <span className="scope-label scope-3">Raw Materials &amp; Waste (Scope 3)</span>
+              <span className="scope-label scope-3">Raw Materials &amp; Waste (<JargonTooltip term="Scope 3">Scope 3</JargonTooltip>)</span>
               <div className="scope-value">{formatCO2e(scopeBreakdown.scope_3_kg)}</div>
               <span className="scope-pct">{scopeBreakdown.scope_3_pct ?? 0}% of footprint · Feedstock &amp; Packaging</span>
             </div>
@@ -898,15 +946,17 @@ export default function Dashboard({
         <div className="dash-card elite-card interactive-balancer-card">
           <div className="balancer-top-row">
             <div>
-              <span className="dash-card-label">INTERACTIVE CIRCULARITY SIMULATOR</span>
+              <span className="dash-card-label">
+                <JargonTooltip term="What-If Analysis">INTERACTIVE CIRCULARITY SIMULATOR</JargonTooltip>
+              </span>
               <h4 style={{ margin: '3px 0 0', fontSize: '15px', color: 'var(--text-primary)' }}>
-                Simulate Plant Substitution Ratio: <strong>{circularRatio}% Circular Feed</strong>
+                Simulate Plant Substitution Ratio: <strong>{circularRatio}% <JargonTooltip term="Circular Economy">Circular Feed</JargonTooltip></strong>
               </h4>
             </div>
             <span className="balancer-tag">
               {circularRatio >= 80 ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-                  <RefreshCw size={12} className="spin-on-active" /> Fully Circular Loop
+                  <RefreshCw size={12} className="spin-on-active" /> <JargonTooltip term="Closed-Loop">Fully Circular Loop</JargonTooltip>
                 </span>
               ) : circularRatio >= 50 ? (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
@@ -924,7 +974,7 @@ export default function Dashboard({
             <div className="balancer-slider-labels">
               <span>0% Baseline Bleed</span>
               <span>50% Partial Loop</span>
-              <span>100% Fully Closed-Loop</span>
+              <span>100% <JargonTooltip term="Closed-Loop">Fully Closed-Loop</JargonTooltip></span>
             </div>
             <input
               type="range"
@@ -939,19 +989,22 @@ export default function Dashboard({
 
           <div className="balancer-dynamic-metrics">
             <div className="balancer-metric-pill">
-              <small>Avoided Carbon</small>
+              <small><JargonTooltip term="CO2e">Avoided Carbon</JargonTooltip></small>
               <strong style={{ color: 'var(--mint-hover)' }}>−{formatCO2e(simulatedSavingsKg)}/mo</strong>
             </div>
             <div className="balancer-metric-pill">
-              <small>Projected Annual OPEX Saved</small>
+              <small>Projected Annual <JargonTooltip term="OPEX">OPEX Saved</JargonTooltip></small>
               <strong style={{ color: 'var(--emerald-deep)' }}>+{formatINR(simulatedOpexSavings, true)}/yr</strong>
             </div>
             <div className="balancer-metric-pill">
-              <small>Estimated Upfront CAPEX</small>
+              <small style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                Estimated Upfront <JargonTooltip term="CAPEX">CAPEX</JargonTooltip>
+                <JargonIcon term="Williams' 0.65 Rule" size={11} />
+              </small>
               <strong>{formatINR(totalCapex, true)}</strong>
             </div>
             <div className="balancer-metric-pill">
-              <small>Average Payback</small>
+              <small>Average <JargonTooltip term="Payback Period">Payback</JargonTooltip></small>
               <strong style={{ color: 'var(--cyan-fresh)' }}>{avgPaybackMonths} Months</strong>
             </div>
           </div>
@@ -989,7 +1042,7 @@ export default function Dashboard({
                   <div>
                     <span className="rec-type-label">CIRCULAR INTERVENTION #{i + 1}</span>
                     <h3 className="rec-title">
-                      {rec.target_activity} <span style={{ color: 'var(--mint-hover)', margin: '0 4px' }}>→</span> <strong className="gradient-text">{rec.alternative}</strong>
+                      {formatDisplayName(rec.target_activity)} <span style={{ color: 'var(--mint-hover)', margin: '0 4px' }}>→</span> <strong className="gradient-text">{formatDisplayName(rec.alternative)}</strong>
                     </h3>
                   </div>
                   <div className="rec-badge-group">
@@ -1004,29 +1057,29 @@ export default function Dashboard({
 
                 {rec.mechanism && (
                   <p className="rec-mechanism-desc">
-                    <strong>Closed-Loop Mechanism:</strong> {rec.mechanism}
+                    <strong><JargonTooltip term="Closed-Loop">Closed-Loop Mechanism</JargonTooltip>:</strong> {rec.mechanism}
                   </p>
                 )}
 
                 <div className="rec-metrics">
                   <div className="rec-metric">
-                    <small>CO₂ Reduction</small>
+                    <small><JargonTooltip term="CO2e">CO₂ Reduction</JargonTooltip></small>
                     <strong className="metric-green">
                       −{rec.co2e_reduction_percent}% ({formatCO2e(Math.round(rec.co2e_savings_kg * (circularRatio / 100)))})
                     </strong>
                   </div>
                   <div className="rec-metric">
-                    <small>Required Investment</small>
+                    <small>Required Investment (<JargonTooltip term="CAPEX">CAPEX</JargonTooltip>)</small>
                     <strong>{formatINR(rec.estimated_capex_inr)}</strong>
                   </div>
                   <div className="rec-metric">
-                    <small>Annual Operating Savings</small>
+                    <small>Annual Operating Savings (<JargonTooltip term="OPEX">OPEX</JargonTooltip>)</small>
                     <strong className="metric-cyan">
                       {formatINR(Math.round(rec.annual_opex_savings_inr * (circularRatio / 100)))}/yr
                     </strong>
                   </div>
                   <div className="rec-metric">
-                    <small>Investment Payback</small>
+                    <small>Investment <JargonTooltip term="Payback Period">Payback</JargonTooltip></small>
                     <strong style={{ color: 'var(--amber)' }}>
                       {rec.payback_months ? `${rec.payback_months} Months` : 'Immediate'}
                     </strong>
@@ -1036,7 +1089,7 @@ export default function Dashboard({
                 {rec.regulatory_readiness && (
                   <div className="rec-compliance">
                     <ShieldCheck size={14} color="var(--mint-hover)" />
-                    <span><strong>Regulation &amp; ESG Standards:</strong> {rec.regulatory_readiness}</span>
+                    <span><strong>Regulation &amp; ESG Standards:</strong> <JargonTooltip term="BRSR">{rec.regulatory_readiness}</JargonTooltip></span>
                   </div>
                 )}
               </div>
@@ -1078,10 +1131,10 @@ export default function Dashboard({
                 <MapPin size={11} /> {authUser?.location || 'MIDC Bhosari Industrial Area, Pune'}
               </span>
               <span className="report-meta-chip">
-                <FileCheck size={11} /> SPCB: {authUser?.regId || 'MH-SPCB/CTO-2026/4102'}
+                <FileCheck size={11} /> <JargonTooltip term="SPCB">SPCB</JargonTooltip>: {authUser?.regId || 'MH-SPCB/CTO-2026/4102'}
               </span>
               <span className="report-meta-chip">
-                <ShieldAlert size={11} /> {authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Orange Category'}
+                <ShieldAlert size={11} /> <JargonTooltip term="Orange Category">{authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Orange Category'}</JargonTooltip>
               </span>
             </div>
           </div>
@@ -1092,18 +1145,18 @@ export default function Dashboard({
 
         <div className="report-grid-3">
           <div className="report-stat-box">
-            <small>Baseline Footprint</small>
-            <strong>{formatCO2e(totalEmissions, true)}</strong>
+            <small><JargonTooltip term="Carbon Footprint">Baseline Footprint</JargonTooltip></small>
+            <strong><JargonTooltip term="CO2e">{formatCO2e(totalEmissions, true)}</JargonTooltip></strong>
             <span>Per Month</span>
           </div>
           <div className="report-stat-box">
-            <small>Total Recoverable Emissions</small>
-            <strong style={{ color: 'var(--mint-hover)' }}>{formatCO2e(simulatedSavingsKg, true)}</strong>
+            <small><JargonTooltip term="Circular Economy">Total Recoverable Emissions</JargonTooltip></small>
+            <strong style={{ color: 'var(--mint-hover)' }}><JargonTooltip term="CO2e">{formatCO2e(simulatedSavingsKg, true)}</JargonTooltip></strong>
             <span>Avoidable through circularity</span>
           </div>
           <div className="report-stat-box">
             <small>Annual Capital Savings</small>
-            <strong style={{ color: 'var(--emerald-deep)' }}>{formatINR(simulatedOpexSavings, true)}</strong>
+            <strong style={{ color: 'var(--emerald-deep)' }}><JargonTooltip term="OPEX">{formatINR(simulatedOpexSavings, true)}</JargonTooltip></strong>
             <span>Recurring OPEX reduction</span>
           </div>
         </div>
@@ -1113,13 +1166,13 @@ export default function Dashboard({
         </h4>
 
         <div className="report-roadmap-list">
-          {rawRecs.map((rec, i) => (
+          {uniqueRecs.map((rec, i) => (
             <div key={i} className="report-roadmap-item">
               <div className="roadmap-num">{i + 1}</div>
               <div className="roadmap-content">
-                <strong>{rec.alternative}</strong>
+                <strong>{formatDisplayName(rec.alternative)}</strong>
                 <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
-                  Target: {rec.target_activity} · Cuts {rec.co2e_reduction_percent}% CO₂ · Payback: {rec.payback_months} mo · CAPEX: {formatINR(rec.estimated_capex_inr)}
+                  Target: {formatDisplayName(rec.target_activity)} · Cuts {rec.co2e_reduction_percent}% CO₂ · Payback: {rec.payback_months} mo · CAPEX: {formatINR(rec.estimated_capex_inr)}
                 </p>
               </div>
             </div>
@@ -1127,7 +1180,7 @@ export default function Dashboard({
         </div>
 
         <div className="report-footer-note">
-          <span>Standards Aligned: GHG Protocol Corporate Standard, ISO 14064-1, CEA Central Electricity Authority India Factors, BRSR Core.</span>
+          <span>Standards Aligned: <JargonTooltip term="GHG Protocol">GHG Protocol Corporate Standard</JargonTooltip>, <JargonTooltip term="ISO 14064-1">ISO 14064-1</JargonTooltip>, CEA Central Electricity Authority India Factors, <JargonTooltip term="BRSR">BRSR Core</JargonTooltip>, and <JargonTooltip term="CBAM">CBAM</JargonTooltip> Readiness.</span>
         </div>
       </div>
     </div>
@@ -1137,14 +1190,63 @@ export default function Dashboard({
     { id: 'input',    icon: LayoutDashboard,   label: '1. Plant Process Data',    sub: 'Energy, Materials & Waste' },
     { id: 'leaks',    icon: AlertTriangle,     label: '2. Top Emission Leaks',    sub: 'Hotspot Detection' },
     { id: 'circular', icon: RefreshCw,         label: '3. Circular Solutions',     sub: 'Interventions & Cost Savings' },
-    { id: 'report',   icon: Download,          label: 'Executive Action Plan',     sub: 'Compliance & Export' },
+    { id: 'report',   icon: Download,          label: '4. Executive Action Plan', sub: 'Compliance & Export' },
+    { id: 'profile',  icon: User,              label: '5. Operator Profile',      sub: 'Identity & Credentials' },
+    { id: 'plant',    icon: Factory,           label: '6. Plant Information',      sub: 'Facility, GPS & Consents' },
+    { id: 'copilot',  icon: Sparkles,          label: '7. EcoBot AI Copilot',     sub: 'Engineering & Compliance AI' },
   ];
+
+  const renderProfileSection = () => (
+    <div className="dashboard-embedded-profile-wrap">
+      <OperatorProfilePage
+        initialPage="operator"
+        authUser={authUser}
+        onUpdateUser={onUpdateUser}
+        onSignOut={onSignOut}
+        onBack={() => handleSectionSelect('input')}
+        onOpenDashboard={() => handleSectionSelect('input')}
+        onNavigateSection={(sec) => handleSectionSelect(sec)}
+        isEmbedded={true}
+      />
+    </div>
+  );
+
+  const renderPlantSection = () => (
+    <div className="dashboard-embedded-profile-wrap">
+      <OperatorProfilePage
+        initialPage="plant"
+        authUser={authUser}
+        onUpdateUser={onUpdateUser}
+        onSignOut={onSignOut}
+        onBack={() => handleSectionSelect('input')}
+        onOpenDashboard={() => handleSectionSelect('input')}
+        onNavigateSection={(sec) => handleSectionSelect(sec)}
+        isEmbedded={true}
+      />
+    </div>
+  );
+
+  const renderEcoBotSection = () => (
+    <EcoBotDashboardPage
+      authUser={authUser}
+      onOpenAuth={onOpenAuth}
+      activePlantContext={{
+        industry: authUser?.facilityName || industry,
+        location: authUser?.location || 'MIDC Industrial Area, Pune',
+        reg_category: authUser?.regCategory || 'Orange Category'
+      }}
+      onNavigateSection={handleSectionSelect}
+    />
+  );
 
   const sectionRenderers = {
     input: renderInputSection,
     leaks: renderLeakSection,
     circular: renderCircularSection,
     report: renderReportSection,
+    profile: renderProfileSection,
+    plant: renderPlantSection,
+    copilot: renderEcoBotSection,
   };
 
   return (
@@ -1152,7 +1254,7 @@ export default function Dashboard({
       {/* ── Glassy Modern Sidebar ───────────────────────────────────────────── */}
       <aside className={`dash-sidebar ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
         <div className="sidebar-header">
-          <div className="sidebar-brand" onClick={onBack} style={{ cursor: 'pointer' }} title="Back to Overview">
+          <div className="sidebar-brand">
             <div className="brand-mark">
               <span></span>
               <span></span>
@@ -1169,27 +1271,21 @@ export default function Dashboard({
           </button>
         </div>
 
-        <button className="sidebar-back-btn" onClick={onBack}>
-          <ArrowLeft size={14} />
-          {sidebarOpen && <span>Back to Overview</span>}
-        </button>
-
         {/* Exclusive AI Bot button above WORKFLOW PIPELINE in Sidebar */}
-        <div className="sidebar-ai-launcher-card">
+        <div className={`sidebar-ai-launcher-card ${sidebarOpen ? '' : 'ai-launcher-collapsed'}`}>
           <button
             type="button"
-            className={`sidebar-ai-bot-btn ${!authUser ? 'ai-locked' : 'ai-unlocked'} ${isEcoBotOpen ? 'ai-active' : ''}`}
-            onClick={onOpenEcoBot}
+            className={`sidebar-ai-bot-btn ${!authUser ? 'ai-locked' : 'ai-unlocked'} ${activeSection === 'copilot' ? 'ai-active' : ''} ${sidebarOpen ? '' : 'btn-collapsed'}`}
+            onClick={() => handleSectionSelect('copilot')}
             title={authUser ? "Launch EcoBot AI Copilot" : "Authentication Required for EcoBot AI"}
           >
-            <div className="ai-bot-icon-glow">
+            <div className={`ai-bot-icon-glow ${sidebarOpen ? '' : 'glow-collapsed'}`}>
               <CuteEcoBotIcon size={20} isAnimated={Boolean(authUser)} />
             </div>
             {sidebarOpen && (
               <div className="ai-bot-btn-text">
                 <div className="ai-bot-btn-title-row">
                   <span className="ai-bot-btn-title">EcoBot AI</span>
-                  <span className="ai-bot-exclusive-badge">EXCLUSIVE</span>
                 </div>
                 <span className="ai-bot-btn-status">
                   {authUser ? (
@@ -1212,7 +1308,7 @@ export default function Dashboard({
               className={`sidebar-nav-item ${activeSection === id ? 'nav-active' : ''} ${
                 (id === 'leaks' || id === 'circular') && auditResult ? 'has-results' : ''
               }`}
-              onClick={() => setActiveSection(id)}
+              onClick={() => handleSectionSelect(id)}
             >
               <span className="nav-icon-wrap"><Icon size={17} /></span>
               {sidebarOpen && (
@@ -1234,16 +1330,17 @@ export default function Dashboard({
             <div className="sidebar-footer">
               {authUser ? (
                 <div className="sidebar-user-card">
-                  <div className="sidebar-user-avatar">
-                    {authUser.picture ? (
-                      <img src={authUser.picture} alt={authUser.name} />
-                    ) : (
-                      <span>{authUser.name ? authUser.name.slice(0, 2).toUpperCase() : 'OP'}</span>
-                    )}
+                  <div
+                    className="sidebar-user-avatar"
+                    onClick={() => handleSectionSelect('profile')}
+                    style={{ cursor: 'pointer' }}
+                    title="View & Edit Operator Profile"
+                  >
+                    <UserPfp user={authUser} size={38} />
                   </div>
                   <div
                     className="sidebar-user-info"
-                    onClick={onOpenAuth}
+                    onClick={() => handleSectionSelect('profile')}
                     style={{ cursor: 'pointer' }}
                     title="View Operator Profile & Regulatory Parameters"
                   >
@@ -1287,71 +1384,23 @@ export default function Dashboard({
             </div>
           </>
         )}
+
+        {!sidebarOpen && authUser && (
+          <div className="sidebar-collapsed-user">
+            <div
+              className="sidebar-user-avatar"
+              onClick={() => handleSectionSelect('profile')}
+              style={{ cursor: 'pointer' }}
+              title={`Operator Profile: ${authUser.name}`}
+            >
+              <UserPfp user={authUser} size={36} />
+            </div>
+          </div>
+        )}
       </aside>
 
       {/* ── Main Work Area ─────────────────────────────────────────────────── */}
       <main className="dash-main">
-        {/* Top Progress Stepper (Always accessible & clear) */}
-        <header className="dash-top-workflow-bar">
-          <div className="workflow-steps-flex">
-            <button
-              type="button"
-              className={`workflow-step-pill ${activeSection === 'input' ? 'step-active' : 'step-completed'}`}
-              onClick={() => setActiveSection('input')}
-            >
-              <span className="step-num">1</span>
-              <span>Process Data Input</span>
-            </button>
-            <div className="step-connector" />
-            <button
-              type="button"
-              className={`workflow-step-pill ${activeSection === 'leaks' ? 'step-active' : (auditResult ? 'step-completed' : 'step-disabled')}`}
-              onClick={() => auditResult && setActiveSection('leaks')}
-              disabled={!auditResult}
-            >
-              <span className="step-num">2</span>
-              <span>Emission Leak Points</span>
-            </button>
-            <div className="step-connector" />
-            <button
-              type="button"
-              className={`workflow-step-pill ${activeSection === 'circular' ? 'step-active' : (auditResult ? 'step-completed' : 'step-disabled')}`}
-              onClick={() => auditResult && setActiveSection('circular')}
-              disabled={!auditResult}
-            >
-              <span className="step-num">3</span>
-              <span>Circular Solutions &amp; ROI</span>
-            </button>
-          </div>
-
-          {/* Exclusive AI Bot Button directly on the Workflow Pipeline */}
-          <div className="workflow-ai-bot-slot">
-            <button
-              type="button"
-              className={`workflow-exclusive-ai-btn ${!authUser ? 'ai-locked' : 'ai-unlocked'} ${isEcoBotOpen ? 'ai-active' : ''}`}
-              onClick={onOpenEcoBot}
-              title={authUser ? "Open EcoBot AI Industrial Assistant" : "Sign In Required for EcoBot AI"}
-            >
-              <div className="workflow-ai-avatar">
-                <CuteEcoBotIcon size={18} isAnimated={Boolean(authUser)} />
-              </div>
-              <div className="workflow-ai-copy">
-                <span className="workflow-ai-name">EcoBot AI</span>
-                <span className="workflow-ai-tag">EXCLUSIVE</span>
-              </div>
-              {authUser ? (
-                <span className="workflow-ai-pill online">
-                  <span className="ai-live-dot" /> Online
-                </span>
-              ) : (
-                <span className="workflow-ai-pill locked">
-                  <Lock size={11} /> Locked
-                </span>
-              )}
-            </button>
-          </div>
-        </header>
-
         <div className="dash-main-scroll">
           {(sectionRenderers[activeSection] || renderInputSection)()}
         </div>
@@ -1359,3 +1408,4 @@ export default function Dashboard({
     </div>
   );
 }
+

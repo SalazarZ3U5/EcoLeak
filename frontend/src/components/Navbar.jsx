@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowUpRight, Sparkles, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 
-export default function Navbar({ onOpenAssessment, onOpenLogin, authUser }) {
+export default function Navbar({
+  onOpenApp,
+  onOpenAssessment,
+  onOpenSignIn,
+  onOpenSignUp,
+  onOpenAuth,
+  onBack,
+  authUser
+}) {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -12,47 +20,86 @@ export default function Navbar({ onOpenAssessment, onOpenLogin, authUser }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleOpen = () => {
+    if (onOpenApp) onOpenApp();
+    else if (onOpenAssessment) onOpenAssessment();
+  };
+
+  const handleSignIn = () => {
+    if (onOpenSignIn) onOpenSignIn();
+    else if (onOpenAuth) onOpenAuth('login');
+    else if (onOpenApp) onOpenApp();
+  };
+
+  const handleRegister = () => {
+    if (onOpenSignUp) onOpenSignUp();
+    else if (onOpenAuth) onOpenAuth('signup');
+    else if (onOpenApp) onOpenApp();
+  };
+
+  const handleBrandClick = (e) => {
+    e.preventDefault();
+    if (onBack) {
+      onBack();
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const username = authUser?.name || (authUser?.email ? authUser.email.split('@')[0] : 'Operator');
+
   return (
     <header className={`header-nav ${scrolled ? 'nav-scrolled' : ''}`}>
       <div className="container nav-inner-flex">
-        <a href="#top" className="brand-link" aria-label="EcoLeak Home" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>
+        <a
+          href="#top"
+          className="brand-link"
+          aria-label="EcoLeak Home"
+          onClick={handleBrandClick}
+          title="EcoLeak Home"
+        >
           <div className="brand-mark">
-            <span></span>
-            <span></span>
+            <span />
+            <span />
           </div>
           <span className="brand-text">
             Eco<span className="brand-accent">Leak</span>
           </span>
         </a>
 
-        <nav className="nav-links">
-          <a href="#top" className="nav-item">Overview</a>
-          <a href="#how" className="nav-item">How It Works</a>
-          <a href="#calculator" className="nav-item">ROI Ledger</a>
-          <a href="#impact" className="nav-item">Impact</a>
-        </nav>
-
         <div className="nav-actions">
-          <button 
-            className="btn btn-ghost"
-            onClick={onOpenLogin}
-            id="nav-signin-btn"
+          {authUser ? (
+            <span className="navbar-welcome-msg">
+              Welcome, <strong className="navbar-welcome-name">{username}</strong>
+            </span>
+          ) : (
+            <div className="navbar-auth-links">
+              <button
+                type="button"
+                className="nav-auth-btn"
+                onClick={handleSignIn}
+                id="nav-signin-btn"
+              >
+                Sign In
+              </button>
+              <span className="nav-auth-separator">/</span>
+              <button
+                type="button"
+                className="nav-auth-btn"
+                onClick={handleRegister}
+                id="nav-register-btn"
+              >
+                Register
+              </button>
+            </div>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary nav-open-app-btn"
+            onClick={handleOpen}
+            id="nav-open-app-btn"
           >
-            {authUser ? (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <ShieldCheck size={14} color="var(--mint)" />
-                <span>{authUser.name ? authUser.name.split(' ')[0] : 'Operator'}</span>
-              </span>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-          <button 
-            className="btn btn-primary"
-            onClick={onOpenAssessment}
-            id="nav-assessment-btn"
-          >
-            Start Leak Audit <ArrowUpRight size={15} />
+            Open App <ArrowUpRight size={15} />
           </button>
         </div>
       </div>

@@ -3,7 +3,7 @@ diesel_fuel	l	2.68	Scope 1
 natural_gas	m3	2.02	Scope 1
 petrol	l	2.31	Scope 1
 lpg	kg	2.983	Scope 1
-grid_electricity	kWh	0.385	Scope 2
+grid_electricity	kWh	0.710	Scope 2
 water_supply	m3	0.149	Scope 3
 wastewater_treatment	m3	0.272	Scope 3
 waste_cardboard	kg	0.82	Scope 3

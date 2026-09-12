@@ -1,9 +1,3 @@
-"""
-Chat-based analysis API endpoint.
-
-POST /api/analyze/chat — natural language input → Gemini extraction → analysis pipeline
-"""
-
 from __future__ import annotations
 
 import logging
@@ -14,16 +8,22 @@ from backend.models.schemas import (
     ChatRequest,
     AnalyzeResponse,
     FacilitySummary,
+    AssistantChatRequest,
+    AssistantChatResponse,
 )
-from backend.services import gemini_service
+from backend.services import gemini_service, assistant_service
 from backend.api.analyze import run_analysis_pipeline
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/analyze")
+router = APIRouter()
 
 
-@router.post("/chat", response_model=AnalyzeResponse)
+# ---------------------------------------------------------------------------
+# Process-Data Chat Extraction Endpoint
+# ---------------------------------------------------------------------------
+
+@router.post("/api/analyze/chat", response_model=AnalyzeResponse)
 async def analyze_chat(request: ChatRequest):
     """
     Analyze factory operations from natural language description.
@@ -72,3 +72,32 @@ async def analyze_chat(request: ChatRequest):
     result = run_analysis_pipeline(industry, activities)
     result.warnings = warnings + result.warnings
     return result
+
+
+# ---------------------------------------------------------------------------
+# EcoBot Project & Math Assistant Endpoint
+# ---------------------------------------------------------------------------
+
+@router.post("/api/assistant/chat", response_model=AssistantChatResponse)
+async def assistant_chat(request: AssistantChatRequest):
+    """
+    EcoBot Conversational Assistant.
+
+    Strictly answers queries regarding:
+      1. EcoLeak project, architecture, circular economy, and SPCB compliance.
+      2. Industrial emission mathematics (Scope 1/2/3 formulas, grid factors, payback math).
+      3. Facility consumption calculations.
+
+    Politely declines off-topic queries.
+    """
+    logger.info("EcoBot query received: '%s'", request.message[:80])
+    res = assistant_service.chat_with_assistant(
+        message=request.message,
+        history=request.history,
+        context=request.context,
+    )
+    return AssistantChatResponse(
+        response=res.get("response", ""),
+        source=res.get("source", "groq"),
+    )
+

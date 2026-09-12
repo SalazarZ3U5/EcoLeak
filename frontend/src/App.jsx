@@ -12,6 +12,7 @@ import ImpactROI from './components/ImpactROI';
 import Footer from './components/Footer';
 import Dashboard from './components/Dashboard';
 import AuthPage from './components/AuthPage';
+import EcoBotChat from './components/EcoBotChat';
 
 export default function App() {
   // 'landing' | 'dashboard' | 'auth'
@@ -94,72 +95,79 @@ export default function App() {
     setView('landing');
   };
 
-  if (view === 'auth') {
-    return (
-      <AuthPage
-        initialTab={authInitialTab}
-        authUser={authUser}
-        onAuthSuccess={handleAuthSuccess}
-        onUpdateUser={handleUpdateUser}
-        onSignOut={handleSignOut}
-        onBack={() => setView('landing')}
-        onOpenDashboard={() => {
-          if (!authUser) {
-            setView('auth');
-          } else {
-            setView('dashboard');
-          }
-        }}
-      />
-    );
-  }
-
-  if (view === 'dashboard') {
-    // Hard guard: dashboard is strictly prohibited for logged-out visitors
-    if (!authUser) {
-      return (
-        <AuthPage
-          initialTab="signin"
-          authUser={null}
-          onAuthSuccess={handleAuthSuccess}
-          onSignOut={handleSignOut}
-          onBack={() => setView('landing')}
-          onOpenDashboard={() => setView('dashboard')}
-        />
-      );
-    }
-    return (
-      <Dashboard
-        initialSection={dashSection}
-        onBack={() => setView('landing')}
-        authUser={authUser}
-        onSignOut={handleSignOut}
-        onOpenAuth={() => openAuth('signin')}
-      />
-    );
-  }
+  const plantContext = authUser ? {
+    industry: authUser.facilityName || 'Manufacturing SME',
+    location: authUser.location || 'MIDC Industrial Area, Pune',
+    reg_category: authUser.regCategory || 'Orange Category'
+  } : null;
 
   return (
-    <div className="app-root">
-      <AnimatedBackground />
-      <div className="noise-overlay"></div>
+    <>
+      {view === 'auth' && (
+        <AuthPage
+          initialTab={authInitialTab}
+          authUser={authUser}
+          onAuthSuccess={handleAuthSuccess}
+          onUpdateUser={handleUpdateUser}
+          onSignOut={handleSignOut}
+          onBack={() => setView('landing')}
+          onOpenDashboard={() => {
+            if (!authUser) {
+              setView('auth');
+            } else {
+              setView('dashboard');
+            }
+          }}
+        />
+      )}
 
-      <Navbar
-        authUser={authUser}
-        onOpenAssessment={() => openDashboard('input')}
-        onOpenLogin={() => openAuth('signin')}
-      />
+      {view === 'dashboard' && (
+        !authUser ? (
+          <AuthPage
+            initialTab="signin"
+            authUser={null}
+            onAuthSuccess={handleAuthSuccess}
+            onSignOut={handleSignOut}
+            onBack={() => setView('landing')}
+            onOpenDashboard={() => setView('dashboard')}
+          />
+        ) : (
+          <Dashboard
+            initialSection={dashSection}
+            onBack={() => setView('landing')}
+            authUser={authUser}
+            onSignOut={handleSignOut}
+            onOpenAuth={() => openAuth('signin')}
+          />
+        )
+      )}
 
-      <main>
-        <Hero onOpenAssessment={() => openDashboard('input')} />
-        <Ticker />
-        <SimpleHowItWorks onOpenAssessment={() => openDashboard('input')} />
-        <SimpleCalculator onOpenAssessment={openDashboard} />
-        <ImpactROI onOpenAssessment={() => openDashboard('input')} />
-      </main>
+      {view === 'landing' && (
+        <div className="app-root">
+          <AnimatedBackground />
+          <div className="noise-overlay"></div>
 
-      <Footer />
-    </div>
+          <Navbar
+            authUser={authUser}
+            onOpenAssessment={() => openDashboard('input')}
+            onOpenLogin={() => openAuth('signin')}
+          />
+
+          <main>
+            <Hero onOpenAssessment={() => openDashboard('input')} />
+            <Ticker />
+            <SimpleHowItWorks onOpenAssessment={() => openDashboard('input')} />
+            <SimpleCalculator onOpenAssessment={openDashboard} />
+            <ImpactROI onOpenAssessment={() => openDashboard('input')} />
+          </main>
+
+          <Footer />
+        </div>
+      )}
+
+      {/* Omnipresent Floating EcoBot AI Assistant with Cute Mascot Icon */}
+      <EcoBotChat activePlantContext={plantContext} />
+    </>
   );
 }
 

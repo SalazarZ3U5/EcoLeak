@@ -174,3 +174,19 @@ class DatabaseStatus(BaseModel):
     active_llm_model: str = "openai/gpt-oss-120b"
     huggingface_configured: bool = False
 
+
+# ---------------------------------------------------------------------------
+# EcoBot Chat Assistant models
+# ---------------------------------------------------------------------------
+
+class AssistantChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, description="Question for EcoBot regarding EcoLeak, emission math, or circularity")
+    history: list[dict] = Field(default_factory=list, description="Recent conversation history [{'role': '...', 'content': '...'}]")
+    context: Optional[dict] = Field(default=None, description="Active facility context")
+
+
+class AssistantChatResponse(BaseModel):
+    response: str
+    source: str = "groq"
+
+

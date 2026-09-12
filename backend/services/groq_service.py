@@ -209,7 +209,7 @@ RULES:
 def analyze_document(file_bytes: bytes, mime_type: str = "application/pdf") -> Optional[dict]:
     """
     Extract structured activity data from an uploaded document (PDF, TXT, CSV, Invoice).
-    Extracts text using pypdf (for PDF) or utf-8 decoding, then parses via Groq.
+    Uses PyMuPDF (multilingual) for high-fidelity text and table extraction, then parses via Groq.
     """
     client = _get_client()
     if client is None:
@@ -217,15 +217,21 @@ def analyze_document(file_bytes: bytes, mime_type: str = "application/pdf") -> O
 
     extracted_text = ""
 
-    # Extract text based on mime type
+    # Extract text based on mime type using PyMuPDF (multilingual)
     if "pdf" in mime_type.lower():
         try:
-            import pypdf
-            reader = pypdf.PdfReader(io.BytesIO(file_bytes))
-            for page in reader.pages:
-                extracted_text += page.extract_text() or ""
+            from backend.services.pdf_parser import extract_pdf_content
+            parsed = extract_pdf_content(file_bytes)
+            extracted_text = parsed.get("text", "")
+            logger.info(
+                "Extracted PDF using %s: %d pages, tables=%s, scripts=%s",
+                parsed.get("parser"),
+                parsed.get("page_count"),
+                parsed.get("has_tables"),
+                parsed.get("detected_scripts"),
+            )
         except Exception as e:
-            logger.warning("pypdf extraction failed: %s", e)
+            logger.warning("PyMuPDF extraction note: %s, attempting raw decode fallback", e)
             extracted_text = file_bytes.decode("utf-8", errors="ignore")
     else:
         extracted_text = file_bytes.decode("utf-8", errors="ignore")

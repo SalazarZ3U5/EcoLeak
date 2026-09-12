@@ -411,3 +411,63 @@ export async function analyzeChat(message) {
     { name: material, quantity: matQty, unit: 'kg' }
   ]);
 }
+
+/**
+ * Conversational EcoBot Assistant API Call
+ * Answers queries strictly regarding EcoLeak, industrial emissions, and mathematical calculations.
+ */
+export async function askEcoBotAssistant(message, history = [], context = null) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+    const res = await fetch(`${API_BASE}/api/assistant/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message, history, context }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch (err) {
+    console.warn('EcoBot API communication note (using local calculation fallback):', err);
+  }
+
+  // Instant local math & project solver fallback
+  const lower = message.toLowerCase();
+  const kwhMatch = message.match(/(\d[\d,]*)\s*(?:kwh|units)/i);
+  if (kwhMatch) {
+    const kwh = parseFloat(kwhMatch[1].replace(/,/g, ''));
+    const co2 = Math.round(kwh * 0.716);
+    return {
+      response: `### Scope 2 Electricity Carbon Math\n\n**Standard Formula:**\n$$\\text{Emissions (kg CO}_2\\text{e)} = \\text{Consumption (kWh)} \\times \\text{Grid Factor (CEA India)}$$\n\n**Calculation:**\n- Electricity Input: **${kwh.toLocaleString()} kWh**\n- National Baseline Factor: **0.716 kg CO₂e / kWh**\n- Result: \`${kwh.toLocaleString()} × 0.716\` = **${co2.toLocaleString()} kg CO₂e** (~**${(co2 / 1000).toFixed(2)} Metric Tons CO₂e**)\n\n*Benchmark: Central Electricity Authority (CEA) CO₂ Baseline Database for the Indian Power Grid.*`,
+      source: 'local_math'
+    };
+  }
+
+  const dieselMatch = message.match(/(\d[\d,]*)\s*(?:l|liters?|litres?)?\s*(?:of\s*)?diesel/i);
+  if (dieselMatch) {
+    const liters = parseFloat(dieselMatch[1].replace(/,/g, ''));
+    const co2 = Math.round(liters * 2.687);
+    return {
+      response: `### Scope 1 Diesel Combustion Math\n\n**Standard Formula:**\n$$\\text{Emissions (kg CO}_2\\text{e)} = \\text{Volume (Liters)} \\times 2.687\\text{ kg CO}_2\\text{e/L}$$\n\n**Calculation:**\n- Diesel Consumed: **${liters.toLocaleString()} Liters**\n- Result: \`${liters.toLocaleString()} × 2.687\` = **${co2.toLocaleString()} kg CO₂e** (~**${(co2 / 1000).toFixed(2)} tCO₂e**)`,
+      source: 'local_math'
+    };
+  }
+
+  if (lower.includes('payback')) {
+    return {
+      response: `### Circular Payback Period Formula\n\n$$\\text{Payback Period (Months)} = \\left( \\frac{\\text{CAPEX (₹)}}{\\text{Annual OPEX Savings (₹)}} \\right) \\times 12$$\n\n**Example:**\n- Upfront CAPEX: **₹2,50,000**\n- Annual OPEX Savings: **₹3,00,000 / year**\n- Math: \`(250000 / 300000) × 12\` = **10.0 Months** payback!\n\n*Any intervention with payback < 12 months is classified as Fast-Payback Circular Alternative.*`,
+      source: 'local_math'
+    };
+  }
+
+  return {
+    response: `Welcome to EcoLeak Assistant.\n\nI assist with industrial emission calculations, Scope 1–3 carbon accounting, and regulatory compliance math.\n\nEnter an activity value, fuel quantity, or project inquiry to begin.`,
+    source: 'local_math'
+  };
+}
+

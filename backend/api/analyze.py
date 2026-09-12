@@ -229,7 +229,20 @@ async def analyze_document(
     file_bytes = await file.read()
     mime_type = file.content_type or "application/octet-stream"
 
-    # Use Gemini to extract activities from document
+    # Multilingual PDF extraction metadata tracking with PyMuPDF
+    if "pdf" in mime_type.lower():
+        try:
+            from backend.services.pdf_parser import extract_pdf_content
+            parsed_meta = extract_pdf_content(file_bytes)
+            parser_label = parsed_meta.get("parser", "PyMuPDF (Multilingual)")
+            pages = parsed_meta.get("page_count", 1)
+            tables_count = len(parsed_meta.get("tables", []))
+            scripts = ", ".join(parsed_meta.get("detected_scripts", [])) or "Latin/Multilingual"
+            warnings.append(f"Document parsed with {parser_label} ({pages} page(s), {tables_count} table grid(s), scripts: {scripts}).")
+        except Exception as e:
+            logger.debug("PyMuPDF metadata check note: %s", e)
+
+    # Use Groq / Gemini with PyMuPDF extracted text to extract activities
     extraction = gemini_service.analyze_document(file_bytes, mime_type)
 
     if extraction is None:

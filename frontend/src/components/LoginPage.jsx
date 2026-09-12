@@ -382,7 +382,7 @@ export default function LoginPage({
                         value={editLocation}
                         onChange={(e) => setEditLocation(e.target.value)}
                         className="dash-input"
-                        placeholder="e.g. MIDC Bhosari Industrial Area, Pune 411026"
+                        placeholder="e.g. Industrial Area Phase 1, City, State"
                         required
                       />
                     </div>
@@ -639,7 +639,7 @@ export default function LoginPage({
                     }}
                   >
                     <Sparkles size={12} style={{ color: 'var(--mint-hover)' }} />
-                    Bypass for testing (1-Click Demo Operator with Pune MIDC Parameters)
+                    Bypass for testing (1-Click Demo Operator)
                   </button>
                 </div>
               </form>

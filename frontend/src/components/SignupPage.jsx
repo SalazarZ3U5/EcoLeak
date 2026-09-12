@@ -421,7 +421,7 @@ export default function SignupPage({
                     onClick={handleAutoDetectLocation}
                     disabled={locationDetecting}
                     className="btn-gps-autodetect"
-                    title="Auto-detect current GPS location for Maharashtra MIDC zone"
+                    title="Auto-detect current GPS location for manufacturing facility"
                   >
                     <LocateFixed size={12} className={locationDetecting ? 'spin-on-active' : ''} />
                     <span>{locationDetecting ? 'Detecting GPS...' : 'Auto-Detect GPS'}</span>
@@ -431,7 +431,7 @@ export default function SignupPage({
                   <MapPin size={16} className="field-lead-icon" />
                   <input
                     type="text"
-                    placeholder="e.g. MIDC Bhosari Industrial Area, Pune 411026"
+                    placeholder="e.g. Industrial Area Phase 1, City, State"
                     value={authLocation}
                     onChange={(e) => { setAuthLocation(e.target.value); setLocationSuccess(false); }}
                     className="dash-input"
@@ -608,7 +608,7 @@ export default function SignupPage({
                   }}
                 >
                   <Sparkles size={12} style={{ color: 'var(--mint-hover)' }} />
-                  Bypass for testing (1-Click Demo Operator with Pune MIDC Parameters)
+                  Bypass for testing (1-Click Demo Operator)
                 </button>
               </div>
             </form>

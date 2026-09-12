@@ -223,11 +223,11 @@ export default function AuthPage({
               name: authName.trim() || fbUser.displayName || 'Operator',
               email: fbUser.email,
               facilityName: authFacility.trim() || 'Industrial Manufacturing Unit',
-              location: authLocation.trim() || 'MIDC Chakan Industrial Area, Pune, Maharashtra 410501',
-              regId: authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/0894',
+              location: authLocation.trim() || '',
+              regId: authRegId.trim() || '',
               regCategory: authRegCategory,
               regStandard: authRegStandard,
-              emissionCap: authEmissionCap.trim() || '450 MT CO2e / Year',
+              emissionCap: authEmissionCap.trim() || '',
               role: authRole,
               authMethod: 'firebase-email',
               registeredAt: new Date().toISOString(),
@@ -265,11 +265,11 @@ export default function AuthPage({
             name: authName.trim(),
             email: authEmail.trim(),
             facilityName: authFacility.trim() || 'Industrial Manufacturing Unit',
-            location: authLocation.trim() || 'MIDC Chakan Industrial Area, Pune, Maharashtra 410501',
-            regId: authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/0894',
+            location: authLocation.trim() || '',
+            regId: authRegId.trim() || '',
             regCategory: authRegCategory,
             regStandard: authRegStandard,
-            emissionCap: authEmissionCap.trim() || '450 MT CO2e / Year',
+            emissionCap: authEmissionCap.trim() || '',
             role: authRole,
             authMethod: 'email',
             registeredAt: new Date().toISOString(),
@@ -628,7 +628,7 @@ export default function AuthPage({
                         type="text"
                         value={editLocation}
                         onChange={(e) => setEditLocation(e.target.value)}
-                        placeholder="e.g. MIDC Chakan Industrial Area, Pune, Maharashtra 410501"
+                        placeholder="e.g. Industrial Area Phase 1, City, State"
                         className="dash-input"
                         required
                       />
@@ -918,7 +918,7 @@ export default function AuthPage({
                       <div className="location-input-wrap">
                         <input
                           type="text"
-                          placeholder="e.g. MIDC Chakan Industrial Area, Phase II, Pune, Maharashtra 410501"
+                          placeholder="e.g. Industrial Area Phase 1, City, State"
                           value={authLocation}
                           onChange={(e) => {
                             setAuthLocation(e.target.value);

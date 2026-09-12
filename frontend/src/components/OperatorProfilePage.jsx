@@ -5,7 +5,8 @@ import {
   Building2, User, Mail, Sparkles, RefreshCw, LocateFixed,
   Layers, Zap, Flame, LogOut, CheckCircle2, Factory, TrendingDown,
   Clock, Hash, Shield, Database, ExternalLink, Cpu, Phone, Briefcase,
-  Sliders, ArrowRight, CheckSquare, Award, ChevronDown, ChevronUp
+  Sliders, ArrowRight, CheckSquare, Award, ChevronDown, ChevronUp,
+  Plus, Trash2
 } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
 import { formatINR, formatCO2e, fetchUserAudits, syncProfileToSupabase } from '../services/api';
@@ -61,6 +62,11 @@ export default function OperatorProfilePage({
   const [plantEmissionCap, setPlantEmissionCap] = useState('');
   const [plantRegionalOffice, setPlantRegionalOffice] = useState('');
 
+  // ── Multi-Plant State ───────────────────────────────────────────────────
+  const [plants, setPlants] = useState([]);
+  // null = viewing list, 'new' = adding new, or plant.id = editing existing
+  const [editingPlantId, setEditingPlantId] = useState(null);
+
   // GPS Telemetry State
   const [locationDetecting, setLocationDetecting] = useState(false);
   const [locationSuccess, setLocationSuccess] = useState(false);
@@ -84,15 +90,27 @@ export default function OperatorProfilePage({
       setOpDepartment(authUser.department || '');
       setOpNotes(authUser.notes || '');
 
-      setPlantFacility(authUser.facilityName || '');
-      setPlantIndustry(authUser.industryType || '');
-      setPlantCapacity(authUser.capacity || '');
-      setPlantLocation(authUser.location || '');
-      setPlantRegId(authUser.regId || '');
-      setPlantRegCategory(authUser.regCategory || '');
-      setPlantRegStandard(authUser.regStandard || '');
-      setPlantEmissionCap(authUser.emissionCap || '');
-      setPlantRegionalOffice(authUser.regionalOffice || '');
+      // Load multi-plant array (backward compat: migrate legacy single plant)
+      if (authUser.plants && authUser.plants.length > 0) {
+        setPlants(authUser.plants);
+      } else if (authUser.facilityName) {
+        // Migrate legacy single-plant data to plants array
+        const legacyPlant = {
+          id: 'plant_1',
+          facilityName: authUser.facilityName || '',
+          industryType: authUser.industryType || '',
+          capacity: authUser.capacity || '',
+          location: authUser.location || '',
+          regId: authUser.regId || '',
+          regCategory: authUser.regCategory || '',
+          regStandard: authUser.regStandard || '',
+          emissionCap: authUser.emissionCap || '',
+          regionalOffice: authUser.regionalOffice || '',
+        };
+        setPlants([legacyPlant]);
+      } else {
+        setPlants([]);
+      }
     }
   }, [authUser]);
 
@@ -104,6 +122,8 @@ export default function OperatorProfilePage({
         const data = await fetchUserAudits();
         if (isMounted && data && data.length > 0) {
           setAudits(data);
+          // Auto-sync unique facilities from audit history into plants inventory
+          syncPlantsFromAudits(data, true);
         } else if (isMounted) {
           setAudits([]);
         }
@@ -115,7 +135,7 @@ export default function OperatorProfilePage({
     }
     loadAudits();
     return () => { isMounted = false; };
-  }, []);
+  }, [authUser]);
 
   const showFeedback = (type, text) => {
     setFeedbackMsg({ type, text });
@@ -142,11 +162,11 @@ export default function OperatorProfilePage({
           if (res.ok) {
             const data = await res.json();
             const addr = data.address || {};
-            const industrialSub = addr.industrial || addr.suburb || addr.neighbourhood || addr.city_district || 'MIDC Industrial Area';
-            const city = addr.city || addr.town || addr.state_district || 'Pune';
-            const state = addr.state || 'Maharashtra';
+            const industrialSub = addr.industrial || addr.suburb || addr.neighbourhood || addr.city_district || 'Industrial Area';
+            const city = addr.city || addr.town || addr.state_district || '';
+            const state = addr.state || '';
             const postcode = addr.postcode ? ` ${addr.postcode}` : '';
-            const detected = `${industrialSub}, ${city}, ${state}${postcode} (Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)})`;
+            const detected = `${industrialSub}${city ? `, ${city}` : ''}${state ? `, ${state}` : ''}${postcode} (Lat: ${latitude.toFixed(4)}, Lon: ${longitude.toFixed(4)})`;
 
             setPlantLocation(detected);
             setLocationSuccess(true);
@@ -183,6 +203,108 @@ export default function OperatorProfilePage({
     setTimeout(() => setCopiedRegId(false), 2200);
   };
 
+  // ── AUTO-SYNC / MAP FACILITIES FROM AUDIT RECORDS ─────────────────────────
+  const syncPlantsFromAudits = (auditList = audits, isSilent = false) => {
+    if (!auditList || auditList.length === 0) {
+      if (!isSilent) showFeedback('warning', 'No audit records found to map facilities from.');
+      return;
+    }
+
+    const currentPlants = [...(plants.length > 0 ? plants : (authUser?.plants || []))];
+    const seen = new Set(currentPlants.map((p) => (p.facilityName || '').toLowerCase().trim()));
+    const newPlants = [];
+
+    // Also preserve authUser.facilityName if configured and not already mapped
+    if (authUser?.facilityName && authUser.facilityName.trim() && !seen.has(authUser.facilityName.toLowerCase().trim())) {
+      const primaryPlant = {
+        id: 'plant_1',
+        facilityName: authUser.facilityName.trim(),
+        industryType: authUser.industryType || 'Plastic Processing & Extrusion',
+        capacity: authUser.capacity || '2,400 MT / Year',
+        location: authUser.location || 'Industrial Facility Site',
+        regId: authUser.regId || 'SPCB/CTO-2026/4102',
+        regCategory: authUser.regCategory || 'Orange Category (Pollution Index 41-59 - Moderate)',
+        regStandard: authUser.regStandard || 'SPCB Consent to Operate & Water/Air Acts',
+        emissionCap: authUser.emissionCap || '450 MT CO2e / Year',
+        regionalOffice: authUser.regionalOffice || 'Regional SPCB Office',
+        auditCount: 0,
+        lastAuditDate: null,
+      };
+      currentPlants.unshift(primaryPlant);
+      seen.add(primaryPlant.facilityName.toLowerCase().trim());
+    }
+
+    for (const a of auditList) {
+      const facName =
+        a.raw_inputs?.facility_name ||
+        (a.title ? a.title.replace(/ carbon audit/i, '').replace(/ audit/i, '').trim() : null) ||
+        (a.industry ? `${a.industry} Facility` : 'Manufacturing Facility');
+      const normKey = facName.toLowerCase().trim();
+
+      if (seen.has(normKey)) {
+        // Increment audit count on existing matching plant
+        const found = currentPlants.find(p => (p.facilityName || '').toLowerCase().trim() === normKey);
+        if (found) {
+          found.auditCount = (found.auditCount || 0) + 1;
+          if (!found.lastAuditDate && a.created_at) found.lastAuditDate = a.created_at;
+        }
+        continue;
+      }
+      seen.add(normKey);
+
+      const s1 = Number(a.scope_1_kg || 0);
+      const s2 = Number(a.scope_2_kg || 0);
+      const s3 = Number(a.scope_3_kg || 0);
+      const totalCo2 = Number(a.total_co2e_kg || (s1 + s2 + s3) || 0);
+      const capVal = totalCo2 > 0 ? `${Math.round((totalCo2 / 1000) * 1.25)} MT CO2e / Year` : '450 MT CO2e / Year';
+
+      newPlants.push({
+        id: a.raw_inputs?.plant_id || `plant_${Date.now()}_${newPlants.length + 1}`,
+        facilityName: facName,
+        industryType: a.industry || 'Manufacturing SME',
+        capacity: a.raw_inputs?.capacity || 'Continuous Operation',
+        location: a.raw_inputs?.location || 'Industrial Facility Site',
+        regId: a.raw_inputs?.regId || `SPCB/CTO-2026/${Math.floor(1000 + Math.random() * 9000)}`,
+        regCategory: a.raw_inputs?.regCategory || 'Orange Category (Pollution Index 41-59 - Moderate)',
+        regStandard: a.raw_inputs?.regStandard || 'SPCB Consent to Operate & Water/Air Acts',
+        emissionCap: capVal,
+        regionalOffice: a.raw_inputs?.regionalOffice || 'Regional State Pollution Board Office',
+        auditCount: 1,
+        lastAuditDate: a.created_at || new Date().toISOString(),
+      });
+    }
+
+    if (newPlants.length === 0 && currentPlants.length === plants.length) {
+      if (!isSilent) showFeedback('success', 'All facilities from your audit records are already in your plant inventory.');
+      return;
+    }
+
+    const updatedPlants = [...currentPlants, ...newPlants];
+    setPlants(updatedPlants);
+
+    const primary = updatedPlants[0] || {};
+    const updated = {
+      ...authUser,
+      plants: updatedPlants,
+      facilityName: primary.facilityName || authUser.facilityName || '',
+      industryType: primary.industryType || authUser.industryType || '',
+      capacity: primary.capacity || authUser.capacity || '',
+      location: primary.location || authUser.location || '',
+      regId: primary.regId || authUser.regId || '',
+      regCategory: primary.regCategory || authUser.regCategory || '',
+      regStandard: primary.regStandard || authUser.regStandard || '',
+      emissionCap: primary.emissionCap || authUser.emissionCap || '',
+      regionalOffice: primary.regionalOffice || authUser.regionalOffice || '',
+      lastUpdated: new Date().toISOString(),
+    };
+
+    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
+    if (onUpdateUser) onUpdateUser(updated);
+    if (!isSilent || newPlants.length > 0) {
+      showFeedback('success', `Mapped ${newPlants.length} plant facility record${newPlants.length !== 1 ? 's' : ''} from profile audit ledger.`);
+    }
+  };
+
   // ── SAVE OPERATOR INFORMATION ────────────────────────────────────────────
   const handleSaveOperator = (e) => {
     e.preventDefault();
@@ -210,22 +332,47 @@ export default function OperatorProfilePage({
     setCurrentPage('operator');
   };
 
-  // ── SAVE PLANT INFORMATION ───────────────────────────────────────────────
+  // ── SAVE PLANT INFORMATION (Multi-Plant) ─────────────────────────────────
   const handleSavePlant = (e) => {
     e.preventDefault();
     if (!authUser) return;
 
+    const plantData = {
+      id: editingPlantId === 'new' ? `plant_${Date.now()}` : editingPlantId,
+      facilityName: plantFacility.trim(),
+      industryType: plantIndustry.trim(),
+      capacity: plantCapacity.trim(),
+      location: plantLocation.trim(),
+      regId: plantRegId.trim(),
+      regCategory: plantRegCategory,
+      regStandard: plantRegStandard,
+      emissionCap: plantEmissionCap.trim(),
+      regionalOffice: plantRegionalOffice.trim(),
+    };
+
+    let updatedPlants;
+    if (editingPlantId === 'new') {
+      updatedPlants = [...plants, plantData];
+    } else {
+      updatedPlants = plants.map((p) => (p.id === editingPlantId ? plantData : p));
+    }
+
+    setPlants(updatedPlants);
+
+    // Backward compat: set primary (first) plant fields on top-level authUser
+    const primary = updatedPlants[0] || {};
     const updated = {
       ...authUser,
-      facilityName: plantFacility.trim() || authUser.facilityName,
-      industryType: plantIndustry.trim() || authUser.industryType,
-      capacity: plantCapacity.trim() || authUser.capacity,
-      location: plantLocation.trim() || authUser.location,
-      regId: plantRegId.trim() || authUser.regId,
-      regCategory: plantRegCategory || authUser.regCategory,
-      regStandard: plantRegStandard || authUser.regStandard,
-      emissionCap: plantEmissionCap.trim() || authUser.emissionCap,
-      regionalOffice: plantRegionalOffice.trim() || authUser.regionalOffice,
+      plants: updatedPlants,
+      facilityName: primary.facilityName || '',
+      industryType: primary.industryType || '',
+      capacity: primary.capacity || '',
+      location: primary.location || '',
+      regId: primary.regId || '',
+      regCategory: primary.regCategory || '',
+      regStandard: primary.regStandard || '',
+      emissionCap: primary.emissionCap || '',
+      regionalOffice: primary.regionalOffice || '',
       lastUpdated: new Date().toISOString(),
     };
 
@@ -237,8 +384,65 @@ export default function OperatorProfilePage({
       syncUserToFirestore({ uid: authUser.uid }, updated).catch((err) => console.debug('Firestore sync note:', err));
     }
 
-    showFeedback('success', 'Plant facility parameters & SPCB regulatory consents updated successfully.');
+    showFeedback('success', editingPlantId === 'new' ? 'New plant added successfully.' : 'Plant details updated successfully.');
+    setEditingPlantId(null);
     setCurrentPage('plant');
+  };
+
+  // ── DELETE PLANT ─────────────────────────────────────────────────────────
+  const handleDeletePlant = (plantId) => {
+    if (!authUser) return;
+    const updatedPlants = plants.filter((p) => p.id !== plantId);
+    setPlants(updatedPlants);
+
+    const primary = updatedPlants[0] || {};
+    const updated = {
+      ...authUser,
+      plants: updatedPlants,
+      facilityName: primary.facilityName || '',
+      industryType: primary.industryType || '',
+      capacity: primary.capacity || '',
+      location: primary.location || '',
+      regId: primary.regId || '',
+      regCategory: primary.regCategory || '',
+      regStandard: primary.regStandard || '',
+      emissionCap: primary.emissionCap || '',
+      regionalOffice: primary.regionalOffice || '',
+      lastUpdated: new Date().toISOString(),
+    };
+
+    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
+    if (onUpdateUser) onUpdateUser(updated);
+    showFeedback('success', 'Plant removed from your account.');
+  };
+
+  // ── LOAD PLANT INTO EDIT FORM ───────────────────────────────────────────
+  const startEditPlant = (plant) => {
+    setPlantFacility(plant.facilityName || '');
+    setPlantIndustry(plant.industryType || '');
+    setPlantCapacity(plant.capacity || '');
+    setPlantLocation(plant.location || '');
+    setPlantRegId(plant.regId || '');
+    setPlantRegCategory(plant.regCategory || '');
+    setPlantRegStandard(plant.regStandard || '');
+    setPlantEmissionCap(plant.emissionCap || '');
+    setPlantRegionalOffice(plant.regionalOffice || '');
+    setEditingPlantId(plant.id);
+    setCurrentPage('edit-plant');
+  };
+
+  const startAddPlant = () => {
+    setPlantFacility('');
+    setPlantIndustry('Plastic Processing & Extrusion');
+    setPlantCapacity('');
+    setPlantLocation('');
+    setPlantRegId('');
+    setPlantRegCategory('Orange Category (Pollution Index 41-59 - Moderate)');
+    setPlantRegStandard('SPCB Consent to Operate & Water/Air Acts');
+    setPlantEmissionCap('');
+    setPlantRegionalOffice('');
+    setEditingPlantId('new');
+    setCurrentPage('edit-plant');
   };
 
   const getCategoryBadgeClass = (cat = '') => {
@@ -251,8 +455,7 @@ export default function OperatorProfilePage({
 
   if (!authUser) return null;
 
-  // Active top tab highlighting
-  const isOperatorSection = currentPage === 'operator' || currentPage === 'edit-operator';
+  // Active section tracking (tab bar removed, but logic kept for parent nav)
   const isPlantSection = currentPage === 'plant' || currentPage === 'edit-plant';
 
   return (
@@ -283,44 +486,7 @@ export default function OperatorProfilePage({
             </div>
           )}
 
-          {/* ── TOP NAVIGATION TABS: OPERATOR vs PLANT ────────────────────────── */}
-          <div className="profile-pages-tab-bar">
-            <div className="profile-pages-tabs-left">
-              <button
-                type="button"
-                className={`profile-page-tab-btn ${isOperatorSection ? 'tab-btn-active' : ''}`}
-                onClick={() => setCurrentPage('operator')}
-              >
-                <User size={16} />
-                <span>Operator Profile</span>
-                {currentPage === 'edit-operator' && <span className="tab-mode-pill">Editing</span>}
-              </button>
 
-              <button
-                type="button"
-                className={`profile-page-tab-btn ${isPlantSection ? 'tab-btn-active' : ''}`}
-                onClick={() => setCurrentPage('plant')}
-              >
-                <Factory size={16} />
-                <span>Plant Information</span>
-                {currentPage === 'edit-plant' && <span className="tab-mode-pill">Editing</span>}
-              </button>
-            </div>
-
-            <div className="profile-pages-tabs-right">
-              {onNavigateSection && (
-                <button
-                  type="button"
-                  className="profile-tab-action-btn"
-                  onClick={() => onNavigateSection('input')}
-                  title="Open Input Audit"
-                >
-                  <LayoutDashboard size={14} />
-                  <span>Plant Process Data</span>
-                </button>
-              )}
-            </div>
-          </div>
 
           {/* ═════════════════════════════════════════════════════════════════════
               PAGE 1: OPERATOR PROFILE (VIEW MODE)
@@ -337,16 +503,23 @@ export default function OperatorProfilePage({
                     <span className="profile-badge-chip compliance-chip">
                       <Award size={12} /> {authUser.role || 'Plant Manager'}
                     </span>
+                    <span className="profile-badge-chip" style={{ background: 'rgba(14, 165, 233, 0.12)', color: '#0284c7', border: '1px solid rgba(14, 165, 233, 0.35)' }}>
+                      <Factory size={12} /> {plants.length} Plant{plants.length !== 1 ? 's' : ''} Linked
+                    </span>
                     <span className="profile-badge-chip font-mono-val" style={{ background: 'rgba(0,0,0,0.04)' }}>
-                      <Hash size={11} /> {authUser.uid ? `UID: ${authUser.uid.slice(0, 10)}...` : 'UID: OP-MIDC-0894'}
+                      <Hash size={11} /> {authUser.uid ? `UID: ${authUser.uid.slice(0, 10)}...` : 'UID: OP-8492'}
                     </span>
                   </div>
                   <h1 className="profile-hero-title">
                     {authUser.name || 'Industrial Operator'}
                   </h1>
                   <p className="profile-hero-sub">
-                    Authorized operator credentials, identity verification, role permissions, and active audit history for{' '}
-                    <strong>{authUser.facilityName || 'Unconfigured Plant'}</strong>.
+                    Authorized operator credentials, identity verification, role permissions, and active audit history across{' '}
+                    <strong>
+                      {plants.length > 1
+                        ? `${plants.length} Manufacturing Plants (${plants.map(p => p.facilityName).filter(Boolean).slice(0, 2).join(', ')}${plants.length > 2 ? '...' : ''})`
+                        : (plants[0]?.facilityName || authUser.facilityName || 'Unconfigured Plant')}
+                    </strong>.
                   </p>
                 </div>
 
@@ -361,11 +534,12 @@ export default function OperatorProfilePage({
                   </button>
                   <button
                     type="button"
-                    className="btn-profile-hero-switch"
-                    onClick={() => setCurrentPage('plant')}
+                    className="btn-profile-hero-dash"
+                    onClick={() => onNavigateSection ? onNavigateSection('plant') : setCurrentPage('plant')}
+                    title="Open Plant Information directory"
                   >
                     <Factory size={15} />
-                    <span>View Plant Information</span>
+                    <span>Plant Directory ({plants.length})</span>
                   </button>
                 </div>
               </div>
@@ -434,8 +608,15 @@ export default function OperatorProfilePage({
                         </div>
 
                         <div className="profile-spec-row">
-                          <span className="spec-label"><Building2 size={13} /> Assigned Facility</span>
-                          <strong className="spec-val">{authUser.facilityName || 'Not configured'}</strong>
+                          <span className="spec-label"><Building2 size={13} /> Primary Facility</span>
+                          <strong className="spec-val">{plants[0]?.facilityName || authUser.facilityName || 'Not configured'}</strong>
+                        </div>
+
+                        <div className="profile-spec-row">
+                          <span className="spec-label"><Factory size={13} /> Managed Sites</span>
+                          <span className="spec-badge-val" style={{ background: 'rgba(0, 184, 107, 0.1)', color: 'var(--mint-hover)' }}>
+                            {plants.length} Active {plants.length === 1 ? 'Plant' : 'Plants'}
+                          </span>
                         </div>
 
                         <div className="profile-spec-row">
@@ -508,37 +689,61 @@ export default function OperatorProfilePage({
                         </div>
                       ) : audits.length > 0 ? (
                         <div className="profile-audit-history-list">
-                          {audits.map((audit, idx) => (
-                            <div key={audit.id || idx} className="profile-audit-item">
-                              <div className="audit-item-left">
-                                <div className="audit-item-title-row">
-                                  <strong className="audit-industry-name">{audit.industry || 'Plant Audit Run'}</strong>
-                                  <span className="audit-date-tag">
-                                    {audit.created_at ? new Date(audit.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
-                                  </span>
-                                </div>
-                                <div className="audit-scope-pills">
-                                  <span className="scope-pill scope-1"><JargonTooltip term="Scope 1">Scope 1</JargonTooltip>: {formatCO2e(audit.scope_1_kg || 1200)}</span>
-                                  <span className="scope-pill scope-2"><JargonTooltip term="Scope 2">Scope 2</JargonTooltip>: {formatCO2e(audit.scope_2_kg || 16400)}</span>
-                                  <span className="scope-pill scope-3"><JargonTooltip term="Scope 3">Scope 3</JargonTooltip>: {formatCO2e(audit.scope_3_kg || 176980)}</span>
-                                </div>
-                              </div>
+                          {audits.map((audit, idx) => {
+                            const matchedPlant = plants.find((p) =>
+                              (audit.raw_inputs?.facility_name && p.facilityName?.toLowerCase() === audit.raw_inputs.facility_name.toLowerCase()) ||
+                              (audit.industry && p.industryType?.toLowerCase().includes(audit.industry.toLowerCase()))
+                            );
+                            const facDisplay = matchedPlant?.facilityName || audit.raw_inputs?.facility_name || (audit.industry ? `${audit.industry} Facility` : 'Operational Site');
 
-                              <div className="audit-item-right">
-                                <span className="audit-total-co2"><JargonTooltip term="CO2e">{formatCO2e(audit.total_co2e_kg, true)}</JargonTooltip></span>
-                                {onNavigateSection && (
-                                  <button
-                                    type="button"
-                                    className="btn-view-audit-record"
-                                    onClick={() => onNavigateSection('leaks')}
-                                  >
-                                    <span>Inspect Leaks</span>
-                                    <ExternalLink size={12} />
-                                  </button>
-                                )}
+                            return (
+                              <div key={audit.id || idx} className="profile-audit-item">
+                                <div className="audit-item-left">
+                                  <div className="audit-item-title-row">
+                                    <strong className="audit-industry-name">{facDisplay}</strong>
+                                    <span className="audit-facility-chip-badge">
+                                      <Factory size={10} /> {audit.industry || 'Manufacturing'}
+                                    </span>
+                                    <span className="audit-date-tag">
+                                      {audit.created_at ? new Date(audit.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                                    </span>
+                                  </div>
+                                  <div className="audit-scope-pills">
+                                    <span className="scope-pill scope-1"><JargonTooltip term="Scope 1">Scope 1</JargonTooltip>: {formatCO2e(audit.scope_1_kg || 1200)}</span>
+                                    <span className="scope-pill scope-2"><JargonTooltip term="Scope 2">Scope 2</JargonTooltip>: {formatCO2e(audit.scope_2_kg || 16400)}</span>
+                                    <span className="scope-pill scope-3"><JargonTooltip term="Scope 3">Scope 3</JargonTooltip>: {formatCO2e(audit.scope_3_kg || 176980)}</span>
+                                  </div>
+                                </div>
+
+                                <div className="audit-item-right">
+                                  <span className="audit-total-co2"><JargonTooltip term="CO2e">{formatCO2e(audit.total_co2e_kg, true)}</JargonTooltip></span>
+                                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                    {onNavigateSection && (
+                                      <button
+                                        type="button"
+                                        className="btn-view-audit-record"
+                                        onClick={() => onNavigateSection('leaks')}
+                                        title="Inspect detected leaks for this audit"
+                                      >
+                                        <span>Inspect Leaks</span>
+                                        <ExternalLink size={12} />
+                                      </button>
+                                    )}
+                                    <button
+                                      type="button"
+                                      className="btn-view-audit-record"
+                                      style={{ background: 'rgba(14, 165, 233, 0.08)', color: '#0284c7', borderColor: 'rgba(14, 165, 233, 0.25)' }}
+                                      onClick={() => onNavigateSection ? onNavigateSection('plant') : setCurrentPage('plant')}
+                                      title="View facility in Plant Information"
+                                    >
+                                      <Factory size={11} />
+                                      <span>Plant Info</span>
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <div style={{ padding: '36px', textAlign: 'center', color: 'var(--text-secondary)' }}>
@@ -554,19 +759,137 @@ export default function OperatorProfilePage({
                           )}
                         </div>
                       )}
-
-                      <div className="profile-card-footer-action">
-                        <button
-                          type="button"
-                          className="btn-profile-card-action"
-                          onClick={() => setCurrentPage('plant')}
-                        >
-                          <Factory size={14} /> Switch to Plant Information &amp; Consents
-                        </button>
-                      </div>
                     </>
                   )}
                 </div>
+              </div>
+
+              {/* Card 3: Managed Manufacturing Facilities Portfolio */}
+              <div className="profile-card-clean elite-card" style={{ marginTop: '24px' }}>
+                <div className="profile-card-header">
+                  <div className="card-header-icon icon-cyan">
+                    <Factory size={18} />
+                  </div>
+                  <div className="card-header-titles">
+                    <h3 className="profile-card-title">Managed Manufacturing Facilities ({plants.length})</h3>
+                    <span className="profile-card-subtitle">Physical sites, GPS telemetry, and CTO consents linked to this account</span>
+                  </div>
+                  <div className="card-header-actions" style={{ marginLeft: 'auto', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {audits.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn-profile-card-action"
+                        onClick={() => syncPlantsFromAudits()}
+                        title="Sync facilities from audit history"
+                      >
+                        <RefreshCw size={13} /> Sync from Audits
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-profile-card-action"
+                      onClick={startAddPlant}
+                      title="Add a new plant"
+                    >
+                      <Plus size={13} /> Add Plant
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-card-collapse-toggle"
+                      onClick={() => toggleCard('op-plants')}
+                      title={collapsedCards['op-plants'] ? "Expand card" : "Collapse card"}
+                      aria-label="Toggle section collapse"
+                    >
+                      {collapsedCards['op-plants'] ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+                    </button>
+                  </div>
+                </div>
+
+                {collapsedCards['op-plants'] ? (
+                  <div className="card-collapsed-summary">
+                    <Factory size={14} color="var(--cyan-main)" />
+                    <span>{plants.length} Registered Plants · Primary: {plants[0]?.facilityName || 'Pending'}</span>
+                  </div>
+                ) : (
+                  <div className="profile-plants-portfolio-body">
+                    {plants.length === 0 ? (
+                      <div className="profile-plants-empty-inline">
+                        <Factory size={32} strokeWidth={1} style={{ opacity: 0.5, margin: '0 auto 10px' }} />
+                        <p style={{ margin: '0 0 12px', fontSize: '13.5px', color: 'var(--text-secondary)' }}>
+                          No physical manufacturing plants have been linked to this operator account yet.
+                        </p>
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-primary btn-sm"
+                            onClick={startAddPlant}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                          >
+                            <Plus size={14} /> Add First Plant
+                          </button>
+                          {audits.length > 0 && (
+                            <button
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              onClick={() => syncPlantsFromAudits()}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            >
+                              <RefreshCw size={14} /> Import {audits.length} from Audits
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="profile-plant-minilist">
+                        {plants.map((plant, idx) => (
+                          <div key={plant.id || idx} className="profile-plant-mini-row">
+                            <div className="mini-row-icon-wrap">
+                              <Factory size={16} />
+                            </div>
+                            <div className="mini-row-info">
+                              <div className="mini-row-title-line">
+                                <strong className="mini-row-name">{plant.facilityName || 'Unnamed Plant'}</strong>
+                                {idx === 0 && (
+                                  <span className="mini-primary-tag">
+                                    <ShieldCheck size={10} /> Primary
+                                  </span>
+                                )}
+                                <span className={`pcs-value ${getCategoryBadgeClass(plant.regCategory)}`} style={{ fontSize: '10.5px', padding: '2px 7px', borderRadius: '4px' }}>
+                                  {(plant.regCategory || 'Orange').split('(')[0].trim()}
+                                </span>
+                              </div>
+                              <div className="mini-row-meta-line">
+                                <span><MapPin size={11} /> {plant.location || 'Location pending'}</span>
+                                <span>•</span>
+                                <span className="font-mono-val">CTO: {plant.regId || 'Pending'}</span>
+                                <span>•</span>
+                                <span>Cap: {plant.emissionCap || 'Unset'}</span>
+                              </div>
+                            </div>
+                            <div className="mini-row-actions">
+                              <button
+                                type="button"
+                                className="btn-mini-plant-action"
+                                onClick={() => startEditPlant(plant)}
+                                title="Edit plant parameters"
+                              >
+                                <Edit2 size={13} />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn-mini-plant-action"
+                                onClick={() => onNavigateSection ? onNavigateSection('plant') : setCurrentPage('plant')}
+                                title="View in Plant Information"
+                              >
+                                <ExternalLink size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -716,368 +1039,177 @@ export default function OperatorProfilePage({
           )}
 
           {/* ═════════════════════════════════════════════════════════════════════
-              PAGE 3: PLANT INFORMATION (VIEW MODE)
+              PAGE 3: PLANT INFORMATION — MULTI-PLANT LIST
              ═════════════════════════════════════════════════════════════════════ */}
           {currentPage === 'plant' && (
             <div className="profile-section-view-wrap">
-              {/* Plant Hero Banner */}
+              {/* Plant Page Header */}
               <div className="profile-hero-banner elite-card">
                 <div className="profile-hero-left">
-                  <h1 className="profile-hero-title">
-                    {authUser.facilityName || plantFacility || 'Facility Name Not Configured'}
-                  </h1>
+                  <div className="profile-hero-badge-row">
+                    <span className="profile-badge-chip verified-chip">
+                      <Factory size={13} color="var(--mint-hover)" /> {plants.length} Plant{plants.length !== 1 ? 's' : ''} Registered
+                    </span>
+                  </div>
+                  <h1 className="profile-hero-title">Plant Information</h1>
                   <p className="profile-hero-sub">
-                    Physical location, GPS telemetry, SPCB Consent to Operate (CTO) registration, and permissible emission boundaries.
+                    Manufacturing facilities, GPS telemetry, SPCB Consent to Operate (CTO), and permissible emission boundaries.
                   </p>
                 </div>
-
                 <div className="profile-hero-actions">
+                  {audits.length > 0 && (
+                    <button
+                      type="button"
+                      className="btn-profile-hero-edit"
+                      onClick={() => syncPlantsFromAudits()}
+                      title="Sync facilities from audit history"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <RefreshCw size={14} />
+                      <span>Sync from Audits ({audits.length})</span>
+                    </button>
+                  )}
                   <button
                     type="button"
                     className="btn-profile-primary-edit"
-                    onClick={() => setCurrentPage('edit-plant')}
+                    onClick={startAddPlant}
                   >
-                    <Edit2 size={15} />
-                    <span>Edit Plant Details</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-profile-hero-switch"
-                    onClick={() => setCurrentPage('operator')}
-                  >
-                    <User size={15} />
-                    <span>View Operator Profile</span>
+                    <Plus size={15} />
+                    <span>Add Plant</span>
                   </button>
                 </div>
               </div>
 
-              {/* 4-Card Plant Stat Ribbon */}
-              <div className="profile-stats-ribbon">
-                <div className="profile-stat-card">
-                  <div className="stat-card-icon-wrap icon-mint">
-                    <FileCheck size={18} />
+              {plants.length === 0 ? (
+                /* ── Empty State: No Plants ──────────────────────────────────────── */
+                <div className="plant-empty-state">
+                  <div className="plant-empty-icon-wrap">
+                    <Factory size={48} strokeWidth={1} />
                   </div>
-                  <div className="stat-card-info">
-                    <span className="stat-card-label"><JargonTooltip term="SPCB">SPCB</JargonTooltip> <JargonTooltip term="CTO">CTO</JargonTooltip> REGISTRATION</span>
-                    <strong className="stat-card-value font-mono-val">{authUser.regId || plantRegId || 'Not configured'}</strong>
-                    <span className="stat-card-sub">State Pollution Board Consent</span>
-                  </div>
-                </div>
-
-                <div className="profile-stat-card">
-                  <div className="stat-card-icon-wrap icon-amber">
-                    <Scale size={18} />
-                  </div>
-                  <div className="stat-card-info">
-                    <span className="stat-card-label"><JargonTooltip term="CTO">CONSENTED CAP</JargonTooltip></span>
-                    <strong className="stat-card-value">{authUser.emissionCap || plantEmissionCap || 'Not configured'}</strong>
-                    <span className="stat-card-sub">Air Act Permissible Ceiling</span>
-                  </div>
-                </div>
-
-                <div className="profile-stat-card">
-                  <div className="stat-card-icon-wrap icon-cyan">
-                    <MapPin size={18} />
-                  </div>
-                  <div className="stat-card-info">
-                    <span className="stat-card-label">INDUSTRIAL ZONE</span>
-                    <strong className="stat-card-value">
-                      {authUser.location ? authUser.location.split(',')[0] : 'Not configured'}
-                    </strong>
-                    <span className="stat-card-sub">Industrial Development Zone</span>
-                  </div>
-                </div>
-
-                <div className="profile-stat-card">
-                  <div className="stat-card-icon-wrap icon-emerald">
-                    <Layers size={18} />
-                  </div>
-                  <div className="stat-card-info">
-                    <span className="stat-card-label">INDUSTRY SECTOR</span>
-                    <strong className="stat-card-value">
-                      {authUser.industryType || plantIndustry || 'Not configured'}
-                    </strong>
-                    <span className="stat-card-sub">Process Classification</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Plant Details Grid */}
-              <div className="profile-two-column-clean-grid">
-                {/* Site & Location Card */}
-                <div className="profile-card-clean elite-card">
-                  <div className="profile-card-header">
-                    <div className="card-header-icon icon-cyan">
-                      <MapPin size={18} />
-                    </div>
-                    <div className="card-header-titles">
-                      <h3 className="profile-card-title">Physical Facility &amp; GPS Telemetry</h3>
-                      <span className="profile-card-subtitle">Geographical coordinates, regional zone, and site jurisdiction</span>
-                    </div>
-                    <div className="card-header-actions" style={{ marginLeft: 'auto' }}>
-                      <button
-                        type="button"
-                        className="btn-card-collapse-toggle"
-                        onClick={() => toggleCard('plant-site')}
-                        title={collapsedCards['plant-site'] ? "Expand section" : "Collapse section"}
-                        aria-label="Toggle section collapse"
-                      >
-                        {collapsedCards['plant-site'] ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {collapsedCards['plant-site'] ? (
-                    <div className="card-collapsed-summary">
-                      <MapPin size={14} color="var(--cyan-main)" />
-                      <span>{authUser.location || plantLocation || 'Location Pending'} · GPS Anchored</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="profile-telemetry-box">
-                        <div className="telemetry-pin-row">
-                          <div className="telemetry-pin-icon">
-                            <MapPin size={18} color="#ffffff" />
-                          </div>
-                          <div className="telemetry-pin-text">
-                            <span className="telemetry-title">PHYSICAL MANUFACTURING SITE</span>
-                            <strong className="telemetry-address">
-                              {authUser.location || plantLocation || 'Not configured (Click Update Site Location below)'}
-                            </strong>
-                          </div>
-                        </div>
-
-                        <div className="telemetry-metrics-grid">
-                          <div className="telemetry-sub-metric">
-                            <span className="telemetry-sub-label">Industrial Zone</span>
-                            <strong className="telemetry-sub-val">{authUser.location ? 'Local Industrial Zone' : 'Not configured'}</strong>
-                          </div>
-                          <div className="telemetry-sub-metric">
-                            <span className="telemetry-sub-label">Regional Pollution Office</span>
-                            <strong className="telemetry-sub-val">{authUser.regionalOffice || plantRegionalOffice || 'Not configured'}</strong>
-                          </div>
-                          <div className="telemetry-sub-metric">
-                            <span className="telemetry-sub-label">Site Geocoding</span>
-                            <span className="telemetry-sub-status">
-                              {authUser.location ? (
-                                <><CheckCircle2 size={12} color="var(--mint-hover)" /> GPS Anchored</>
-                              ) : (
-                                <span style={{ color: 'var(--amber)' }}>Pending Setup</span>
-                              )}
-                            </span>
-                          </div>
-                          <div className="telemetry-sub-metric">
-                            <span className="telemetry-sub-label">State Jurisdiction</span>
-                            <strong className="telemetry-sub-val">{authUser.location ? 'State SPCB' : 'Not configured'}</strong>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="profile-map-card-stub">
-                        <div className="map-stub-radar">
-                          <div className="radar-circle circle-1" />
-                          <div className="radar-circle circle-2" />
-                          <div className="radar-blip" />
-                        </div>
-                        <div className="map-stub-info">
-                          <span className="map-stub-title">Telemetric Coordinate Match</span>
-                          <span className="map-stub-coords">
-                            {authUser.location && authUser.location.includes('Lat:')
-                              ? authUser.location.split('(')[1]?.replace(')', '') || 'GPS coordinates captured'
-                              : 'Coordinates Pending (Click Auto-Detect in Edit Plant)'}
-                          </span>
-                          <span className="map-stub-note">Pinpoint telemetry for regional grid emission factor baseline</span>
-                        </div>
-                      </div>
-
-                      <div className="profile-card-footer-action">
-                        <button
-                          type="button"
-                          className="btn-profile-card-action"
-                          onClick={() => setCurrentPage('edit-plant')}
-                        >
-                          <LocateFixed size={14} /> Update Site Location &amp; Coordinates
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Consents & Permissible Limits Card */}
-                <div className="profile-card-clean elite-card">
-                  <div className="profile-card-header">
-                    <div className="card-header-icon icon-rose">
-                      <Scale size={18} />
-                    </div>
-                    <div className="card-header-titles">
-                      <h3 className="profile-card-title">SPCB / CPCB Regulatory Consents</h3>
-                      <span className="profile-card-subtitle">Permissible statutory limits, CTO certificates, and standards</span>
-                    </div>
-                    <div className="card-header-actions" style={{ marginLeft: 'auto' }}>
-                      <button
-                        type="button"
-                        className="btn-card-collapse-toggle"
-                        onClick={() => toggleCard('plant-consents')}
-                        title={collapsedCards['plant-consents'] ? "Expand section" : "Collapse section"}
-                        aria-label="Toggle section collapse"
-                      >
-                        {collapsedCards['plant-consents'] ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {collapsedCards['plant-consents'] ? (
-                    <div className="card-collapsed-summary">
-                      <Scale size={14} color="var(--rose)" />
-                      <span>CTO: {authUser.regId || plantRegId || 'Not configured'} · Cap: {authUser.emissionCap || plantEmissionCap || 'Not configured'}</span>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="profile-consent-box">
-                        <div className="consent-top-item">
-                          <div className="consent-label-row">
-                            <span className="consent-label">
-                              <FileCheck size={13} color="var(--mint-hover)" /> <JargonTooltip term="CTO">Consent to Operate (CTO)</JargonTooltip> No.
-                            </span>
-                            <button
-                              type="button"
-                              className="btn-copy-consent"
-                              onClick={handleCopyRegId}
-                              title="Copy Consent Number"
-                            >
-                              {copiedRegId ? <Check size={12} color="var(--mint-hover)" /> : <Copy size={12} />}
-                              <span>{copiedRegId ? 'Copied' : 'Copy'}</span>
-                            </button>
-                          </div>
-                          <div className="consent-reg-number-display">
-                            <code>{authUser.regId || plantRegId || 'PENDING REGISTRATION'}</code>
-                          </div>
-                        </div>
-
-                        <div className="consent-category-block">
-                          <div className="consent-label-row">
-                            <span className="consent-label"><ShieldAlert size={13} /> <JargonTooltip term="Orange Category">Pollution Category</JargonTooltip></span>
-                            <span className={`reg-cat-badge ${getCategoryBadgeClass(authUser.regCategory || plantRegCategory)}`}>
-                              {(authUser.regCategory || plantRegCategory || 'Not configured').split('(')[0].trim()}
-                            </span>
-                          </div>
-                          <p className="category-explanation">
-                            {(authUser.regCategory || plantRegCategory || '').includes('Red')
-                              ? 'Heavy industrial operations (Pollution Index 60+). Requires continuous online emission monitoring.'
-                              : (authUser.regCategory || plantRegCategory || '').includes('Green')
-                              ? 'Low impact operations (Pollution Index 21–40). Simplified periodic consent renewals.'
-                              : (authUser.regCategory || plantRegCategory || '').includes('Orange')
-                              ? 'Moderate impact category (PI 41–59). Standard quarterly compliance reporting under Air/Water Acts.'
-                              : 'Category not configured. Please select your official CPCB category (Red, Orange, Green, White).'}
-                          </p>
-                        </div>
-
-                        <div className="consent-cap-meter">
-                          <div className="cap-meter-header">
-                            <span className="cap-meter-title"><JargonTooltip term="tCO2e">Consented Emission Ceiling</JargonTooltip></span>
-                            <strong className="cap-meter-val">{authUser.emissionCap || plantEmissionCap || 'Not configured'}</strong>
-                          </div>
-                          <div className="cap-meter-bar-track">
-                            <div className="cap-meter-bar-fill" style={{ width: authUser.emissionCap ? '43%' : '0%' }} />
-                          </div>
-                          <div className="cap-meter-footer">
-                            <span>Status: {authUser.emissionCap ? 'Cap Configured' : 'No Cap Specified'}</span>
-                            <span style={{ color: 'var(--mint-hover)', fontWeight: 700 }}>
-                              {authUser.emissionCap ? 'Statutory Ceiling Tracked' : 'Update in Edit Plant'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="profile-spec-row" style={{ marginTop: '12px' }}>
-                          <span className="spec-label"><Scale size={13} /> <JargonTooltip term="SPCB">Primary Standard</JargonTooltip></span>
-                          <span className="spec-val" style={{ fontWeight: 700 }}>
-                            {authUser.regStandard || plantRegStandard || 'Not configured'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="profile-card-footer-action">
-                        <button
-                          type="button"
-                          className="btn-profile-card-action"
-                          onClick={() => setCurrentPage('edit-plant')}
-                        >
-                          <Edit2 size={14} /> Modify Regulatory Framework &amp; Consents
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Physical Process Streams Baseline Ribbon */}
-              <div className="profile-stream-baseline-card elite-card">
-                <div className="profile-card-header">
-                  <div className="card-header-icon icon-emerald">
-                    <Factory size={18} />
-                  </div>
-                  <div className="card-header-titles">
-                    <h3 className="profile-card-title">Configured Process Streams Baseline</h3>
-                    <span className="profile-card-subtitle">Industrial utility &amp; raw material throughput profiles</span>
-                  </div>
-                  <div className="card-header-actions" style={{ marginLeft: 'auto' }}>
+                  <h3 className="plant-empty-title">No plants configured yet</h3>
+                  <p className="plant-empty-desc">
+                    {audits.length > 0
+                      ? `You have ${audits.length} recorded emission audits on your profile. You can import these facilities directly into your plant inventory with one click.`
+                      : 'Add your first manufacturing facility to start tracking emissions, regulatory consents, and circular economy opportunities.'}
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
                     <button
                       type="button"
-                      className="btn-card-collapse-toggle"
-                      onClick={() => toggleCard('plant-streams')}
-                      title={collapsedCards['plant-streams'] ? "Expand section" : "Collapse section"}
-                      aria-label="Toggle section collapse"
+                      className="btn btn-primary btn-lg"
+                      onClick={startAddPlant}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                     >
-                      {collapsedCards['plant-streams'] ? <ChevronDown size={17} /> : <ChevronUp size={17} />}
+                      <Plus size={18} />
+                      <span>Add Your First Plant</span>
                     </button>
+                    {audits.length > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-lg"
+                        onClick={() => syncPlantsFromAudits()}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                      >
+                        <RefreshCw size={18} />
+                        <span>Import {audits.length} Facilities from Profile Audits</span>
+                      </button>
+                    )}
                   </div>
                 </div>
-
-                {collapsedCards['plant-streams'] ? (
-                  <div className="card-collapsed-summary">
-                    <Zap size={14} color="var(--mint-hover)" />
-                    <span>20,000 kWh Power · 500 L Diesel · 60,000 kg Virgin Resin · 50% Circular PCR Target</span>
-                  </div>
-                ) : (
-                  <div className="profile-stream-grid">
-                    <div className="stream-badge-card">
-                      <div className="stream-badge-header">
-                        <Zap size={15} color="var(--mint-hover)" />
-                        <span>Grid Utility Power</span>
+              ) : (
+                /* ── Plant List Cards ────────────────────────────────────────────── */
+                <div className="plant-list-grid">
+                  {plants.map((plant, idx) => (
+                    <div key={plant.id} className="plant-list-card elite-card">
+                      <div className="plant-card-header">
+                        <div className="plant-card-icon-wrap">
+                          <Factory size={20} />
+                        </div>
+                        <div className="plant-card-titles">
+                          <h3 className="plant-card-name">{plant.facilityName || 'Unnamed Plant'}</h3>
+                          <span className="plant-card-location">
+                            <MapPin size={11} /> {plant.location || 'Location not set'}
+                          </span>
+                        </div>
+                        <div className="plant-card-actions">
+                          <button
+                            type="button"
+                            className="btn-plant-card-action btn-edit"
+                            onClick={() => startEditPlant(plant)}
+                            title="Edit plant details"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-plant-card-action btn-delete"
+                            onClick={() => handleDeletePlant(plant.id)}
+                            title="Remove plant"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </div>
-                      <strong className="stream-badge-value">20,000 <JargonTooltip term="kWh">kWh</JargonTooltip></strong>
-                      <span className="stream-badge-sub"><JargonTooltip term="Scope 2">Scope 2</JargonTooltip> (0.82 kg CO₂e / kWh)</span>
-                    </div>
 
-                    <div className="stream-badge-card">
-                      <div className="stream-badge-header">
-                        <Flame size={15} color="var(--rose)" />
-                        <span>Thermal Boiler Fuel</span>
+                      <div className="plant-card-specs">
+                        <div className="plant-card-spec">
+                          <span className="pcs-label">Industry</span>
+                          <span className="pcs-value">{plant.industryType || 'Not set'}</span>
+                        </div>
+                        <div className="plant-card-spec">
+                          <span className="pcs-label">CTO No.</span>
+                          <span className="pcs-value font-mono-val">{plant.regId || 'Not set'}</span>
+                        </div>
+                        <div className="plant-card-spec">
+                          <span className="pcs-label">Category</span>
+                          <span className={`pcs-value ${getCategoryBadgeClass(plant.regCategory)}`} style={{ fontWeight: 700 }}>
+                            {(plant.regCategory || 'Not set').split('(')[0].trim()}
+                          </span>
+                        </div>
+                        <div className="plant-card-spec">
+                          <span className="pcs-label">Emission Cap</span>
+                          <span className="pcs-value">{plant.emissionCap || 'Not set'}</span>
+                        </div>
                       </div>
-                      <strong className="stream-badge-value">500 Liters Diesel</strong>
-                      <span className="stream-badge-sub"><JargonTooltip term="Scope 1">Scope 1</JargonTooltip> (2.68 kg CO₂e / L)</span>
-                    </div>
 
-                    <div className="stream-badge-card">
-                      <div className="stream-badge-header">
-                        <Layers size={15} color="var(--emerald-main)" />
-                        <span>Raw Virgin Polymer</span>
-                      </div>
-                      <strong className="stream-badge-value">60,000 kg <JargonTooltip term="Virgin Material">Virgin Resin</JargonTooltip></strong>
-                      <span className="stream-badge-sub"><JargonTooltip term="Scope 3">Scope 3</JargonTooltip> Inflow (3.10 kg/kg)</span>
-                    </div>
+                      <div className="plant-card-footer-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto', paddingTop: '12px', borderTop: '1px solid var(--line, rgba(0, 0, 0, 0.06))', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          {idx === 0 && (
+                            <div className="plant-card-primary-badge">
+                              <ShieldCheck size={11} /> Primary Plant
+                            </div>
+                          )}
+                          <span className="plant-card-audit-count-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: 'var(--text-secondary, #475569)', background: '#f1f5f9', padding: '3px 8px', borderRadius: '6px' }}>
+                            <Database size={11} color="var(--mint-hover)" /> {plant.auditCount || 0} {plant.auditCount === 1 ? 'Audit' : 'Audits'}
+                          </span>
+                        </div>
 
-                    <div className="stream-badge-card">
-                      <div className="stream-badge-header">
-                        <TrendingDown size={15} color="var(--mint-hover)" />
-                        <span>Circular Substitution</span>
+                        {onNavigateSection && (
+                          <button
+                            type="button"
+                            className="btn-card-audit-jump"
+                            onClick={() => onNavigateSection('input')}
+                            title={`Run new carbon audit for ${plant.facilityName || 'this plant'}`}
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', background: 'linear-gradient(135deg, #062319 0%, #0d5f47 100%)', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer' }}
+                          >
+                            <Zap size={12} color="#ffffff" />
+                            <span>Audit Plant</span>
+                          </button>
+                        )}
                       </div>
-                      <strong className="stream-badge-value">50% <JargonTooltip term="PCR">Recycled PCR</JargonTooltip></strong>
-                      <span className="stream-badge-sub"><JargonTooltip term="Closed-Loop">Closed-Loop</JargonTooltip> Alternative</span>
                     </div>
-                  </div>
-                )}
-              </div>
+                  ))}
+
+                  {/* Add Plant Card */}
+                  <button
+                    type="button"
+                    className="plant-add-card"
+                    onClick={startAddPlant}
+                  >
+                    <Plus size={24} />
+                    <span>Add Another Plant</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -1091,13 +1223,13 @@ export default function OperatorProfilePage({
                 <button
                   type="button"
                   className="btn-back-breadcrumb"
-                  onClick={() => setCurrentPage('plant')}
+                  onClick={() => { setEditingPlantId(null); setCurrentPage('plant'); }}
                 >
                   <ArrowLeft size={16} />
-                  <span>Back to Plant Information</span>
+                  <span>Back to Plant List</span>
                 </button>
                 <span className="breadcrumb-divider">/</span>
-                <span className="breadcrumb-current">Edit Plant Parameters &amp; Consents</span>
+                <span className="breadcrumb-current">{editingPlantId === 'new' ? 'Add New Plant' : 'Edit Plant'}</span>
               </div>
 
               {/* Edit Header */}
@@ -1107,7 +1239,7 @@ export default function OperatorProfilePage({
                     <Factory size={22} />
                   </div>
                   <div>
-                    <h2 className="edit-page-title">Edit Plant Parameters &amp; Regulatory Consents</h2>
+                    <h2 className="edit-page-title">{editingPlantId === 'new' ? 'Add New Plant' : 'Edit Plant Parameters'}</h2>
                     <p className="edit-page-sub">
                       Configure physical manufacturing site, GPS telemetry, SPCB Consent to Operate (CTO), and permissible emission caps.
                     </p>
@@ -1198,7 +1330,7 @@ export default function OperatorProfilePage({
                         rows={3}
                         value={plantLocation}
                         onChange={(e) => setPlantLocation(e.target.value)}
-                        placeholder="e.g. MIDC Bhosari Industrial Area, Pune, Maharashtra 411026"
+                        placeholder="e.g. Industrial Area Phase 1, City, State"
                         required
                       />
                       {locationStatusMsg && (
@@ -1290,12 +1422,12 @@ export default function OperatorProfilePage({
                 {/* Form Action Buttons */}
                 <div className="edit-form-actions-bar">
                   <button type="submit" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                    <Save size={16} /> Save Plant Parameters
+                    <Save size={16} /> {editingPlantId === 'new' ? 'Add Plant' : 'Save Plant Parameters'}
                   </button>
                   <button
                     type="button"
                     className="btn btn-ghost"
-                    onClick={() => setCurrentPage('plant')}
+                    onClick={() => { setEditingPlantId(null); setCurrentPage('plant'); }}
                   >
                     Cancel
                   </button>

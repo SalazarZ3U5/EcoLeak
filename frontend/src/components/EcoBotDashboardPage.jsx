@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Send, RefreshCw, Check, Copy, ShieldCheck, ArrowRight, Lock, LogIn,
   Sparkles, Bot, Zap, Flame, Scale, Layers, HelpCircle, AlertCircle,
-  FileCheck, Factory, CornerDownLeft, ExternalLink, ShieldAlert
+  FileCheck, Factory, CornerDownLeft, ExternalLink, ShieldAlert, Building2, Crown, X
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -75,6 +75,55 @@ export default function EcoBotDashboardPage({
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
+  const [selectedFactoryId, setSelectedFactoryId] = useState('primary');
+  const [showProModal, setShowProModal] = useState(false);
+  const [showProBadge, setShowProBadge] = useState(false);
+
+  // Multi-Factory Definition: Dynamic plant context from user profile
+  const userPlants = (authUser?.plants && authUser.plants.length > 0)
+    ? authUser.plants
+    : (authUser?.facilityName ? [{
+        id: 'primary',
+        facilityName: authUser.facilityName,
+        location: authUser.location || '',
+        industryType: authUser.industryType || '',
+        regCategory: authUser.regCategory || '',
+        regId: authUser.regId || '',
+        capacity: authUser.capacity || '',
+        emissionCap: authUser.emissionCap || '',
+      }] : []);
+
+  const factoryList = userPlants.length > 0
+    ? userPlants.map((p, idx) => ({
+        id: p.id || `plant_${idx + 1}`,
+        name: p.facilityName || `Facility ${idx + 1}`,
+        badgeIcon: idx === 0 ? '📍' : '🏭',
+        statusLabel: idx === 0 ? 'Active Audit Data' : `Plant #${idx + 1}`,
+        location: p.location || '',
+        industry: p.industryType || '',
+        regCategory: p.regCategory || '',
+        regId: p.regId || '',
+        capacity: p.capacity || '',
+        emissionCap: p.emissionCap || '',
+        context: idx === 0 ? (activePlantContext || p) : p
+      }))
+    : [
+        {
+          id: 'primary',
+          name: activePlantContext?.facilityName || authUser?.facilityName || 'Primary Facility',
+          badgeIcon: '📍',
+          statusLabel: 'Active Context',
+          location: activePlantContext?.location || authUser?.location || '',
+          industry: activePlantContext?.industry || authUser?.industry || 'Plastics & Polymers',
+          regCategory: activePlantContext?.regCategory || authUser?.regCategory || 'Orange Category',
+          regId: activePlantContext?.regId || authUser?.regId || '',
+          capacity: activePlantContext?.capacity || authUser?.capacity || '',
+          emissionCap: activePlantContext?.emissionCap || authUser?.emissionCap || '',
+          context: activePlantContext || {}
+        }
+      ];
+
+  const currentActiveFactory = factoryList.find(f => f.id === selectedFactoryId) || factoryList[0];
 
   const [messages, setMessages] = useState([
     {
@@ -95,6 +144,31 @@ export default function EcoBotDashboardPage({
     scrollToBottom();
   }, [messages, isLoading]);
 
+  const handleCloseProModal = () => {
+    setShowProModal(false);
+    setShowProBadge(false);
+  };
+
+  const handleFactorySelect = (id) => {
+    if (id === 'all_pro') {
+      setShowProBadge(true);
+      setShowProModal(true);
+      return;
+    }
+    setShowProBadge(false);
+    setSelectedFactoryId(id);
+    const target = factoryList.find(f => f.id === id) || factoryList[0];
+    const locationPart = target.location ? ` (${target.location})` : '';
+    setMessages(prev => [
+      ...prev,
+      {
+        role: 'assistant',
+        content: `📍 **Active Target Facility Switched:** **${target.name}**\n\nEcoBot context is now strictly isolated to **${target.name}**${locationPart}.\n\n*Token Guard active: Single-plant context window locked (~1,100 tokens).*`,
+        source: 'Scope Switcher'
+      }
+    ]);
+  };
+
   const handleSendMessage = async (textToSend = null) => {
     const text = textToSend || inputMessage;
     if (!text.trim() || isLoading) return;
@@ -107,7 +181,8 @@ export default function EcoBotDashboardPage({
 
     try {
       const formattedHistory = newHistory.map(m => ({ role: m.role, content: m.content }));
-      const res = await askEcoBotAssistant(text.trim(), formattedHistory, activePlantContext);
+      // ONLY send the selected factory's context to prevent token explosion
+      const res = await askEcoBotAssistant(text.trim(), formattedHistory, currentActiveFactory.context);
 
       setMessages(prev => [
         ...prev,
@@ -228,17 +303,17 @@ export default function EcoBotDashboardPage({
             <div className="ecobot-toolbar-meta-row">
               <span className="ecobot-toolbar-meta-item">
                 <Factory size={11} color="var(--mint-hover)" />
-                <strong>{authUser?.facilityName || 'Facility Not Configured'}</strong>
+                <strong>{currentActiveFactory?.name || 'Facility Not Configured'}</strong>
               </span>
               <span className="ecobot-toolbar-meta-sep">•</span>
               <span className="ecobot-toolbar-meta-item">
                 <Scale size={11} color="var(--rose)" />
-                <span>{authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Category Pending'}</span>
+                <span>{currentActiveFactory?.regCategory ? currentActiveFactory.regCategory.split('(')[0].trim() : 'Category Pending'}</span>
               </span>
               <span className="ecobot-toolbar-meta-sep">•</span>
               <span className="ecobot-toolbar-meta-item">
                 <FileCheck size={11} color="var(--cyan-main)" />
-                <span>{authUser?.emissionCap || 'Cap Unset'}</span>
+                <span>{currentActiveFactory?.emissionCap || 'Cap Unset'}</span>
               </span>
             </div>
           </div>
@@ -382,6 +457,47 @@ export default function EcoBotDashboardPage({
             </div>
           </div>
 
+          {/* ── Inline Factory Context Selector (beside input) ───────────── */}
+          <div className="dock-context-row">
+            <div className="dock-context-chip">
+              <div className="dock-context-selector">
+                <Building2 size={13} className="dock-ctx-icon" />
+                <select
+                  className="dock-factory-select"
+                  value={showProBadge ? 'all_pro' : selectedFactoryId}
+                  onChange={(e) => handleFactorySelect(e.target.value)}
+                  title="Select which factory's emissions & circular context is sent to EcoBot"
+                >
+                  {factoryList.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {f.badgeIcon} {f.name}
+                    </option>
+                  ))}
+                  <option value="all_pro">
+                    🔒 All Factories (Cross-Plant) — PRO
+                  </option>
+                </select>
+              </div>
+
+              {showProBadge && (
+                <button
+                  type="button"
+                  className="dock-pro-lock-btn"
+                  onClick={() => setShowProModal(true)}
+                  title="Cross-Facility Portfolio Analysis requires PRO"
+                >
+                  <Lock size={10} />
+                  <span className="pro-lock-badge">PRO</span>
+                </button>
+              )}
+
+              <div className="dock-token-guard" title="Single-plant context isolation keeps token usage minimal">
+                <ShieldCheck size={11} />
+                <span>~1.1k tokens</span>
+              </div>
+            </div>
+          </div>
+
           <div className="dock-input-wrapper">
             <textarea
               ref={textareaRef}
@@ -423,6 +539,91 @@ export default function EcoBotDashboardPage({
           </div>
         </div>
       </div>
+
+      {/* ── EcoLeak PRO Feature Locked Modal ──────────────────────────────── */}
+      {showProModal && (
+        <div className="pro-modal-backdrop" onClick={handleCloseProModal}>
+          <div className="pro-modal-card elite-card" onClick={(e) => e.stopPropagation()}>
+            <div className="pro-modal-header">
+              <div className="pro-modal-icon-badge">
+                <Crown size={24} color="#d97706" />
+              </div>
+              <div className="pro-modal-titles">
+                <div className="pro-badge-header-row">
+                  <h3 className="pro-modal-title">Multi-Plant Portfolio Copilot</h3>
+                  <span className="pro-tag-gold">PRO FEATURE</span>
+                </div>
+                <p className="pro-modal-subtitle">Enterprise Cross-Facility Carbon Intelligence</p>
+              </div>
+              <button
+                type="button"
+                className="pro-modal-close"
+                onClick={handleCloseProModal}
+                aria-label="Close modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="pro-modal-body">
+              <div className="pro-alert-box">
+                <div className="pro-alert-icon">
+                  <Lock size={18} color="#d97706" />
+                </div>
+                <div className="pro-alert-text">
+                  <strong>Multi-Facility Cross-Analysis is Locked in Standard Tier.</strong>
+                  <p>
+                    Aggregating operational telemetry, live meters, and circular interventions across multiple factories expands LLM context window payloads by <strong>500%+</strong>, causing token consumption to skyrocket.
+                  </p>
+                </div>
+              </div>
+
+              <div className="pro-comparison-grid">
+                <div className="comp-card current">
+                  <span className="comp-tag">Standard (Current)</span>
+                  <h4>Single-Plant Scope</h4>
+                  <ul>
+                    <li>✓ 1 factory context isolated per query</li>
+                    <li>✓ ~1,100 tokens per prompt (Budget Guard)</li>
+                    <li>✓ Sub-second Groq gpt-oss-120b inference</li>
+                    <li>✓ Dedicated SPCB consent compliance</li>
+                  </ul>
+                </div>
+
+                <div className="comp-card pro">
+                  <span className="comp-tag pro-tag">EcoLeak PRO</span>
+                  <h4>Enterprise Portfolio</h4>
+                  <ul>
+                    <li>🔒 Cross-plant emission leak correlation</li>
+                    <li>🔒 Multi-facility industrial symbiosis</li>
+                    <li>🔒 Enterprise SEBI BRSR Core rollups</li>
+                    <li>🔒 Dedicated high-throughput token pipeline</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div className="pro-modal-footer">
+              <button
+                type="button"
+                className="btn-pro-cancel"
+                onClick={handleCloseProModal}
+              >
+                Keep Single Plant Focus (Free)
+              </button>
+              <button
+                type="button"
+                className="btn-pro-upgrade"
+                disabled
+                title="PRO subscription is simulated for UI prototyping"
+              >
+                <Lock size={13} />
+                <span>Enterprise Upgrade (Locked)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

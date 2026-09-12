@@ -108,7 +108,8 @@ const NAV_ITEMS = [
   { id: 'leaks',    icon: AlertTriangle,     label: '2. Top Emission Leaks',    sub: 'Hotspot Detection' },
   { id: 'circular', icon: RefreshCw,         label: '3. Circular Solutions',     sub: 'Interventions & Cost Savings' },
   { id: 'report',   icon: Download,          label: '4. Executive Action Plan', sub: 'Compliance & Export' },
-  { id: 'profile',  icon: User,              label: '5. Operator Profile',      sub: 'Plant Location & Consents' },
+  { id: 'profile',  icon: User,              label: '5. Operator Profile',      sub: 'Identity & Credentials' },
+  { id: 'plant',    icon: Factory,           label: '6. Plant Information',      sub: 'Multi-Plant Directory & Consents' },
 ];
 
 export default function Dashboard({
@@ -159,6 +160,32 @@ export default function Dashboard({
   // ── Input Mode Selector: 'form' | 'upload' | 'chat' ─────────────────────────
   const [inputMode, setInputMode] = useState('form');
 
+  // ── Multi-Plant Target Selection ──────────────────────────────────────────
+  const [selectedPlantId, setSelectedPlantId] = useState(() => {
+    return authUser?.plants?.[0]?.id || 'primary';
+  });
+
+  useEffect(() => {
+    if (authUser?.plants && authUser.plants.length > 0) {
+      if (!authUser.plants.some(p => p.id === selectedPlantId)) {
+        setSelectedPlantId(authUser.plants[0].id);
+      }
+    }
+  }, [authUser?.plants]);
+
+  const handlePlantSelectionChange = (plantId) => {
+    setSelectedPlantId(plantId);
+    const target = authUser?.plants?.find(p => p.id === plantId);
+    if (target?.industryType) {
+      const matched = Object.keys(INDUSTRY_PRESETS).find(k => k.toLowerCase() === target.industryType.toLowerCase());
+      if (matched) {
+        setIndustry(matched);
+      } else {
+        setIndustry(target.industryType);
+      }
+    }
+  };
+
   // ── Process Data Form State ────────────────────────────────────────────────
   const [selectedPresetKey, setSelectedPresetKey] = useState('Plastic Moulding (60t Resin)');
   const [industry, setIndustry] = useState('Plastic manufacturing');
@@ -180,9 +207,7 @@ export default function Dashboard({
   const [uploadLanguage, setUploadLanguage] = useState('auto');
   const [sarvamApiKey, setSarvamApiKey] = useState('');
   const [showSarvamKey, setShowSarvamKey] = useState(false);
-  const [chatMessage, setChatMessage] = useState(
-    'Our factory in Maharashtra processes 60 tons of virgin plastic pellets and 2.5 tons of color additives monthly, using 20,000 kWh of grid electricity and 500 liters of diesel backup.'
-  );
+  const [chatMessage, setChatMessage] = useState('');
 
   // ── Shared State ───────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
@@ -253,7 +278,8 @@ export default function Dashboard({
     try {
       const res = await analyzeActivities({ industry, activities });
       setAuditResult(res);
-      saveAuditToSupabase(res, authUser).catch((e) => console.debug('Background Supabase save note:', e));
+      const selectedPlant = authUser?.plants?.find(p => p.id === selectedPlantId) || authUser?.plants?.[0] || null;
+      saveAuditToSupabase(res, authUser, selectedPlant).catch((e) => console.debug('Background Supabase save note:', e));
       handleSectionSelect('leaks');
     } catch (err) {
       setError(err.message || 'Analysis could not be completed.');
@@ -273,7 +299,8 @@ export default function Dashboard({
     try {
       const res = await analyzeDocument(uploadFile, industry, uploadLanguage, sarvamApiKey);
       setAuditResult(res);
-      saveAuditToSupabase(res, authUser).catch((e) => console.debug('Background Supabase save note:', e));
+      const selectedPlant = authUser?.plants?.find(p => p.id === selectedPlantId) || authUser?.plants?.[0] || null;
+      saveAuditToSupabase(res, authUser, selectedPlant).catch((e) => console.debug('Background Supabase save note:', e));
       handleSectionSelect('leaks');
     } catch (err) {
       setError(err.message || 'Document analysis failed.');
@@ -409,9 +436,39 @@ export default function Dashboard({
       {/* MODE 1: Direct Form */}
       {inputMode === 'form' && (
         <form onSubmit={handleDirectSubmit} className="dash-form">
-          {/* Facility Sector */}
+          {/* Facility Sector & Target Plant Selection */}
           <div className="dash-card elite-card">
-            <div className="dash-card-label">1. FACILITY CLASSIFICATION</div>
+            <div className="dash-card-label">1. FACILITY CLASSIFICATION &amp; TARGET PLANT</div>
+
+            {authUser?.plants && authUser.plants.length > 0 && (
+              <div className="dash-form-group" style={{ marginBottom: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label className="dash-label" style={{ margin: 0 }}>
+                    <Factory size={15} color="var(--mint-hover)" /> Target Manufacturing Facility
+                  </label>
+                  <button
+                    type="button"
+                    style={{ background: 'none', border: 'none', color: 'var(--mint-hover)', fontSize: '11.5px', fontWeight: 700, cursor: 'pointer', padding: 0 }}
+                    onClick={() => handleSectionSelect('plant')}
+                  >
+                    Manage Plants ({authUser.plants.length}) →
+                  </button>
+                </div>
+                <select
+                  value={selectedPlantId}
+                  onChange={(e) => handlePlantSelectionChange(e.target.value)}
+                  className="dash-select"
+                  style={{ fontWeight: 700 }}
+                >
+                  {authUser.plants.map((p, idx) => (
+                    <option key={p.id || idx} value={p.id}>
+                      {p.facilityName || `Facility ${idx + 1}`} ({p.location || 'Site Location'} · {p.industryType || 'Manufacturing'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="dash-form-group">
               <label className="dash-label"><Building2 size={15} /> Industrial Sector</label>
               <select
@@ -1192,7 +1249,7 @@ export default function Dashboard({
     { id: 'circular', icon: RefreshCw,         label: '3. Circular Solutions',     sub: 'Interventions & Cost Savings' },
     { id: 'report',   icon: Download,          label: '4. Executive Action Plan', sub: 'Compliance & Export' },
     { id: 'profile',  icon: User,              label: '5. Operator Profile',      sub: 'Identity & Credentials' },
-    { id: 'plant',    icon: Factory,           label: '6. Plant Information',      sub: 'Facility, GPS & Consents' },
+    { id: 'plant',    icon: Factory,           label: '6. Plant Information',      sub: 'Multi-Plant Directory & Consents' },
   ];
 
   const renderProfileSection = () => (
@@ -1230,9 +1287,20 @@ export default function Dashboard({
       authUser={authUser}
       onOpenAuth={onOpenAuth}
       activePlantContext={{
-        industry: authUser?.facilityName || industry || '',
+        facilityName: authUser?.facilityName || '',
         location: authUser?.location || '',
-        reg_category: authUser?.regCategory || ''
+        industry: industry || authUser?.industry || '',
+        regCategory: authUser?.regCategory || '',
+        regId: authUser?.regId || '',
+        capacity: authUser?.capacity || '',
+        emissionCap: authUser?.emissionCap || '',
+        total_emissions: auditResult?.facility_summary?.total_emissions_kg_co2e || totalEmissions || 0,
+        scope_1_kg_co2e: auditResult?.facility_summary?.scope_1_kg_co2e || 0,
+        scope_2_kg_co2e: auditResult?.facility_summary?.scope_2_kg_co2e || 0,
+        scope_3_kg_co2e: auditResult?.facility_summary?.scope_3_kg_co2e || 0,
+        activities: auditResult?.activities || [],
+        hotspots: auditResult?.hotspots || [],
+        circular_recommendations: uniqueRecs || auditResult?.circular_recommendations || []
       }}
       onNavigateSection={handleSectionSelect}
     />
@@ -1250,6 +1318,13 @@ export default function Dashboard({
 
   const isProfileIncomplete = (user) => {
     if (!user) return true;
+    if (user.plants && user.plants.length > 0) {
+      const primary = user.plants[0];
+      const hasPrimaryFac = Boolean(primary.facilityName && primary.facilityName.trim());
+      const hasPrimaryLoc = Boolean(primary.location && primary.location.trim());
+      const hasPrimaryReg = Boolean(primary.regId && primary.regId.trim());
+      return !hasPrimaryFac || !hasPrimaryLoc || !hasPrimaryReg;
+    }
     const hasFacility = Boolean(user.facilityName && user.facilityName.trim());
     const hasLocation = Boolean(user.location && user.location.trim());
     const hasRegId = Boolean(user.regId && user.regId.trim());
@@ -1352,7 +1427,11 @@ export default function Dashboard({
                     title="View Operator Profile & Regulatory Parameters"
                   >
                     <strong className="sidebar-user-name">{authUser.name || 'Plant Operator'}</strong>
-                    <span className="sidebar-user-facility">{authUser.facilityName || 'Unconfigured Plant'}</span>
+                    <span className="sidebar-user-facility">
+                      {authUser.plants && authUser.plants.length > 1
+                        ? `${authUser.plants.length} Plants (${authUser.facilityName || authUser.plants[0]?.facilityName || 'Portfolio'})`
+                        : (authUser.facilityName || authUser.plants?.[0]?.facilityName || 'Unconfigured Plant')}
+                    </span>
                     {authUser.location && (
                       <span className="sidebar-user-location" title={authUser.location}>
                         <MapPin size={10} style={{ flexShrink: 0 }} /> {authUser.location.split(',')[0]}

@@ -82,9 +82,29 @@ export default function App() {
       const user = JSON.parse(saved);
       // Strip any legacy hardcoded placeholder data so user enters real factory data
       if (user.facilityName?.includes('GreenPack')) user.facilityName = '';
-      if (user.location?.includes('MIDC Bhosari') || user.location?.includes('MIDC Chakan')) user.location = '';
+      if (user.location && (user.location.toLowerCase().includes('chakan') || user.location.toLowerCase().includes('bhosari'))) {
+        user.location = '';
+      }
       if (user.regId?.includes('MH-SPCB/PUN/CTO-2026/4102') || user.regId?.includes('MH-SPCB/PUN/CTO-2026/0894')) user.regId = '';
       if (user.phone === '+91 98201 54892') user.phone = '';
+
+      // Backward compatibility: migrate legacy single plant into plants array
+      if ((!user.plants || user.plants.length === 0) && user.facilityName && user.facilityName.trim()) {
+        user.plants = [{
+          id: 'plant_1',
+          facilityName: user.facilityName.trim(),
+          industryType: user.industryType || '',
+          capacity: user.capacity || '',
+          location: user.location || '',
+          regId: user.regId || '',
+          regCategory: user.regCategory || '',
+          regStandard: user.regStandard || '',
+          emissionCap: user.emissionCap || '',
+          regionalOffice: user.regionalOffice || '',
+        }];
+        localStorage.setItem('ecoleak_auth_user', JSON.stringify(user));
+      }
+
       return assignAvatarToUser(user);
     } catch {
       return null;
@@ -122,13 +142,20 @@ export default function App() {
             uid: fbUser.uid,
             name: fbUser.displayName || prev?.name || (fbUser.email ? fbUser.email.split('@')[0] : 'Operator'),
             email: fbUser.email || prev?.email || '',
+            plants: prev?.plants || [],
             facilityName: prev?.facilityName || '',
+            industryType: prev?.industryType || '',
+            capacity: prev?.capacity || '',
             location: prev?.location || '',
             regId: prev?.regId || '',
             regCategory: prev?.regCategory || '',
             regStandard: prev?.regStandard || '',
             emissionCap: prev?.emissionCap || '',
+            regionalOffice: prev?.regionalOffice || '',
             role: prev?.role || 'Plant Operator',
+            department: prev?.department || '',
+            phone: prev?.phone || '',
+            notes: prev?.notes || '',
             authMethod: prev?.authMethod || 'firebase-google',
           };
           const updated = assignAvatarToUser(raw);

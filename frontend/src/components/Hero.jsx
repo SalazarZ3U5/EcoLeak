@@ -18,32 +18,33 @@ export default function Hero({ onOpenAssessment }) {
           <div className="hero-text-col">
             <div className="section-tag">
               <span></span>
-              CIRCULAR CARBON ECOSYSTEM
+              THEME: CIRCULAR CARBON ECOSYSTEM
             </div>
 
-            <h1>
-              Find emissions.<br />
-              <span className="gradient-text">Close the loop.</span><br />
-              Keep the capital.
+            <h1 style={{ fontSize: 'clamp(32px, 4vw, 48px)', lineHeight: 1.15 }}>
+              Industrial Emission <br />
+              <span className="gradient-text">Leak-Point Detector</span> &amp; <br />
+              Circular Recommender
             </h1>
 
             <p className="hero-subtitle">
-              Most factories lose 20% to 35% of their energy as unrecovered waste heat and process friction. EcoLeak pinpoints your hidden leak points and discovers circular interventions that pay for themselves.
+              Small and medium industries often don't know where their carbon footprint originates or what circular alternatives exist. Input your process data (energy source, materials, waste streams) to pinpoint emission leak points and discover concrete circular interventions with estimated costs and CO₂ savings.
             </p>
 
             <div className="hero-actions">
-              <button className="btn btn-primary btn-lg" onClick={onOpenAssessment}>
-                Calculate Facility Savings <ArrowRight size={18} />
+              <button className="btn btn-primary btn-lg" onClick={onOpenAssessment} id="hero-launch-btn">
+                Launch Leak-Point Detector &amp; Recommender <ArrowRight size={18} />
               </button>
               <a href="#how" className="btn btn-secondary btn-lg">
-                Explore the Concept
+                How It Works
               </a>
             </div>
 
-            <div className="hero-guarantee-line">
-              <span><CheckCircle2 size={16} color="var(--mint)" />Zero hardware needed</span>
-              <span><CheckCircle2 size={16} color="var(--mint)" />From utility bills</span>
-              <span><CheckCircle2 size={16} color="var(--mint)" />Audit in 3 minutes</span>
+            <div className="hero-guarantee-line" style={{ marginTop: '18px' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Built for:</span>
+              <span><CheckCircle2 size={15} color="var(--mint)" />SMEs &amp; Factory Operators</span>
+              <span><CheckCircle2 size={15} color="var(--mint)" />Sustainability Consultants</span>
+              <span><CheckCircle2 size={15} color="var(--mint)" />Industry Regulators</span>
             </div>
           </div>
 

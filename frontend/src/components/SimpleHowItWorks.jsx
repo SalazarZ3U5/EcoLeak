@@ -3,23 +3,23 @@ import React, { useState } from 'react';
 const steps = [
   {
     num: '01',
-    title: 'Drop utility bills',
-    desc: "Upload last month's electricity bills and fuel invoices. No hardware installations, zero sensor intrusion.",
+    title: 'Input Plant Process Data',
+    desc: "Enter energy sources, raw materials, and waste streams, or drop last month's utility invoices. Zero sensor hardware needed.",
     tag: 'Takes 2 minutes',
     accent: 'var(--mint)',
   },
   {
     num: '02',
-    title: 'Pinpoint invisible leaks',
-    desc: 'Our engine isolates exactly where energy escapes — boiler flue gas, motor friction drag, and uninsulated lines.',
-    tag: 'Instant diagnosis',
+    title: 'Pinpoint Emission Leak Points',
+    desc: 'Our Pareto hotspot engine isolates exactly where carbon and energy escape — virgin feedstock, flue gas, and line friction.',
+    tag: 'Instant hotspot mapping',
     accent: 'var(--cyan-fresh)',
   },
   {
     num: '03',
-    title: 'Close loops & save capital',
-    desc: 'Receive pre-engineered circular interventions that recapture waste energy and pay for themselves in months.',
-    tag: '< 9 mo payback',
+    title: 'Adopt Circular Interventions',
+    desc: 'Receive pre-engineered circular recommendations (recycled loops, alternative feedstocks, heat recovery) with estimated cost and CO₂ savings.',
+    tag: '< 8 mo payback',
     accent: 'var(--mint-hover)',
   },
 ];
@@ -60,12 +60,11 @@ export default function SimpleHowItWorks() {
         <div className="section-header">
           <div className="section-tag">
             <span></span>
-            THE 3-STEP PIPELINE
+            THE CIRCULAR CARBON PIPELINE
           </div>
-          <h2>From raw utility bills to real cash savings.</h2>
+          <h2>From plant process data to high-ROI circular alternatives.</h2>
           <p>
-            No complex consulting reports. Just an autonomous intelligence layer
-            turning messy plant invoices into high-ROI circular decisions.
+            No complex consulting fees. A guided intelligence tool designed for SMEs, factory operators, and consultants to pinpoint emission hotspots and quantify payback.
           </p>
         </div>
 

@@ -45,7 +45,7 @@ export default function Navbar({ onOpenAssessment, onOpenLogin }) {
             onClick={onOpenAssessment}
             id="nav-assessment-btn"
           >
-            Start Free Assessment <ArrowUpRight size={15} />
+            Start Leak Audit <ArrowUpRight size={15} />
           </button>
         </div>
       </div>

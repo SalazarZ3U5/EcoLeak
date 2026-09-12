@@ -3,7 +3,9 @@ import {
   ArrowLeft, LayoutDashboard, UploadCloud, MessageSquareText,
   Layers, BarChart3, LogIn, X, ChevronRight, Zap, Flame,
   Building2, AlertTriangle, TrendingDown, Coins, ShieldCheck,
-  RefreshCw, ArrowRight, CheckCircle2, Lock, Mail, Menu
+  RefreshCw, ArrowRight, CheckCircle2, Lock, Mail, Menu,
+  Download, Printer, Sparkles, Sliders, Factory, Check, Info,
+  Eye, EyeOff, User, UserPlus, LogOut, UserCheck, Key
 } from 'lucide-react';
 import {
   analyzeActivities,
@@ -12,98 +14,204 @@ import {
   formatINR,
   formatCO2e
 } from '../services/api';
+import { triggerGoogleAuth, AUTH_CONFIG } from '../services/authConfig';
 import { INDUSTRY_PRESETS } from '../data/mockData';
 
-// ─── One-click preset scenarios ───────────────────────────────────────────────
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+    />
+  </svg>
+);
+
+// ─── 1-Click Pre-filled Facility Profiles ─────────────────────────────────────
 const PRESET_SCENARIOS = {
-  'GreenPack Plastics (60t Resin)': {
+  'Plastic Moulding (60t Resin)': {
+    icon: '🏭',
     industry: 'Plastic manufacturing',
+    tag: 'Extrusion & Moulding',
+    kwh: 20000,
+    fuelType: 'Diesel',
+    fuelQty: 500,
+    materialType: 'Virgin Plastic Pellets',
+    materialQty: 60000,
+    wasteType: 'Sprue & Trim Scrap',
+    wasteQty: 1800,
     activities: [
       { name: 'Virgin Plastic Pellets', quantity: 60000, unit: 'kg' },
-      { name: 'Color Additives', quantity: 2500, unit: 'kg' },
-      { name: 'Packaging Material', quantity: 5000, unit: 'kg' },
       { name: 'Grid Electricity', quantity: 20000, unit: 'kWh' },
       { name: 'Diesel Fuel', quantity: 500, unit: 'liters' },
+      { name: 'Color Additives', quantity: 2500, unit: 'kg' },
+      { name: 'Packaging Material', quantity: 5000, unit: 'kg' },
     ]
   },
-  'Standard Packaging SME': {
-    industry: 'Packaging',
-    activities: [
-      { name: 'Virgin HDPE Plastic', quantity: 5000, unit: 'kg' },
-      { name: 'Grid Electricity', quantity: 15000, unit: 'kWh' },
-      { name: 'Diesel Fuel', quantity: 800, unit: 'liters' },
-      { name: 'Cardboard Waste', quantity: 1200, unit: 'kg' },
-      { name: 'Process Water', quantity: 10000, unit: 'liters' },
-    ]
-  },
-  'Metal Fabrication Unit': {
+  'Metal Fabrication (2t Steel)': {
+    icon: '⚙️',
     industry: 'Metal fabrication',
+    tag: 'Furnace & CNC Milling',
+    kwh: 30000,
+    fuelType: 'LPG',
+    fuelQty: 450,
+    materialType: 'Virgin Steel',
+    materialQty: 2000,
+    wasteType: 'Metal Swarf & Mill Scale',
+    wasteQty: 320,
     activities: [
       { name: 'Virgin Steel', quantity: 2000, unit: 'kg' },
       { name: 'LPG', quantity: 450, unit: 'kg' },
       { name: 'Grid Electricity', quantity: 30000, unit: 'kWh' },
       { name: 'Industrial Lubricant', quantity: 200, unit: 'liters' },
     ]
+  },
+  'Packaging SME (5t HDPE)': {
+    icon: '📦',
+    industry: 'Packaging',
+    tag: 'Blow Moulding & Boxes',
+    kwh: 15000,
+    fuelType: 'Diesel',
+    fuelQty: 400,
+    materialType: 'Virgin HDPE Plastic',
+    materialQty: 5000,
+    wasteType: 'Cardboard Waste',
+    wasteQty: 1200,
+    activities: [
+      { name: 'Virgin HDPE Plastic', quantity: 5000, unit: 'kg' },
+      { name: 'Grid Electricity', quantity: 15000, unit: 'kWh' },
+      { name: 'Cardboard Waste', quantity: 1200, unit: 'kg' },
+      { name: 'Packaging Material', quantity: 2000, unit: 'kg' },
+      { name: 'Diesel Fuel', quantity: 400, unit: 'liters' },
+    ]
+  },
+  'Textile & Dyeing Mill': {
+    icon: '🧵',
+    industry: 'Textile',
+    tag: 'Boiler & Weaving Unit',
+    kwh: 32000,
+    fuelType: 'Coal',
+    fuelQty: 1500,
+    materialType: 'Virgin Kraft Paper',
+    materialQty: 1800,
+    wasteType: 'Process Effluent & Steam',
+    wasteQty: 10000,
+    activities: [
+      { name: 'Grid Electricity', quantity: 32000, unit: 'kWh' },
+      { name: 'Coal', quantity: 1500, unit: 'kg' },
+      { name: 'Packaging Material', quantity: 1800, unit: 'kg' },
+      { name: 'Process Water', quantity: 10000, unit: 'liters' },
+    ]
   }
 };
 
-// ─── Sidebar nav items ─────────────────────────────────────────────────────────
+// ─── Simplified, Jargon-Free Sidebar Items ───────────────────────────────────
 const NAV_ITEMS = [
-  { id: 'audit',    icon: LayoutDashboard,   label: 'Quick Audit',   sub: 'Inputs & Presets' },
-  { id: 'upload',   icon: UploadCloud,       label: 'Bill Upload',   sub: 'PDF / Invoice' },
-  { id: 'copilot',  icon: MessageSquareText, label: 'AI Copilot',    sub: 'Natural Language' },
-  { id: 'results',  icon: BarChart3,         label: 'Results',       sub: 'Audit Report' },
-  { id: 'signin',   icon: LogIn,             label: 'Sign In',       sub: 'Operator Console' },
+  { id: 'input',    icon: LayoutDashboard,   label: '1. Plant Process Data',    sub: 'Energy, Materials & Waste' },
+  { id: 'leaks',    icon: AlertTriangle,     label: '2. Top Emission Leaks',    sub: 'Hotspot Detection' },
+  { id: 'circular', icon: RefreshCw,         label: '3. Circular Solutions',     sub: 'Interventions & Cost Savings' },
+  { id: 'report',   icon: Download,          label: 'Executive Action Plan',     sub: 'Compliance & Export' },
+  { id: 'signin',   icon: LogIn,             label: 'Operator Sign In',         sub: 'Facility Ledger' },
 ];
 
-export default function Dashboard({ onBack, initialSection = 'audit' }) {
-  const [activeSection, setActiveSection] = useState(initialSection);
+export default function Dashboard({ onBack, initialSection = 'input' }) {
+  const [activeSection, setActiveSection] = useState(
+    initialSection === 'audit' ? 'input' : (initialSection === 'results' ? 'leaks' : initialSection)
+  );
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
-  // ── Audit form state ────────────────────────────────────────────────────────
+  // ── Input Mode Selector: 'form' | 'upload' | 'chat' ─────────────────────────
+  const [inputMode, setInputMode] = useState('form');
+
+  // ── Process Data Form State ────────────────────────────────────────────────
+  const [selectedPresetKey, setSelectedPresetKey] = useState('Plastic Moulding (60t Resin)');
   const [industry, setIndustry] = useState('Plastic manufacturing');
   const [kwh, setKwh] = useState(20000);
   const [fuelType, setFuelType] = useState('Diesel');
   const [fuelQty, setFuelQty] = useState(500);
   const [materialType, setMaterialType] = useState('Virgin Plastic Pellets');
   const [materialQty, setMaterialQty] = useState(60000);
+  const [wasteType, setWasteType] = useState('Sprue & Trim Scrap');
+  const [wasteQty, setWasteQty] = useState(1800);
 
-  // ── Upload state ────────────────────────────────────────────────────────────
+  // ── Circular Loop Interactive Simulation ───────────────────────────────────
+  const [circularRatio, setCircularRatio] = useState(100); // 0% to 100% substitution
+  const [activeRecFilter, setActiveRecFilter] = useState('all'); // 'all' | 'high_impact' | 'fast_payback'
+
+  // ── Document & Chat State ──────────────────────────────────────────────────
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadDrag, setUploadDrag] = useState(false);
-
-  // ── Copilot state ───────────────────────────────────────────────────────────
   const [chatMessage, setChatMessage] = useState(
     'Our factory in Maharashtra processes 60 tons of virgin plastic pellets and 2.5 tons of color additives monthly, using 20,000 kWh of grid electricity and 500 liters of diesel backup.'
   );
 
-  // ── Shared loading / result state ───────────────────────────────────────────
+  // ── Shared State ───────────────────────────────────────────────────────────
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [auditResult, setAuditResult] = useState(null);
 
-  // ── Login state ─────────────────────────────────────────────────────────────
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loggedIn, setLoggedIn] = useState(false);
+  // ── Auth state with localStorage persistence ────────────────────────────────
+  const [authUser, setAuthUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ecoleak_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [authTab, setAuthTab] = useState('signin'); // 'signin' | 'signup'
+  const [authName, setAuthName] = useState('');
+  const [authFacility, setAuthFacility] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authRole, setAuthRole] = useState('Plant Manager');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authSuccessMsg, setAuthSuccessMsg] = useState('');
+  const [authErrorMsg, setAuthErrorMsg] = useState('');
 
-  // Auto-navigate to results after successful audit
+  // Initialize with a default run so first-time users immediately see rich data
   useEffect(() => {
-    if (auditResult) setActiveSection('results');
-  }, [auditResult]);
+    if (!auditResult) {
+      handleApplyPreset('Plastic Moulding (60t Resin)', false);
+    }
+  }, []);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
+  // ── Handlers ───────────────────────────────────────────────────────────────
   const resetError = () => setError(null);
 
-  const handleApplyPreset = async (presetKey) => {
+  const handleApplyPreset = async (presetKey, switchView = true) => {
+    setSelectedPresetKey(presetKey);
     const p = PRESET_SCENARIOS[presetKey];
     if (!p) return;
+
     setIndustry(p.industry);
+    setKwh(p.kwh);
+    setFuelType(p.fuelType);
+    setFuelQty(p.fuelQty);
+    setMaterialType(p.materialType);
+    setMaterialQty(p.materialQty);
+    setWasteType(p.wasteType || 'Process Scrap');
+    setWasteQty(p.wasteQty || 1000);
+
     setLoading(true);
     setError(null);
     try {
       const res = await analyzeActivities({ industry: p.industry, activities: p.activities });
       setAuditResult(res);
+      if (switchView) setActiveSection('leaks');
     } catch (err) {
       setError(err.message || 'Failed to analyze scenario');
     } finally {
@@ -111,23 +219,36 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
     }
   };
 
-  const handleQuickSubmit = async (e) => {
+  const handleDirectSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
     const activities = [{ name: 'Grid Electricity', quantity: Number(kwh), unit: 'kWh' }];
+
     if (fuelType !== 'None' && fuelQty > 0) {
-      const fuelUnit = fuelType === 'Natural gas' ? 'm³' : (fuelType === 'LPG' ? 'kg' : 'liters');
-      activities.push({ name: fuelType === 'Diesel' ? 'Diesel Fuel' : fuelType, quantity: Number(fuelQty), unit: fuelUnit });
+      const fuelUnit = fuelType === 'Natural gas' ? 'm³' : (fuelType === 'LPG' || fuelType === 'Coal' ? 'kg' : 'liters');
+      activities.push({
+        name: fuelType === 'Diesel' ? 'Diesel Fuel' : fuelType,
+        quantity: Number(fuelQty),
+        unit: fuelUnit
+      });
     }
+
     if (materialType !== 'None' && materialQty > 0) {
       activities.push({ name: materialType, quantity: Number(materialQty), unit: 'kg' });
     }
+
+    if (wasteType && wasteQty > 0) {
+      activities.push({ name: 'Cardboard Waste', quantity: Number(wasteQty), unit: 'kg' });
+    }
+
     try {
       const res = await analyzeActivities({ industry, activities });
       setAuditResult(res);
+      setActiveSection('leaks');
     } catch (err) {
-      setError(err.message || 'Analysis error');
+      setError(err.message || 'Analysis could not be completed.');
     } finally {
       setLoading(false);
     }
@@ -135,12 +256,16 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
 
   const handleDocumentSubmit = async (e) => {
     e.preventDefault();
-    if (!uploadFile) { setError('Please select a file to upload (PDF, PNG, JPG).'); return; }
+    if (!uploadFile) {
+      setError('Please select a utility bill or invoice (PDF, PNG, JPG).');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await analyzeDocument(uploadFile, industry);
       setAuditResult(res);
+      setActiveSection('leaks');
     } catch (err) {
       setError(err.message || 'Document analysis failed.');
     } finally {
@@ -156,434 +281,1153 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
     try {
       const res = await analyzeChat(chatMessage);
       setAuditResult(res);
+      setActiveSection('leaks');
     } catch (err) {
-      setError(err.message || 'Copilot extraction failed.');
+      setError(err.message || 'Plant narrative parsing failed.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogin = (e) => {
+  const handleEmailAuth = (e) => {
     e.preventDefault();
-    setLoggedIn(true);
-    setTimeout(() => { setLoggedIn(false); }, 2000);
+    setAuthLoading(true);
+    setAuthErrorMsg('');
+    setAuthSuccessMsg('');
+
+    setTimeout(() => {
+      setAuthLoading(false);
+      if (authTab === 'signup') {
+        if (!authName.trim()) {
+          setAuthErrorMsg('Please enter your full name');
+          return;
+        }
+        const user = {
+          name: authName.trim(),
+          email: authEmail.trim(),
+          facilityName: authFacility.trim() || 'Industrial Manufacturing Unit',
+          role: authRole,
+          authMethod: 'email',
+          registeredAt: new Date().toISOString(),
+        };
+        setAuthUser(user);
+        if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(user));
+        setAuthSuccessMsg(`Welcome, ${user.name}! Plant account created.`);
+      } else {
+        const fallbackName = authEmail.includes('@')
+          ? authEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+          : 'Operator';
+        const user = {
+          name: fallbackName,
+          email: authEmail.trim(),
+          facilityName: authFacility.trim() || 'GreenPack Plastics Plant',
+          role: authRole || 'Plant Operations Lead',
+          authMethod: 'email',
+          loggedInAt: new Date().toISOString(),
+        };
+        setAuthUser(user);
+        if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(user));
+        setAuthSuccessMsg(`Welcome back, ${user.name}!`);
+      }
+    }, 600);
   };
 
-  // ── Section content renderers ───────────────────────────────────────────────
+  const handleGoogleAuth = async () => {
+    setAuthLoading(true);
+    setAuthErrorMsg('');
+    setAuthSuccessMsg('');
+    try {
+      const googleUser = await triggerGoogleAuth();
+      setAuthUser(googleUser);
+      localStorage.setItem('ecoleak_auth_user', JSON.stringify(googleUser));
+      setAuthSuccessMsg(`Authenticated via Google as ${googleUser.name}!`);
+    } catch (err) {
+      setAuthErrorMsg(err.message || 'Google Sign-In failed or was cancelled.');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
-  const renderAudit = () => (
+  const handleSignOut = () => {
+    localStorage.removeItem('ecoleak_auth_user');
+    setAuthUser(null);
+    setAuthSuccessMsg('You have been signed out.');
+    setTimeout(() => setAuthSuccessMsg(''), 3000);
+  };
+
+  // ── Calculated Summary Numbers ─────────────────────────────────────────────
+  const totalEmissions = auditResult?.facility_summary?.total_emissions_kg_co2e || 0;
+  const rawRecs = auditResult?.circular_recommendations || [];
+
+  // Filter recommendations based on active pill
+  const filteredRecs = rawRecs.filter(r => {
+    if (activeRecFilter === 'high_impact') return r.co2e_reduction_percent >= 60;
+    if (activeRecFilter === 'fast_payback') return (r.payback_months || 12) <= 8;
+    return true;
+  });
+
+  const scaledMultiplier = circularRatio / 100;
+  const simulatedSavingsKg = Math.round(rawRecs.reduce((acc, r) => acc + (r.co2e_savings_kg || 0), 0) * scaledMultiplier);
+  const simulatedOpexSavings = Math.round(rawRecs.reduce((acc, r) => acc + (r.annual_opex_savings_inr || 0), 0) * scaledMultiplier);
+  const totalCapex = rawRecs.reduce((acc, r) => acc + (r.estimated_capex_inr || 0), 0);
+  const avgPaybackMonths = rawRecs.length > 0
+    ? Math.round(rawRecs.reduce((acc, r) => acc + (r.payback_months || 6), 0) / rawRecs.length)
+    : 7;
+
+  // ── RENDER STEP 1: Process Data Inputs ──────────────────────────────────────
+  const renderInputSection = () => (
     <div className="dash-content-inner">
+      {/* Editorial Header */}
       <div className="dash-section-header">
         <div>
-          <div className="dash-section-badge">AUTONOMOUS GHG AUDIT</div>
-          <h2 className="dash-section-title">Quick Facility Audit</h2>
-          <p className="dash-section-desc">Enter your monthly energy, fuel, and material inputs for a verified GHG Protocol analysis.</p>
+          <div className="dash-section-badge">STEP 1: INDUSTRIAL PROCESS DATA</div>
+          <h2 className="dash-section-title">Enter Plant Energy, Materials &amp; Waste</h2>
+          <p className="dash-section-desc">
+            Input your monthly consumption data below or load a pre-filled plant profile to identify where emissions leak.
+          </p>
         </div>
       </div>
 
-      {/* One-click presets */}
-      <div className="dash-card">
-        <div className="dash-card-label">ONE-CLICK BENCHMARK SCENARIOS</div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '10px' }}>
-          {Object.keys(PRESET_SCENARIOS).map((key) => (
-            <button key={key} type="button" disabled={loading} onClick={() => handleApplyPreset(key)} className="dash-preset-btn">
-              <ChevronRight size={12} /> {key}
+      {/* 1-Click Pre-filled Facility Profiles (Prominent & Clean) */}
+      <div className="dash-card elite-card" style={{ marginBottom: '20px' }}>
+        <div className="dash-card-label-row">
+          <span className="dash-card-label">⚡ 1-CLICK PRE-FILLED PLANT PROFILES (TEST INSTANTLY)</span>
+          <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Select to test real benchmark data</span>
+        </div>
+        <div className="preset-btn-grid">
+          {Object.entries(PRESET_SCENARIOS).map(([key, data]) => (
+            <button
+              key={key}
+              type="button"
+              disabled={loading}
+              onClick={() => handleApplyPreset(key, false)}
+              className={`dash-preset-pill ${selectedPresetKey === key ? 'preset-active' : ''}`}
+            >
+              <span className="preset-icon">{data.icon}</span>
+              <div className="preset-info">
+                <strong className="preset-name">{key}</strong>
+                <span className="preset-tag">{data.tag}</span>
+              </div>
+              {selectedPresetKey === key && <Check size={14} className="preset-check" />}
             </button>
           ))}
         </div>
       </div>
 
-      {error && <div className="dash-error"><AlertTriangle size={16} /> {error}<button onClick={resetError} className="dash-error-close"><X size={14}/></button></div>}
+      {/* Input Mode Segment Switcher */}
+      <div className="input-mode-tabs-bar">
+        <button
+          type="button"
+          className={`input-mode-tab ${inputMode === 'form' ? 'tab-active' : ''}`}
+          onClick={() => setInputMode('form')}
+        >
+          <Zap size={15} /> Direct Process Form
+        </button>
+        <button
+          type="button"
+          className={`input-mode-tab ${inputMode === 'upload' ? 'tab-active' : ''}`}
+          onClick={() => setInputMode('upload')}
+        >
+          <UploadCloud size={15} /> Upload Utility Bill / PDF
+        </button>
+        <button
+          type="button"
+          className={`input-mode-tab ${inputMode === 'chat' ? 'tab-active' : ''}`}
+          onClick={() => setInputMode('chat')}
+        >
+          <MessageSquareText size={15} /> Describe in Plain Words
+        </button>
+      </div>
 
-      <form onSubmit={handleQuickSubmit} className="dash-form">
-        <div className="dash-card">
-          <div className="dash-card-label">FACILITY CLASSIFICATION</div>
-          <div className="dash-form-group">
-            <label className="dash-label"><Building2 size={14} /> Industry Type</label>
-            <select value={industry} onChange={(e) => setIndustry(e.target.value)} className="dash-select">
-              {Object.keys(INDUSTRY_PRESETS).map((ind) => (
-                <option key={ind} value={ind}>{ind}</option>
-              ))}
-              <option value="Other">Other / General Manufacturing</option>
-            </select>
-          </div>
+      {error && (
+        <div className="dash-alert dash-alert-danger">
+          <AlertTriangle size={16} />
+          <span>{error}</span>
+          <button onClick={resetError} className="dash-error-close"><X size={14} /></button>
         </div>
+      )}
 
-        <div className="dash-card">
-          <div className="dash-card-label">ENERGY CONSUMPTION</div>
-          <div className="dash-form-grid-2">
+      {/* MODE 1: Direct Form */}
+      {inputMode === 'form' && (
+        <form onSubmit={handleDirectSubmit} className="dash-form">
+          {/* Facility Sector */}
+          <div className="dash-card elite-card">
+            <div className="dash-card-label">1. FACILITY CLASSIFICATION</div>
             <div className="dash-form-group">
-              <label className="dash-label"><Zap size={14} /> Monthly Electricity (kWh)</label>
-              <input type="number" min="0" step="500" value={kwh} onChange={(e) => setKwh(Math.max(0, Number(e.target.value)))} className="dash-input" required />
-            </div>
-            <div className="dash-form-group">
-              <label className="dash-label"><Flame size={14} /> Primary Fuel</label>
-              <select value={fuelType} onChange={(e) => setFuelType(e.target.value)} className="dash-select">
-                <option value="Diesel">Diesel Fuel (L)</option>
-                <option value="LPG">LPG (kg)</option>
-                <option value="Natural gas">Natural Gas (m³)</option>
-                <option value="Coal">Coal (kg)</option>
-                <option value="Biomass">Biomass (kg)</option>
-                <option value="None">None (All Electric)</option>
+              <label className="dash-label"><Building2 size={15} /> Industrial Sector</label>
+              <select
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+                className="dash-select"
+              >
+                {Object.keys(INDUSTRY_PRESETS).map((ind) => (
+                  <option key={ind} value={ind}>{ind}</option>
+                ))}
+                <option value="General Manufacturing">General Manufacturing / Assembly</option>
+                <option value="Chemicals & Agro">Chemicals &amp; Agro</option>
               </select>
             </div>
           </div>
-          {fuelType !== 'None' && (
-            <div className="dash-form-group" style={{ marginTop: '12px' }}>
-              <label className="dash-label">Monthly Fuel Quantity</label>
-              <input type="number" min="0" step="50" value={fuelQty} onChange={(e) => setFuelQty(Math.max(0, Number(e.target.value)))} className="dash-input" />
-            </div>
-          )}
-        </div>
 
-        <div className="dash-card">
-          <div className="dash-card-label">RAW MATERIAL STREAM</div>
-          <div className="dash-form-grid-2">
-            <div className="dash-form-group">
-              <label className="dash-label"><Layers size={14} /> Primary Material</label>
-              <select value={materialType} onChange={(e) => setMaterialType(e.target.value)} className="dash-select">
-                <option value="Virgin Plastic Pellets">Virgin Plastic Pellets</option>
-                <option value="Virgin HDPE Plastic">Virgin HDPE Plastic</option>
-                <option value="Virgin PP Plastic">Virgin PP Plastic</option>
-                <option value="Virgin LDPE Film">Virgin LDPE Film</option>
-                <option value="Virgin Steel">Virgin Steel</option>
-                <option value="Virgin Aluminum">Virgin Aluminum</option>
-                <option value="Virgin Kraft Paper">Virgin Kraft Paper</option>
-                <option value="Packaging Material">Packaging Material</option>
-                <option value="None">None / Pure Utility</option>
-              </select>
-            </div>
-            {materialType !== 'None' && (
+          {/* Energy & Fuels */}
+          <div className="dash-card elite-card">
+            <div className="dash-card-label">2. ENERGY SOURCE &amp; ON-SITE FUELS</div>
+            <div className="dash-form-grid-2">
               <div className="dash-form-group">
-                <label className="dash-label">Monthly Quantity (kg)</label>
-                <input type="number" min="0" step="1000" value={materialQty} onChange={(e) => setMaterialQty(Math.max(0, Number(e.target.value)))} className="dash-input" />
+                <label className="dash-label">
+                  <Zap size={15} color="var(--mint-hover)" />
+                  Monthly Electricity (kWh)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="500"
+                  value={kwh}
+                  onChange={(e) => setKwh(Math.max(0, Number(e.target.value)))}
+                  className="dash-input"
+                  required
+                />
+                <span className="input-helper">Grid utility meter reading</span>
+              </div>
+
+              <div className="dash-form-group">
+                <label className="dash-label">
+                  <Flame size={15} color="var(--rose)" />
+                  Primary Heating / Thermal Fuel
+                </label>
+                <select
+                  value={fuelType}
+                  onChange={(e) => setFuelType(e.target.value)}
+                  className="dash-select"
+                >
+                  <option value="Diesel">Diesel Fuel (Boilers / Genset in Liters)</option>
+                  <option value="LPG">LPG / Liquified Petroleum Gas (kg)</option>
+                  <option value="Natural gas">Natural Gas (m³)</option>
+                  <option value="Coal">Industrial Coal (kg)</option>
+                  <option value="Biomass">Biomass Pellets / Briquettes (kg)</option>
+                  <option value="None">None (All Electric Operation)</option>
+                </select>
+                <span className="input-helper">Used for steam, furnaces, or generators</span>
+              </div>
+            </div>
+
+            {fuelType !== 'None' && (
+              <div className="dash-form-group" style={{ marginTop: '14px' }}>
+                <label className="dash-label">
+                  Monthly Fuel Quantity ({fuelType === 'Natural gas' ? 'm³' : (fuelType === 'LPG' || fuelType === 'Coal' ? 'kg' : 'Liters')})
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="50"
+                  value={fuelQty}
+                  onChange={(e) => setFuelQty(Math.max(0, Number(e.target.value)))}
+                  className="dash-input"
+                />
               </div>
             )}
           </div>
-        </div>
 
-        <button type="submit" disabled={loading} className="dash-submit-btn">
-          {loading ? (
-            <><RefreshCw size={16} className="spin-on-active" /> Analyzing Emission Factors & Hotspots...</>
-          ) : (
-            <>Execute Verified Facility Audit <ArrowRight size={15} /></>
-          )}
-        </button>
-      </form>
+          {/* Materials & Waste Streams */}
+          <div className="dash-card elite-card">
+            <div className="dash-card-label">3. MATERIALS USED &amp; WASTE STREAMS</div>
+            <div className="dash-form-grid-2">
+              <div className="dash-form-group">
+                <label className="dash-label">
+                  <Layers size={15} color="var(--emerald-main)" />
+                  Primary Raw Material Feedstock
+                </label>
+                <select
+                  value={materialType}
+                  onChange={(e) => setMaterialType(e.target.value)}
+                  className="dash-select"
+                >
+                  <option value="Virgin Plastic Pellets">Virgin Plastic Pellets (PP / PE Resin)</option>
+                  <option value="Virgin HDPE Plastic">Virgin HDPE Plastic (Bottles &amp; Pipes)</option>
+                  <option value="Virgin PP Plastic">Virgin PP Plastic (Moulding)</option>
+                  <option value="Virgin LDPE Film">Virgin LDPE Film (Packaging)</option>
+                  <option value="Virgin Steel">Virgin Structural Steel (Billet/Sheet)</option>
+                  <option value="Virgin Aluminum">Virgin Aluminum Ingot</option>
+                  <option value="Virgin Kraft Paper">Virgin Kraft Paper (Corrugated Boxes)</option>
+                  <option value="Packaging Material">General Packaging &amp; Cushioning</option>
+                  <option value="None">None (Pure Utility/Assembly)</option>
+                </select>
+              </div>
+
+              {materialType !== 'None' && (
+                <div className="dash-form-group">
+                  <label className="dash-label">Monthly Material Inflow (kg)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1000"
+                    value={materialQty}
+                    onChange={(e) => setMaterialQty(Math.max(0, Number(e.target.value)))}
+                    className="dash-input"
+                  />
+                  <span className="input-helper">Weight of virgin material purchased</span>
+                </div>
+              )}
+            </div>
+
+            <div className="dash-form-grid-2" style={{ marginTop: '14px' }}>
+              <div className="dash-form-group">
+                <label className="dash-label">
+                  <RefreshCw size={14} color="var(--mint-hover)" />
+                  Main Waste Stream Generated
+                </label>
+                <input
+                  type="text"
+                  value={wasteType}
+                  onChange={(e) => setWasteType(e.target.value)}
+                  placeholder="e.g., Plastic Trimmings, Cardboard, Slag"
+                  className="dash-input"
+                />
+              </div>
+              <div className="dash-form-group">
+                <label className="dash-label">Monthly Waste Output (kg)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={wasteQty}
+                  onChange={(e) => setWasteQty(Math.max(0, Number(e.target.value)))}
+                  className="dash-input"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Elite Submit Button */}
+          <div className="dash-action-bar">
+            <button
+              type="submit"
+              disabled={loading}
+              className="dash-elite-btn"
+              id="dash-run-audit-btn"
+            >
+              {loading ? (
+                <>
+                  <RefreshCw size={17} className="spin-on-active" />
+                  Calculating Emission Factors &amp; Circular Options...
+                </>
+              ) : (
+                <>
+                  Find Emission Leaks &amp; Calculate Savings
+                  <ArrowRight size={17} />
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* MODE 2: Bill / PDF Upload */}
+      {inputMode === 'upload' && (
+        <form onSubmit={handleDocumentSubmit} className="dash-form">
+          <div
+            className={`dash-dropzone ${uploadDrag ? 'drag-over' : ''} ${uploadFile ? 'has-file' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setUploadDrag(true); }}
+            onDragLeave={() => setUploadDrag(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setUploadDrag(false);
+              if (e.dataTransfer.files[0]) setUploadFile(e.dataTransfer.files[0]);
+            }}
+          >
+            <UploadCloud size={46} className="dropzone-icon" />
+            <h4 className="dropzone-title">
+              {uploadFile ? uploadFile.name : 'Drop your utility bill or invoice here'}
+            </h4>
+            <p className="dropzone-sub">
+              {uploadFile
+                ? `${(uploadFile.size / 1024).toFixed(1)} KB · Ready to scan`
+                : 'Upload electricity invoices, diesel receipts, or fuel bills (PDF, PNG, JPG)'}
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <label className="dash-file-label">
+                {uploadFile ? 'Change File' : 'Browse Computer'}
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  style={{ display: 'none' }}
+                  onChange={(e) => setUploadFile(e.target.files[0] || null)}
+                />
+              </label>
+              {uploadFile && (
+                <button type="button" onClick={() => setUploadFile(null)} className="dropzone-clear">
+                  <X size={14} /> Remove
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="dash-action-bar">
+            <button
+              type="submit"
+              disabled={loading || !uploadFile}
+              className="dash-elite-btn"
+            >
+              {loading ? (
+                <><RefreshCw size={17} className="spin-on-active" /> Scanning Invoice &amp; Mapping Streams...</>
+              ) : (
+                <>Scan Document &amp; Run Leak Detection <ArrowRight size={17} /></>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* MODE 3: Chat / Copilot Prompt */}
+      {inputMode === 'chat' && (
+        <form onSubmit={handleChatSubmit} className="dash-form">
+          <div className="dash-card elite-card">
+            <div className="dash-card-label">CLICK AN EXAMPLE TO AUTO-FILL:</div>
+            <div className="example-prompts-list">
+              {[
+                'Our factory processes 60t of virgin plastic pellets monthly, uses 20,000 kWh of grid power and 500L of diesel.',
+                'We run a metal fabrication unit with 2t virgin steel, 450kg LPG burners, and 30,000 kWh of power monthly.',
+                'Our packaging plant uses 5t of HDPE, 15,000 kWh electricity, and produces 1.2t of cardboard waste.'
+              ].map((ex, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setChatMessage(ex)}
+                  className="dash-example-pill"
+                >
+                  <ChevronRight size={13} color="var(--mint-hover)" />
+                  <span>{ex}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="dash-card elite-card">
+            <div className="dash-card-label">YOUR FACTORY NARRATIVE</div>
+            <textarea
+              rows={5}
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              className="dash-textarea"
+              placeholder="Describe your plant's monthly inputs, utilities, fuel consumption, and material streams in plain words..."
+              required
+            />
+          </div>
+
+          <div className="dash-action-bar">
+            <button
+              type="submit"
+              disabled={loading || !chatMessage.trim()}
+              className="dash-elite-btn"
+            >
+              {loading ? (
+                <><RefreshCw size={17} className="spin-on-active" /> Extracting Process Quantities...</>
+              ) : (
+                <>Detect Leaks from Description <ArrowRight size={17} /></>
+              )}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 
-  const renderUpload = () => (
-    <div className="dash-content-inner">
-      <div className="dash-section-header">
-        <div>
-          <div className="dash-section-badge">DOCUMENT INTELLIGENCE</div>
-          <h2 className="dash-section-title">Utility Bill & PDF Upload</h2>
-          <p className="dash-section-desc">Upload your electricity invoices, fuel receipts or energy audits. EcoLeak extracts and maps them automatically.</p>
+  // ── RENDER STEP 2: Emission Leak Points (Hotspots) ──────────────────────────
+  const renderLeakSection = () => {
+    if (!auditResult) {
+      return (
+        <div className="dash-content-inner">
+          <div className="dash-empty-state">
+            <AlertTriangle size={48} className="empty-icon" />
+            <h3>No Emission Leaks Detected Yet</h3>
+            <p>Input your plant process data in Step 1 to calculate your emission leak points.</p>
+            <button className="dash-elite-btn" style={{ marginTop: '20px' }} onClick={() => setActiveSection('input')}>
+              Go to Step 1: Input Data <ArrowRight size={15} />
+            </button>
+          </div>
         </div>
-      </div>
+      );
+    }
 
-      {error && <div className="dash-error"><AlertTriangle size={16} /> {error}<button onClick={resetError} className="dash-error-close"><X size={14}/></button></div>}
+    const leakPoints = auditResult.leak_points || [];
+    const scopeBreakdown = auditResult.facility_summary?.scope_breakdown || {};
 
-      <form onSubmit={handleDocumentSubmit} className="dash-form">
-        <div className="dash-card">
-          <div className="dash-card-label">FACILITY CLASSIFICATION</div>
-          <div className="dash-form-group">
-            <label className="dash-label"><Building2 size={14} /> Industry Type</label>
-            <select value={industry} onChange={(e) => setIndustry(e.target.value)} className="dash-select">
-              {Object.keys(INDUSTRY_PRESETS).map((ind) => (
-                <option key={ind} value={ind}>{ind}</option>
-              ))}
-              <option value="Other">Other / General Manufacturing</option>
-            </select>
+    return (
+      <div className="dash-content-inner">
+        {/* Header */}
+        <div className="dash-section-header">
+          <div>
+            <div className="dash-section-badge">STEP 2: EMISSION LEAK POINTS</div>
+            <h2 className="dash-section-title">Where Carbon &amp; Energy Escapes</h2>
+            <p className="dash-section-desc">
+              Identified emission hotspots ranked by magnitude. Target these top leak points to unlock maximum financial savings.
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="dash-back-btn-sm" onClick={() => setActiveSection('input')}>
+              <Sliders size={14} /> Adjust Inputs
+            </button>
+            <button className="dash-elite-btn-sm" onClick={() => setActiveSection('circular')}>
+              View Circular Solutions <ArrowRight size={14} />
+            </button>
           </div>
         </div>
 
-        <div
-          className={`dash-dropzone ${uploadDrag ? 'drag-over' : ''} ${uploadFile ? 'has-file' : ''}`}
-          onDragOver={(e) => { e.preventDefault(); setUploadDrag(true); }}
-          onDragLeave={() => setUploadDrag(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setUploadDrag(false);
-            if (e.dataTransfer.files[0]) setUploadFile(e.dataTransfer.files[0]);
-          }}
-        >
-          <UploadCloud size={44} className="dropzone-icon" />
-          <h4 className="dropzone-title">
-            {uploadFile ? uploadFile.name : 'Drop your bill or invoice here'}
-          </h4>
-          <p className="dropzone-sub">
-            {uploadFile ? `${(uploadFile.size / 1024).toFixed(1)} KB · Ready to analyze` : 'Accepts PDF, PNG, JPG — electricity bills, fuel invoices, energy audit reports'}
-          </p>
-          <label className="dash-file-label">
-            {uploadFile ? 'Replace File' : 'Browse Files'}
-            <input type="file" accept=".pdf,.png,.jpg,.jpeg" style={{ display: 'none' }} onChange={(e) => setUploadFile(e.target.files[0] || null)} />
-          </label>
-          {uploadFile && (
-            <button type="button" onClick={() => setUploadFile(null)} className="dropzone-clear">
-              <X size={14} /> Clear
-            </button>
-          )}
+        {/* Top KPI Cards */}
+        <div className="dash-kpi-grid">
+          <div className="dash-kpi-card">
+            <span className="kpi-label">Total Monthly Emissions</span>
+            <div className="kpi-value kpi-red">{formatCO2e(totalEmissions, true)}</div>
+            <small className="kpi-sub">{Math.round(totalEmissions).toLocaleString()} kg CO₂e / month</small>
+          </div>
+          <div className="dash-kpi-card">
+            <span className="kpi-label">Reducible by Circularity</span>
+            <div className="kpi-value kpi-green">
+              {formatCO2e(simulatedSavingsKg, true)}
+              <span style={{ fontSize: '13px', marginLeft: '6px', fontWeight: 600 }}>
+                ({Math.round((simulatedSavingsKg / (totalEmissions || 1)) * 100)}% cut)
+              </span>
+            </div>
+            <small className="kpi-sub">Avoidable via closed-loop alternatives</small>
+          </div>
+          <div className="dash-kpi-card">
+            <span className="kpi-label">Projected Annual Savings</span>
+            <div className="kpi-value kpi-cyan">{formatINR(simulatedOpexSavings, true)}/yr</div>
+            <small className="kpi-sub">Net operating expense saved</small>
+          </div>
         </div>
 
-        <button type="submit" disabled={loading || !uploadFile} className="dash-submit-btn">
-          {loading ? (
-            <><RefreshCw size={16} className="spin-on-active" /> Extracting & Running Audit...</>
-          ) : (
-            <>Extract & Audit Document <ArrowRight size={15} /></>
-          )}
-        </button>
-      </form>
-    </div>
-  );
+        {/* Top Emission Hotspots / Pareto Leak Points */}
+        <div className="dash-card elite-card">
+          <div className="dash-card-label-row">
+            <span className="dash-card-label">🔥 TOP EMISSION LEAK POINTS (RANKED BY SEVERITY)</span>
+            <span className="badge-pill-danger">80/20 Rule Hotspot Analysis</span>
+          </div>
 
-  const renderCopilot = () => (
-    <div className="dash-content-inner">
-      <div className="dash-section-header">
-        <div>
-          <div className="dash-section-badge">NATURAL LANGUAGE EXTRACTION</div>
-          <h2 className="dash-section-title">AI Copilot Prompt</h2>
-          <p className="dash-section-desc">Describe your factory's operations in plain English. The AI extracts quantities and maps them to GHG emission factors.</p>
-        </div>
-      </div>
+          <div className="leak-points-container">
+            {leakPoints.map((lp, idx) => (
+              <div key={idx} className="leak-point-row">
+                <div className="leak-point-header">
+                  <div className="leak-title-wrap">
+                    <span className="leak-rank">#{idx + 1}</span>
+                    <div>
+                      <strong className="leak-name">{lp.raw_name || lp.activity_key}</strong>
+                      <span className="leak-scope-tag">{lp.scope}</span>
+                    </div>
+                  </div>
+                  <div className="leak-stat-wrap">
+                    <span className="leak-qty">{formatCO2e(lp.emissions_kg)}</span>
+                    <span className={`leak-tier-badge ${lp.share_percent >= 35 ? 'tier-critical' : 'tier-high'}`}>
+                      {lp.share_percent}% of Total
+                    </span>
+                  </div>
+                </div>
 
-      {error && <div className="dash-error"><AlertTriangle size={16} /> {error}<button onClick={resetError} className="dash-error-close"><X size={14}/></button></div>}
+                {/* Progress Visual Bar */}
+                <div className="leak-progress-track">
+                  <div
+                    className="leak-progress-fill"
+                    style={{
+                      width: `${Math.min(100, Math.max(8, lp.share_percent))}%`,
+                      background: lp.share_percent >= 35
+                        ? 'linear-gradient(90deg, #e11d48 0%, #fb7185 100%)'
+                        : 'linear-gradient(90deg, #d97706 0%, #f59e0b 100%)'
+                    }}
+                  />
+                </div>
 
-      <form onSubmit={handleChatSubmit} className="dash-form">
-        <div className="dash-card">
-          <div className="dash-card-label">EXAMPLE PROMPTS</div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '10px' }}>
-            {[
-              'Our factory processes 60t of virgin plastic pellets monthly, uses 20,000 kWh of grid power and 500L of diesel.',
-              'We run a steel fabrication unit with 2t of virgin steel, LPG burners at 450kg/month and 30,000 kWh of electricity.',
-              'Our packaging plant uses 5t of HDPE, 15,000 kWh electricity, and generates 1.2t of cardboard waste monthly.'
-            ].map((ex, i) => (
-              <button key={i} type="button" onClick={() => setChatMessage(ex)} className="dash-example-btn">
-                <ChevronRight size={12} />{ex}
-              </button>
+                <div className="leak-diagnostic-text">
+                  <Info size={13} color="var(--text-muted)" />
+                  <span>{lp.diagnostic || `${lp.raw_name} accounts for ${lp.share_percent}% of your entire plant carbon footprint.`}</span>
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
-        <div className="dash-card">
-          <div className="dash-card-label">YOUR FACTORY NARRATIVE</div>
-          <textarea
-            rows={6}
-            value={chatMessage}
-            onChange={(e) => setChatMessage(e.target.value)}
-            className="dash-textarea"
-            placeholder="Describe your plant's monthly inputs, utilities, fuel consumption, and material streams..."
-            required
-          />
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{chatMessage.length} characters</span>
-          </div>
-        </div>
-
-        <button type="submit" disabled={loading || !chatMessage.trim()} className="dash-submit-btn">
-          {loading ? (
-            <><RefreshCw size={16} className="spin-on-active" /> Parsing Narrative & Mapping Factors...</>
-          ) : (
-            <>Run Copilot Audit <ArrowRight size={15} /></>
-          )}
-        </button>
-      </form>
-    </div>
-  );
-
-  const renderResults = () => {
-    if (!auditResult) return (
-      <div className="dash-content-inner">
-        <div className="dash-empty-state">
-          <BarChart3 size={52} className="empty-icon" />
-          <h3>No Audit Results Yet</h3>
-          <p>Run a Quick Audit, upload a bill, or use the AI Copilot to generate your facility's emission report.</p>
-          <button className="dash-submit-btn" style={{ marginTop: '20px' }} onClick={() => setActiveSection('audit')}>
-            Start Quick Audit <ArrowRight size={15} />
-          </button>
-        </div>
-      </div>
-    );
-
-    const recs = auditResult.circular_recommendations || [];
-    const totalSavingsKg = recs.reduce((acc, r) => acc + (r.co2e_savings_kg || 0), 0);
-    const totalOpex = recs.reduce((acc, r) => acc + (r.annual_opex_savings_inr || r.annual_opex_savings_usd * 84 || 0), 0);
-
-    return (
-      <div className="dash-content-inner">
-        <div className="dash-section-header">
-          <div>
-            <div className="dash-section-badge">VERIFIED GHG AUDIT REPORT</div>
-            <h2 className="dash-section-title">{auditResult.facility_summary?.industry} Facility</h2>
-            <p className="dash-section-desc">ISO 14064-1 accounting · DQI: <strong>{auditResult.facility_summary?.data_quality_index ?? 100}%</strong></p>
-          </div>
-          <button className="dash-back-btn-sm" onClick={() => { setAuditResult(null); setActiveSection('audit'); }}>
-            <RefreshCw size={14} /> New Audit
-          </button>
-        </div>
-
-        {/* KPI strip */}
-        <div className="dash-kpi-grid">
-          <div className="dash-kpi-card">
-            <span className="kpi-label">Total Emissions</span>
-            <div className="kpi-value kpi-red">{formatCO2e(auditResult.facility_summary?.total_emissions_kg_co2e, true)}</div>
-            <small className="kpi-sub">{Math.round(auditResult.facility_summary?.total_emissions_kg_co2e ?? 0).toLocaleString()} kg CO₂e</small>
-          </div>
-          <div className="dash-kpi-card">
-            <span className="kpi-label">Reducible Emissions</span>
-            <div className="kpi-value kpi-green">{formatCO2e(totalSavingsKg, true)}</div>
-            <small className="kpi-sub">Closed-loop savings</small>
-          </div>
-          <div className="dash-kpi-card">
-            <span className="kpi-label">Annual OPEX Upside</span>
-            <div className="kpi-value kpi-cyan">{formatINR(totalOpex, true)}/yr</div>
-            <small className="kpi-sub">Net recurring savings</small>
-          </div>
-        </div>
-
-        {/* Scope breakdown */}
-        <div className="dash-card">
-          <div className="dash-card-label">GHG PROTOCOL SCOPE BREAKDOWN</div>
+        {/* Scope 1, 2, 3 Breakdown */}
+        <div className="dash-card elite-card">
+          <div className="dash-card-label">EMISSION SOURCES BY ACTIVITY TYPE</div>
           <div className="dash-scope-grid">
             <div className="dash-scope-cell">
-              <span className="scope-label scope-1">Scope 1 — Direct Fuel</span>
-              <div className="scope-value">{formatCO2e(auditResult.facility_summary?.scope_breakdown?.scope_1_kg)}</div>
-              <span className="scope-pct">{auditResult.facility_summary?.scope_breakdown?.scope_1_pct}% of footprint</span>
+              <span className="scope-label scope-1">On-Site Fuels (Scope 1)</span>
+              <div className="scope-value">{formatCO2e(scopeBreakdown.scope_1_kg)}</div>
+              <span className="scope-pct">{scopeBreakdown.scope_1_pct ?? 0}% of footprint · Diesel, LPG, Gas</span>
             </div>
             <div className="dash-scope-cell">
-              <span className="scope-label scope-2">Scope 2 — Electricity</span>
-              <div className="scope-value">{formatCO2e(auditResult.facility_summary?.scope_breakdown?.scope_2_kg)}</div>
-              <span className="scope-pct">{auditResult.facility_summary?.scope_breakdown?.scope_2_pct}% of footprint</span>
+              <span className="scope-label scope-2">Purchased Power (Scope 2)</span>
+              <div className="scope-value">{formatCO2e(scopeBreakdown.scope_2_kg)}</div>
+              <span className="scope-pct">{scopeBreakdown.scope_2_pct ?? 0}% of footprint · Grid Electricity</span>
             </div>
             <div className="dash-scope-cell">
-              <span className="scope-label scope-3">Scope 3 — Materials & Waste</span>
-              <div className="scope-value">{formatCO2e(auditResult.facility_summary?.scope_breakdown?.scope_3_kg)}</div>
-              <span className="scope-pct">{auditResult.facility_summary?.scope_breakdown?.scope_3_pct}% of footprint</span>
+              <span className="scope-label scope-3">Raw Materials &amp; Waste (Scope 3)</span>
+              <div className="scope-value">{formatCO2e(scopeBreakdown.scope_3_kg)}</div>
+              <span className="scope-pct">{scopeBreakdown.scope_3_pct ?? 0}% of footprint · Feedstock &amp; Packaging</span>
             </div>
           </div>
         </div>
-
-        {/* Leak points */}
-        {auditResult.leak_points?.length > 0 && (
-          <div className="dash-alert dash-alert-danger">
-            <div className="dash-alert-title"><AlertTriangle size={15} /> PARETO HOTSPOT LEAK POINTS DETECTED</div>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
-              {auditResult.leak_points.map((lp, i) => (
-                <span key={i} className="leak-badge">
-                  {lp.raw_name || lp.activity_key} — {lp.share_percent ?? lp.percent_of_total}% [{(lp.hotspot_tier || lp.leak_point_severity || 'HIGH').toUpperCase()}]
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Circular recommendations */}
-        <div className="dash-card">
-          <div className="dash-card-label">CHROMADB MATCHED CIRCULAR INTERVENTIONS</div>
-          {recs.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '12px' }}>
-              {recs.map((rec, i) => (
-                <div key={i} className="dash-rec-card">
-                  <div className="rec-header">
-                    <div>
-                      <span className="rec-type-label">CIRCULAR SUBSTITUTION</span>
-                      <h4 className="rec-title">
-                        {rec.target_activity?.replace(/_/g, ' ')} → <strong>{rec.alternative?.replace(/_/g, ' ')}</strong>
-                      </h4>
-                    </div>
-                    <span className="rec-feasibility">Feasibility: {rec.feasibility_score}/100 · {rec.technical_difficulty} Complexity</span>
-                  </div>
-                  <div className="rec-metrics">
-                    <div className="rec-metric">
-                      <small>CO₂e Abatement</small>
-                      <strong className="metric-green">-{rec.co2e_reduction_percent}% ({formatCO2e(rec.co2e_savings_kg)})</strong>
-                    </div>
-                    <div className="rec-metric">
-                      <small>Est. CAPEX</small>
-                      <strong>{formatINR(rec.estimated_capex_inr || rec.estimated_capex_usd * 84)}</strong>
-                    </div>
-                    <div className="rec-metric">
-                      <small>Annual OPEX Saving</small>
-                      <strong className="metric-cyan">{formatINR(rec.annual_opex_savings_inr || rec.annual_opex_savings_usd * 84)}/yr</strong>
-                    </div>
-                    <div className="rec-metric">
-                      <small>Payback Horizon</small>
-                      <strong>{rec.payback_months ? `${rec.payback_months} Months` : 'Immediate'}</strong>
-                    </div>
-                  </div>
-                  {rec.regulatory_readiness && (
-                    <p className="rec-compliance">
-                      <ShieldCheck size={12} /> <strong>Standards & Compliance:</strong> {rec.regulatory_readiness}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '12px' }}>No high-volume virgin material hotspots detected.</p>
-          )}
-        </div>
-
-        {/* Unresolved activities */}
-        {auditResult.unresolved_activities?.length > 0 && (
-          <div className="dash-alert dash-alert-warning">
-            <div className="dash-alert-title">UNRESOLVED STREAMS ({auditResult.unresolved_activities.length})</div>
-            <ul style={{ fontSize: '12.5px', paddingLeft: '18px', marginTop: '8px' }}>
-              {auditResult.unresolved_activities.map((un, i) => (
-                <li key={i}><strong>{un.raw_name}</strong>: {un.warning} → <em>{un.suggested_action}</em></li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     );
   };
 
+  // ── RENDER STEP 3: Circular Solutions & Cost Savings ────────────────────────
+  const renderCircularSection = () => {
+    if (!auditResult) {
+      return (
+        <div className="dash-content-inner">
+          <div className="dash-empty-state">
+            <RefreshCw size={48} className="empty-icon" />
+            <h3>No Circular Recommendations Yet</h3>
+            <p>Run the leak point analysis first to generate pre-engineered circular alternatives.</p>
+            <button className="dash-elite-btn" style={{ marginTop: '20px' }} onClick={() => setActiveSection('input')}>
+              Go to Step 1: Input Data <ArrowRight size={15} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="dash-content-inner">
+        {/* Header */}
+        <div className="dash-section-header">
+          <div>
+            <div className="dash-section-badge">STEP 3: CIRCULAR ALTERNATIVE RECOMMENDER</div>
+            <h2 className="dash-section-title">Pre-Engineered Circular Solutions</h2>
+            <p className="dash-section-desc">
+              Specific interventions that substitute linear leak-points with closed-loop materials, process heat recapture, and verified savings.
+            </p>
+          </div>
+          <button className="dash-elite-btn-sm" onClick={() => setActiveSection('report')}>
+            <Download size={14} /> Download Action Plan
+          </button>
+        </div>
+
+        {/* Interactive Circular Loop Balancer */}
+        <div className="dash-card elite-card interactive-balancer-card">
+          <div className="balancer-top-row">
+            <div>
+              <span className="dash-card-label">INTERACTIVE CIRCULARITY SIMULATOR</span>
+              <h4 style={{ margin: '3px 0 0', fontSize: '15px', color: 'var(--text-primary)' }}>
+                Simulate Plant Substitution Ratio: <strong>{circularRatio}% Circular Feed</strong>
+              </h4>
+            </div>
+            <span className="balancer-tag">
+              {circularRatio >= 80 ? '🌿 Fully Circular Loop' : (circularRatio >= 50 ? '⚡ Hybrid Transition' : '⚠️ Linear Heavy')}
+            </span>
+          </div>
+
+          <div className="balancer-slider-wrap">
+            <div className="balancer-slider-labels">
+              <span>0% Baseline Bleed</span>
+              <span>50% Partial Loop</span>
+              <span>100% Fully Closed-Loop</span>
+            </div>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              step="5"
+              value={circularRatio}
+              onChange={(e) => setCircularRatio(Number(e.target.value))}
+              className="scrub-range-slider"
+            />
+          </div>
+
+          <div className="balancer-dynamic-metrics">
+            <div className="balancer-metric-pill">
+              <small>Avoided Carbon</small>
+              <strong style={{ color: 'var(--mint-hover)' }}>−{formatCO2e(simulatedSavingsKg)}/mo</strong>
+            </div>
+            <div className="balancer-metric-pill">
+              <small>Projected Annual OPEX Saved</small>
+              <strong style={{ color: 'var(--emerald-deep)' }}>+{formatINR(simulatedOpexSavings, true)}/yr</strong>
+            </div>
+            <div className="balancer-metric-pill">
+              <small>Estimated Upfront CAPEX</small>
+              <strong>{formatINR(totalCapex, true)}</strong>
+            </div>
+            <div className="balancer-metric-pill">
+              <small>Average Payback</small>
+              <strong style={{ color: 'var(--cyan-fresh)' }}>{avgPaybackMonths} Months</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Pills */}
+        <div className="rec-filters-bar">
+          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)' }}>FILTER SOLUTIONS:</span>
+          <button
+            className={`rec-filter-pill ${activeRecFilter === 'all' ? 'pill-active' : ''}`}
+            onClick={() => setActiveRecFilter('all')}
+          >
+            All Recommended ({rawRecs.length})
+          </button>
+          <button
+            className={`rec-filter-pill ${activeRecFilter === 'high_impact' ? 'pill-active' : ''}`}
+            onClick={() => setActiveRecFilter('high_impact')}
+          >
+            Highest Carbon Cut (&gt;60%)
+          </button>
+          <button
+            className={`rec-filter-pill ${activeRecFilter === 'fast_payback' ? 'pill-active' : ''}`}
+            onClick={() => setActiveRecFilter('fast_payback')}
+          >
+            Fastest Payback (&lt;8 Months)
+          </button>
+        </div>
+
+        {/* Recommended Circular Cards */}
+        <div className="rec-cards-list">
+          {filteredRecs.length > 0 ? (
+            filteredRecs.map((rec, i) => (
+              <div key={i} className="dash-rec-card elite-rec-card">
+                <div className="rec-header">
+                  <div>
+                    <span className="rec-type-label">CIRCULAR INTERVENTION #{i + 1}</span>
+                    <h3 className="rec-title">
+                      {rec.target_activity} ➔ <strong className="gradient-text">{rec.alternative}</strong>
+                    </h3>
+                  </div>
+                  <div className="rec-badge-group">
+                    <span className="rec-feasibility">
+                      Feasibility: {rec.feasibility_score ?? 90}/100
+                    </span>
+                    <span className="rec-difficulty-badge">
+                      {rec.technical_difficulty || 'Low'} Complexity
+                    </span>
+                  </div>
+                </div>
+
+                {rec.mechanism && (
+                  <p className="rec-mechanism-desc">
+                    <strong>Closed-Loop Mechanism:</strong> {rec.mechanism}
+                  </p>
+                )}
+
+                <div className="rec-metrics">
+                  <div className="rec-metric">
+                    <small>CO₂ Reduction</small>
+                    <strong className="metric-green">
+                      −{rec.co2e_reduction_percent}% ({formatCO2e(Math.round(rec.co2e_savings_kg * (circularRatio / 100)))})
+                    </strong>
+                  </div>
+                  <div className="rec-metric">
+                    <small>Required Investment</small>
+                    <strong>{formatINR(rec.estimated_capex_inr)}</strong>
+                  </div>
+                  <div className="rec-metric">
+                    <small>Annual Operating Savings</small>
+                    <strong className="metric-cyan">
+                      {formatINR(Math.round(rec.annual_opex_savings_inr * (circularRatio / 100)))}/yr
+                    </strong>
+                  </div>
+                  <div className="rec-metric">
+                    <small>Investment Payback</small>
+                    <strong style={{ color: 'var(--amber)' }}>
+                      {rec.payback_months ? `${rec.payback_months} Months` : 'Immediate'}
+                    </strong>
+                  </div>
+                </div>
+
+                {rec.regulatory_readiness && (
+                  <div className="rec-compliance">
+                    <ShieldCheck size={14} color="var(--mint-hover)" />
+                    <span><strong>Regulation &amp; ESG Standards:</strong> {rec.regulatory_readiness}</span>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <p style={{ padding: '20px', color: 'var(--text-muted)' }}>No circular solutions match the chosen filter.</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── RENDER STEP 4: Executive Action Plan ────────────────────────────────────
+  const renderReportSection = () => (
+    <div className="dash-content-inner">
+      <div className="dash-section-header">
+        <div>
+          <div className="dash-section-badge">OFFICIAL FACILITY COMPLIANCE</div>
+          <h2 className="dash-section-title">Executive Decarbonization Action Plan</h2>
+          <p className="dash-section-desc">
+            Audit-ready report summary for factory managers, green bank loans, and pollution control board regulations.
+          </p>
+        </div>
+        <button className="dash-elite-btn-sm" onClick={() => window.print()}>
+          <Printer size={14} /> Print / Save as PDF
+        </button>
+      </div>
+
+      <div className="dash-card elite-card report-card">
+        <div className="report-letterhead">
+          <div>
+            <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--emerald-deep)' }}>
+              EcoLeak Industrial Emission Assessment
+            </h3>
+            <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
+              Theme: Circular Carbon Ecosystem · Facility: {industry}
+            </span>
+          </div>
+          <div className="report-status-badge">
+            <CheckCircle2 size={15} color="var(--mint)" /> Verified Factors Aligned
+          </div>
+        </div>
+
+        <div className="report-grid-3">
+          <div className="report-stat-box">
+            <small>Baseline Footprint</small>
+            <strong>{formatCO2e(totalEmissions, true)}</strong>
+            <span>Per Month</span>
+          </div>
+          <div className="report-stat-box">
+            <small>Total Recoverable Emissions</small>
+            <strong style={{ color: 'var(--mint-hover)' }}>{formatCO2e(simulatedSavingsKg, true)}</strong>
+            <span>Avoidable through circularity</span>
+          </div>
+          <div className="report-stat-box">
+            <small>Annual Capital Savings</small>
+            <strong style={{ color: 'var(--emerald-deep)' }}>{formatINR(simulatedOpexSavings, true)}</strong>
+            <span>Recurring OPEX reduction</span>
+          </div>
+        </div>
+
+        <h4 style={{ margin: '24px 0 10px', fontSize: '14px', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+          ACTIONABLE IMPLEMENTATION ROADMAP:
+        </h4>
+
+        <div className="report-roadmap-list">
+          {rawRecs.map((rec, i) => (
+            <div key={i} className="report-roadmap-item">
+              <div className="roadmap-num">{i + 1}</div>
+              <div className="roadmap-content">
+                <strong>{rec.alternative}</strong>
+                <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: '2px 0 0' }}>
+                  Target: {rec.target_activity} · Cuts {rec.co2e_reduction_percent}% CO₂ · Payback: {rec.payback_months} mo · CAPEX: {formatINR(rec.estimated_capex_inr)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="report-footer-note">
+          <span>Standards Aligned: GHG Protocol Corporate Standard, ISO 14064-1, CEA Central Electricity Authority India Factors, BRSR Core.</span>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── RENDER STEP 5: Operator Access (Sign In / Sign Up / Google Auth) ───────
   const renderSignIn = () => (
     <div className="dash-content-inner">
       <div className="dash-section-header">
         <div>
-          <div className="dash-section-badge">OPERATOR CONSOLE</div>
-          <h2 className="dash-section-title">Sign In to EcoLeak</h2>
-          <p className="dash-section-desc">Access your facility's utility data, saved audits, and intervention ledger.</p>
+          <div className="dash-section-badge">OPERATOR ACCESS &amp; COMPLIANCE</div>
+          <h2 className="dash-section-title">
+            {authUser ? 'Verified Plant Operator Profile' : (authTab === 'signin' ? 'Sign In to Plant Console' : 'Create Operator Account')}
+          </h2>
+          <p className="dash-section-desc">
+            {authUser
+              ? 'Your authenticated session connects your facility meters, historical audits, and circular interventions.'
+              : 'Sign in to access your facility emissions ledger, save audit histories, and export verified reports.'}
+          </p>
         </div>
       </div>
 
       <div className="dash-login-wrap">
-        {!loggedIn ? (
-          <form onSubmit={handleLogin} className="dash-login-form">
-            <div className="dash-form-group">
-              <label className="dash-label"><Mail size={14} /> Corporate Email</label>
-              <input type="email" placeholder="operator@plant.com" value={email} onChange={(e) => setEmail(e.target.value)} className="dash-input" required />
+        {authUser ? (
+          /* Profile Card when logged in */
+          <div className="dash-card elite-card operator-profile-card">
+            <div className="profile-header-row">
+              <div className="profile-avatar-circle">
+                {authUser.picture ? (
+                  <img src={authUser.picture} alt={authUser.name} className="profile-avatar-img" />
+                ) : (
+                  <span>{authUser.name ? authUser.name.slice(0, 2).toUpperCase() : 'OP'}</span>
+                )}
+              </div>
+              <div className="profile-titles">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--emerald-deep)' }}>{authUser.name}</h3>
+                  <span className="profile-verified-badge">
+                    <ShieldCheck size={13} /> Verified Operator
+                  </span>
+                </div>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{authUser.email}</span>
+                <span className="profile-role-tag">
+                  {authUser.role || 'Plant Operations Lead'} · {authUser.facilityName || 'Manufacturing Facility'}
+                </span>
+              </div>
             </div>
-            <div className="dash-form-group">
-              <label className="dash-label"><Lock size={14} /> Password</label>
-              <input type="password" placeholder="••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="dash-input" required />
+
+            <div className="profile-stats-grid">
+              <div className="profile-stat-box">
+                <small>Connected Plant</small>
+                <strong>{authUser.facilityName || 'GreenPack Plastics'}</strong>
+                <span>Sector: {industry}</span>
+              </div>
+              <div className="profile-stat-box">
+                <small>Auth Method</small>
+                <strong style={{ textTransform: 'capitalize' }}>
+                  {authUser.authMethod === 'google' ? 'Google OAuth' : 'Corporate Email'}
+                </strong>
+                <span>Session Active</span>
+              </div>
+              <div className="profile-stat-box">
+                <small>Emission Compliance</small>
+                <strong style={{ color: 'var(--mint-hover)' }}>BRSR &amp; ISO 14064</strong>
+                <span>Verified Factors Aligned</span>
+              </div>
             </div>
-            <button type="submit" className="dash-submit-btn">
-              Sign In to Console <ArrowRight size={15} />
-            </button>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', textAlign: 'center', marginTop: '14px' }}>
-              Don't have an account? <a href="#" style={{ color: 'var(--mint-hover)' }}>Request access →</a>
-            </p>
-          </form>
+
+            <div className="profile-actions-row">
+              <button
+                type="button"
+                className="dash-elite-btn"
+                onClick={() => setActiveSection('input')}
+              >
+                Continue to Plant Audit <ArrowRight size={16} />
+              </button>
+              <button
+                type="button"
+                className="dash-back-btn-sm"
+                style={{ padding: '12px 20px', color: 'var(--rose)', borderColor: 'rgba(225,29,72,0.3)' }}
+                onClick={handleSignOut}
+              >
+                <LogOut size={15} /> Sign Out
+              </button>
+            </div>
+          </div>
         ) : (
-          <div className="dash-login-success">
-            <CheckCircle2 size={52} style={{ color: 'var(--mint)' }} />
-            <h3>Authenticated Successfully</h3>
-            <p>Opening your facility ledger...</p>
+          /* Auth Form Card (Sign In / Sign Up) */
+          <div className="dash-login-form elite-auth-card">
+            {/* Tab Switcher */}
+            <div className="auth-mode-tabs">
+              <button
+                type="button"
+                className={`auth-mode-tab ${authTab === 'signin' ? 'auth-tab-active' : ''}`}
+                onClick={() => { setAuthTab('signin'); setAuthErrorMsg(''); }}
+              >
+                <LogIn size={15} /> Sign In
+              </button>
+              <button
+                type="button"
+                className={`auth-mode-tab ${authTab === 'signup' ? 'auth-tab-active' : ''}`}
+                onClick={() => { setAuthTab('signup'); setAuthErrorMsg(''); }}
+              >
+                <UserPlus size={15} /> Create Account
+              </button>
+            </div>
+
+            {/* Google One-Click Button */}
+            <button
+              type="button"
+              disabled={authLoading}
+              onClick={handleGoogleAuth}
+              className="dash-google-btn"
+            >
+              <GoogleIcon />
+              <span>Continue with Google</span>
+            </button>
+
+            <div className="google-key-helper">
+              <Key size={12} color="var(--mint-hover)" />
+              <span>OAuth Ready · Set <code>VITE_GOOGLE_CLIENT_ID</code> in .env or test with 1-click</span>
+            </div>
+
+            <div className="auth-divider">
+              <span>OR CONTINUE WITH EMAIL</span>
+            </div>
+
+            {authErrorMsg && (
+              <div className="dash-alert dash-alert-danger" style={{ marginBottom: '14px', padding: '10px 14px' }}>
+                <AlertTriangle size={14} />
+                <span>{authErrorMsg}</span>
+              </div>
+            )}
+
+            {authSuccessMsg && (
+              <div className="dash-alert" style={{ background: 'var(--mint-light)', border: '1px solid var(--mint)', color: 'var(--mint-hover)', marginBottom: '14px', padding: '10px 14px' }}>
+                <CheckCircle2 size={14} />
+                <span>{authSuccessMsg}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleEmailAuth} className="auth-inner-form">
+              {authTab === 'signup' && (
+                <>
+                  <div className="dash-form-group">
+                    <label className="dash-label"><User size={14} /> Operator Full Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Sarthakk Anjariya"
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      className="dash-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="dash-form-group">
+                    <label className="dash-label"><Building2 size={14} /> Facility / Plant Name</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. GreenPack Plastics Ltd."
+                      value={authFacility}
+                      onChange={(e) => setAuthFacility(e.target.value)}
+                      className="dash-input"
+                      required
+                    />
+                  </div>
+
+                  <div className="dash-form-group">
+                    <label className="dash-label"><ShieldCheck size={14} /> Operator Role</label>
+                    <select
+                      value={authRole}
+                      onChange={(e) => setAuthRole(e.target.value)}
+                      className="dash-select"
+                    >
+                      <option value="Plant Manager">Plant Manager / Factory Head</option>
+                      <option value="Process Engineer">Process &amp; Energy Engineer</option>
+                      <option value="Sustainability Consultant">Sustainability Consultant</option>
+                      <option value="Environmental Auditor">Pollution Control / Regulatory Auditor</option>
+                    </select>
+                  </div>
+                </>
+              )}
+
+              <div className="dash-form-group">
+                <label className="dash-label"><Mail size={14} /> Corporate Email</label>
+                <input
+                  type="email"
+                  placeholder="operator@plant.com"
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  className="dash-input"
+                  required
+                />
+              </div>
+
+              <div className="dash-form-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <label className="dash-label"><Lock size={14} /> Password</label>
+                  {authTab === 'signin' && (
+                    <button
+                      type="button"
+                      onClick={() => alert('Password reset verification link sent to your registered corporate email.')}
+                      style={{ background: 'none', border: 'none', color: 'var(--mint-hover)', fontSize: '11.5px', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Forgot password?
+                    </button>
+                  )}
+                </div>
+                <div className="password-input-wrap">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••••••"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="dash-input password-input-field"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="auth-checkbox-row">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    style={{ accentColor: 'var(--mint-hover)' }}
+                  />
+                  <span>Remember me on this plant terminal</span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={authLoading}
+                className="dash-elite-btn"
+                style={{ width: '100%', marginTop: '14px' }}
+              >
+                {authLoading ? (
+                  <><RefreshCw size={16} className="spin-on-active" /> Authenticating...</>
+                ) : (
+                  <>
+                    {authTab === 'signin' ? 'Sign In to Plant Console' : 'Create Operator Account'}
+                    <ArrowRight size={16} />
+                  </>
+                )}
+              </button>
+
+              <div style={{ textAlign: 'center', marginTop: '16px', fontSize: '12.5px', color: 'var(--text-muted)' }}>
+                {authTab === 'signin' ? (
+                  <span>
+                    New facility operator?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setAuthTab('signup'); setAuthErrorMsg(''); }}
+                      style={{ background: 'none', border: 'none', color: 'var(--mint-hover)', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Create account →
+                    </button>
+                  </span>
+                ) : (
+                  <span>
+                    Already have an account?{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setAuthTab('signin'); setAuthErrorMsg(''); }}
+                      style={{ background: 'none', border: 'none', color: 'var(--mint-hover)', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Sign in →
+                    </button>
+                  </span>
+                )}
+              </div>
+            </form>
           </div>
         )}
       </div>
     </div>
   );
 
-  const sectionRenderers = { audit: renderAudit, upload: renderUpload, copilot: renderCopilot, results: renderResults, signin: renderSignIn };
+  const dynamicNavItems = [
+    { id: 'input',    icon: LayoutDashboard,   label: '1. Plant Process Data',    sub: 'Energy, Materials & Waste' },
+    { id: 'leaks',    icon: AlertTriangle,     label: '2. Top Emission Leaks',    sub: 'Hotspot Detection' },
+    { id: 'circular', icon: RefreshCw,         label: '3. Circular Solutions',     sub: 'Interventions & Cost Savings' },
+    { id: 'report',   icon: Download,          label: 'Executive Action Plan',     sub: 'Compliance & Export' },
+    {
+      id: 'signin',
+      icon: authUser ? UserCheck : LogIn,
+      label: authUser ? authUser.name : 'Operator Access',
+      sub: authUser ? (authUser.facilityName || 'Verified Plant') : 'Sign In / Sign Up'
+    },
+  ];
+
+  const sectionRenderers = {
+    input: renderInputSection,
+    leaks: renderLeakSection,
+    circular: renderCircularSection,
+    report: renderReportSection,
+    signin: renderSignIn
+  };
 
   return (
     <div className="dash-shell">
-      {/* ── Glassy Sidebar ───────────────────────────────────────────────────── */}
+      {/* ── Glassy Modern Sidebar ───────────────────────────────────────────── */}
       <aside className={`dash-sidebar ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
         <div className="sidebar-header">
           <div className="sidebar-brand">
@@ -591,7 +1435,7 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
             {sidebarOpen && (
               <div>
                 <span className="sidebar-brand-text">Eco<span className="brand-accent">Leak</span></span>
-                <div className="sidebar-tagline">Emission Intelligence</div>
+                <div className="sidebar-tagline">Circular Carbon Ecosystem</div>
               </div>
             )}
           </div>
@@ -602,26 +1446,28 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
 
         <button className="sidebar-back-btn" onClick={onBack}>
           <ArrowLeft size={14} />
-          {sidebarOpen && <span>Back to Home</span>}
+          {sidebarOpen && <span>Back to Overview</span>}
         </button>
 
-        {sidebarOpen && <div className="sidebar-nav-label">Navigation</div>}
+        {sidebarOpen && <div className="sidebar-nav-label">WORKFLOW PIPELINE</div>}
 
         <nav className="sidebar-nav">
-          {NAV_ITEMS.map(({ id, icon: Icon, label, sub }) => (
+          {dynamicNavItems.map(({ id, icon: Icon, label, sub }) => (
             <button
               key={id}
-              className={`sidebar-nav-item ${activeSection === id ? 'nav-active' : ''} ${id === 'results' && auditResult ? 'has-results' : ''}`}
+              className={`sidebar-nav-item ${activeSection === id ? 'nav-active' : ''} ${
+                (id === 'leaks' || id === 'circular') && auditResult ? 'has-results' : ''
+              }`}
               onClick={() => setActiveSection(id)}
             >
               <span className="nav-icon-wrap"><Icon size={17} /></span>
               {sidebarOpen && (
                 <span className="nav-label-wrap">
                   <span className="nav-label">{label}</span>
-                  <span className="nav-sub">{id === 'results' && auditResult ? '✓ Report ready' : sub}</span>
+                  <span className="nav-sub">{sub}</span>
                 </span>
               )}
-              {id === 'results' && auditResult && sidebarOpen && (
+              {sidebarOpen && (id === 'leaks' || id === 'circular') && auditResult && (
                 <span className="nav-dot" />
               )}
             </button>
@@ -632,23 +1478,81 @@ export default function Dashboard({ onBack, initialSection = 'audit' }) {
           <>
             <div className="sidebar-divider" />
             <div className="sidebar-footer">
-              <div className="sidebar-footer-card">
-                <div className="sidebar-footer-text">EcoLeak v1.0</div>
-                <div className="sidebar-footer-sub">GHG Protocol · ISO 14064-1</div>
-                <div className="sidebar-status-pill">
-                  <span className="sidebar-status-dot" />
-                  Platform Active
+              {authUser ? (
+                <div className="sidebar-user-card">
+                  <div className="sidebar-user-avatar">
+                    {authUser.picture ? (
+                      <img src={authUser.picture} alt={authUser.name} />
+                    ) : (
+                      <span>{authUser.name ? authUser.name.slice(0, 2).toUpperCase() : 'OP'}</span>
+                    )}
+                  </div>
+                  <div className="sidebar-user-info">
+                    <strong className="sidebar-user-name">{authUser.name}</strong>
+                    <span className="sidebar-user-facility">{authUser.facilityName || 'Active Plant'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="sidebar-logout-btn"
+                    title="Sign Out"
+                  >
+                    <LogOut size={14} />
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <div className="sidebar-footer-card">
+                  <div className="sidebar-footer-text">Hackout 2k26</div>
+                  <div className="sidebar-footer-sub">Circular Carbon Ecosystem</div>
+                  <div className="sidebar-status-pill">
+                    <span className="sidebar-status-dot" />
+                    Engine Online
+                  </div>
+                </div>
+              )}
             </div>
           </>
         )}
       </aside>
 
-      {/* ── Main content ─────────────────────────────────────────────────────── */}
+      {/* ── Main Work Area ─────────────────────────────────────────────────── */}
       <main className="dash-main">
+        {/* Top Progress Stepper (Always accessible & clear) */}
+        <header className="dash-top-workflow-bar">
+          <div className="workflow-steps-flex">
+            <button
+              type="button"
+              className={`workflow-step-pill ${activeSection === 'input' ? 'step-active' : 'step-completed'}`}
+              onClick={() => setActiveSection('input')}
+            >
+              <span className="step-num">1</span>
+              <span>Process Data Input</span>
+            </button>
+            <div className="step-connector" />
+            <button
+              type="button"
+              className={`workflow-step-pill ${activeSection === 'leaks' ? 'step-active' : (auditResult ? 'step-completed' : 'step-disabled')}`}
+              onClick={() => auditResult && setActiveSection('leaks')}
+              disabled={!auditResult}
+            >
+              <span className="step-num">2</span>
+              <span>Emission Leak Points</span>
+            </button>
+            <div className="step-connector" />
+            <button
+              type="button"
+              className={`workflow-step-pill ${activeSection === 'circular' ? 'step-active' : (auditResult ? 'step-completed' : 'step-disabled')}`}
+              onClick={() => auditResult && setActiveSection('circular')}
+              disabled={!auditResult}
+            >
+              <span className="step-num">3</span>
+              <span>Circular Solutions &amp; ROI</span>
+            </button>
+          </div>
+        </header>
+
         <div className="dash-main-scroll">
-          {(sectionRenderers[activeSection] || renderAudit)()}
+          {(sectionRenderers[activeSection] || renderInputSection)()}
         </div>
       </main>
     </div>

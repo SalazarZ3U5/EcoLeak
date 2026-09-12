@@ -80,10 +80,13 @@ export async function triggerGoogleAuth() {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({
-        name: 'Sarthakk Anjariya',
-        email: 'sarthakk@industrial-ops.com',
-        facilityName: 'GreenPack Plastics Ltd.',
-        role: 'Plant Operations Lead',
+        name: 'Industrial Operator',
+        email: 'operator@ecoleak.org',
+        facilityName: '',
+        location: '',
+        regId: '',
+        regCategory: '',
+        role: 'Plant Operator',
         authMethod: 'google',
       });
     }, 600);

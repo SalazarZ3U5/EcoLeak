@@ -81,13 +81,13 @@ export default function LoginPage({
 
   useEffect(() => {
     if (authUser) {
-      setEditFacility(authUser.facilityName || 'GreenPack Plastics Ltd.');
-      setEditLocation(authUser.location || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026');
-      setEditRegId(authUser.regId || 'MH-SPCB/PUN/CTO-2026/4102');
-      setEditRegCategory(authUser.regCategory || 'Orange Category (Pollution Index 41-59 - Moderate)');
-      setEditRegStandard(authUser.regStandard || 'SPCB Consent to Operate & Water/Air Acts');
-      setEditEmissionCap(authUser.emissionCap || '450 MT CO2e / Year');
-      setEditRole(authUser.role || 'Plant Manager');
+      setEditFacility(authUser.facilityName || '');
+      setEditLocation(authUser.location || '');
+      setEditRegId(authUser.regId || '');
+      setEditRegCategory(authUser.regCategory || '');
+      setEditRegStandard(authUser.regStandard || '');
+      setEditEmissionCap(authUser.emissionCap || '');
+      setEditRole(authUser.role || '');
     }
   }, [authUser]);
 
@@ -110,13 +110,13 @@ export default function LoginPage({
             uid: fbUser.uid,
             name: fbUser.displayName || authEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
             email: fbUser.email,
-            facilityName: 'GreenPack Plastics Ltd.',
-            location: 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-            regId: 'MH-SPCB/PUN/CTO-2026/4102',
-            regCategory: 'Orange Category (Pollution Index 41-59 - Moderate)',
-            regStandard: 'SPCB Consent to Operate & Water/Air Acts',
-            emissionCap: '450 MT CO2e / Year',
-            role: 'Plant Manager',
+            facilityName: '',
+            location: '',
+            regId: '',
+            regCategory: '',
+            regStandard: '',
+            emissionCap: '',
+            role: 'Plant Operator',
             authMethod: 'firebase-email',
             loggedInAt: new Date().toISOString(),
           };
@@ -152,13 +152,13 @@ export default function LoginPage({
         loggedUser = {
           name: fallbackName,
           email: authEmail.trim(),
-          facilityName: 'GreenPack Plastics Ltd.',
-          location: 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-          regId: 'MH-SPCB/PUN/CTO-2026/4102',
-          regCategory: 'Orange Category (Pollution Index 41-59 - Moderate)',
-          regStandard: 'SPCB Consent to Operate & Water/Air Acts',
-          emissionCap: '450 MT CO2e / Year',
-          role: 'Plant Manager',
+          facilityName: '',
+          location: '',
+          regId: '',
+          regCategory: '',
+          regStandard: '',
+          emissionCap: '',
+          role: 'Plant Operator',
           authMethod: 'email',
           loggedInAt: new Date().toISOString(),
         };
@@ -195,12 +195,12 @@ export default function LoginPage({
         name: fbUser.displayName || fbUser.email.split('@')[0],
         email: fbUser.email,
         picture: fbUser.photoURL || '',
-        facilityName: savedProfile?.facilityName || 'GreenPack Plastics Plant',
-        location: savedProfile?.location || 'MIDC Chakan Industrial Area, Pune, Maharashtra 410501',
-        regId: savedProfile?.regId || 'MH-SPCB/PUN/CTO-2026/0894',
-        regCategory: savedProfile?.regCategory || 'Orange Category (Pollution Index 41-59 - Moderate)',
-        regStandard: savedProfile?.regStandard || 'SPCB Consent to Operate & Water/Air Acts',
-        emissionCap: savedProfile?.emissionCap || '450 MT CO2e / Year',
+        facilityName: savedProfile?.facilityName || '',
+        location: savedProfile?.location || '',
+        regId: savedProfile?.regId || '',
+        regCategory: savedProfile?.regCategory || '',
+        regStandard: savedProfile?.regStandard || '',
+        emissionCap: savedProfile?.emissionCap || '',
         role: savedProfile?.role || 'Plant Operations Lead',
         authMethod: 'firebase-google',
         loggedInAt: new Date().toISOString(),
@@ -233,16 +233,16 @@ export default function LoginPage({
 
   const handleDemoSignIn = () => {
     const demoUser = {
-      uid: 'demo-operator-pune',
-      name: 'Kavin Jindal',
-      email: 'kavin.jindal@greenpack-plastics.in',
-      facilityName: 'GreenPack Plastics Ltd.',
-      location: 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-      regId: 'MH-SPCB/PUN/CTO-2026/4102',
-      regCategory: 'Orange Category (Pollution Index 41-59 - Moderate)',
-      regStandard: 'SPCB Consent to Operate & Water/Air Acts',
-      emissionCap: '450 MT CO2e / Year',
-      role: 'Plant Manager',
+      uid: 'demo-operator-' + Math.random().toString(36).slice(2, 7),
+      name: 'Demo Operator',
+      email: 'operator@demo.ecoleak.org',
+      facilityName: '',
+      location: '',
+      regId: '',
+      regCategory: '',
+      regStandard: '',
+      emissionCap: '',
+      role: 'Plant Operator',
       authMethod: 'demo',
       loggedInAt: new Date().toISOString(),
     };
@@ -457,27 +457,27 @@ export default function LoginPage({
                     <Scale size={15} color="var(--mint-hover)" /> REGULATORY &amp; OFFICE LOCATION PARAMETERS
                   </span>
                   <span className="reg-cat-badge">
-                    <ShieldAlert size={12} /> {authUser.regCategory || 'Orange Category (SPCB)'}
+                    <ShieldAlert size={12} /> {authUser.regCategory || 'Not Configured'}
                   </span>
                 </div>
 
                 <div className="reg-params-display-grid">
                   <div className="reg-param-item">
                     <div className="reg-param-label"><MapPin size={13} /> Office / Plant Location</div>
-                    <div className="reg-param-val">{authUser.location || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026'}</div>
+                    <div className="reg-param-val">{authUser.location || 'Not Configured'}</div>
                   </div>
                   <div className="reg-param-item">
                     <div className="reg-param-label"><FileCheck size={13} /> SPCB / CPCB Registration No.</div>
-                    <div className="reg-param-val font-mono-val">{authUser.regId || 'MH-SPCB/PUN/CTO-2026/4102'}</div>
+                    <div className="reg-param-val font-mono-val">{authUser.regId || 'Not Configured'}</div>
                   </div>
                   <div className="reg-param-item">
                     <div className="reg-param-label"><Scale size={13} /> Compliance Standard</div>
-                    <div className="reg-param-val">{authUser.regStandard || 'SPCB Consent to Operate & BRSR Core'}</div>
+                    <div className="reg-param-val">{authUser.regStandard || 'Not Configured'}</div>
                   </div>
                   <div className="reg-param-item">
                     <div className="reg-param-label"><ShieldCheck size={13} /> Consented Emission Cap</div>
                     <div className="reg-param-val" style={{ color: 'var(--mint-hover)', fontWeight: 800 }}>
-                      {authUser.emissionCap || '450 MT CO2e / Year'}
+                      {authUser.emissionCap || 'Not Configured'}
                     </div>
                   </div>
                 </div>

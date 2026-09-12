@@ -152,13 +152,13 @@ export default function SignupPage({
             uid: fbUser.uid,
             name: authName.trim(),
             email: fbUser.email,
-            facilityName: authFacility.trim() || 'GreenPack Plastics Ltd.',
-            location: authLocation.trim() || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-            regId: authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/4102',
-            regCategory: authRegCategory,
-            regStandard: authRegStandard,
-            emissionCap: authEmissionCap.trim() || '450 MT CO2e / Year',
-            role: authRole,
+            facilityName: authFacility.trim() || '',
+            location: authLocation.trim() || '',
+            regId: authRegId.trim() || '',
+            regCategory: authRegCategory || '',
+            regStandard: authRegStandard || '',
+            emissionCap: authEmissionCap.trim() || '',
+            role: authRole || 'Plant Operator',
             authMethod: 'firebase-email',
             registeredAt: new Date().toISOString(),
           };
@@ -187,13 +187,13 @@ export default function SignupPage({
         registeredUser = {
           name: authName.trim(),
           email: authEmail.trim(),
-          facilityName: authFacility.trim() || 'GreenPack Plastics Ltd.',
-          location: authLocation.trim() || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-          regId: authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/4102',
-          regCategory: authRegCategory,
-          regStandard: authRegStandard,
-          emissionCap: authEmissionCap.trim() || '450 MT CO2e / Year',
-          role: authRole,
+          facilityName: authFacility.trim() || '',
+          location: authLocation.trim() || '',
+          regId: authRegId.trim() || '',
+          regCategory: authRegCategory || '',
+          regStandard: authRegStandard || '',
+          emissionCap: authEmissionCap.trim() || '',
+          role: authRole || 'Plant Operator',
           authMethod: 'email',
           registeredAt: new Date().toISOString(),
         };
@@ -215,7 +215,7 @@ export default function SignupPage({
     setAuthSuccessMsg('');
     try {
       if (!isFirebaseConfigured()) {
-        throw new Error('Firebase credentials are not set in .env.');
+        throw new Error('Firebase credentials are not set in .env. Please check VITE_FIREBASE_API_KEY.');
       }
       const fbUser = await loginWithFirebaseGoogle();
       let savedProfile = null;
@@ -230,12 +230,12 @@ export default function SignupPage({
         name: fbUser.displayName || authName.trim() || fbUser.email.split('@')[0],
         email: fbUser.email,
         picture: fbUser.photoURL || '',
-        facilityName: savedProfile?.facilityName || authFacility.trim() || 'GreenPack Plastics Plant',
-        location: savedProfile?.location || authLocation.trim() || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-        regId: savedProfile?.regId || authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/4102',
-        regCategory: savedProfile?.regCategory || authRegCategory,
-        regStandard: savedProfile?.regStandard || authRegStandard,
-        emissionCap: savedProfile?.emissionCap || authEmissionCap.trim() || '450 MT CO2e / Year',
+        facilityName: savedProfile?.facilityName || authFacility.trim() || '',
+        location: savedProfile?.location || authLocation.trim() || '',
+        regId: savedProfile?.regId || authRegId.trim() || '',
+        regCategory: savedProfile?.regCategory || authRegCategory || '',
+        regStandard: savedProfile?.regStandard || authRegStandard || '',
+        emissionCap: savedProfile?.emissionCap || authEmissionCap.trim() || '',
         role: savedProfile?.role || authRole || 'Plant Operations Lead',
         authMethod: 'firebase-google',
         loggedInAt: new Date().toISOString(),
@@ -268,16 +268,16 @@ export default function SignupPage({
 
   const handleDemoSignIn = () => {
     const demoUser = {
-      uid: 'demo-operator-pune',
-      name: 'Kavin Jindal',
-      email: 'kavin.jindal@greenpack-plastics.in',
-      facilityName: 'GreenPack Plastics Ltd.',
-      location: 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-      regId: 'MH-SPCB/PUN/CTO-2026/4102',
-      regCategory: 'Orange Category (Pollution Index 41-59 - Moderate)',
-      regStandard: 'SPCB Consent to Operate & Water/Air Acts',
-      emissionCap: '450 MT CO2e / Year',
-      role: 'Plant Manager',
+      uid: 'demo-operator-' + Math.random().toString(36).slice(2, 7),
+      name: 'Demo Operator',
+      email: 'operator@demo.ecoleak.org',
+      facilityName: '',
+      location: '',
+      regId: '',
+      regCategory: '',
+      regStandard: '',
+      emissionCap: '',
+      role: 'Plant Operator',
       authMethod: 'demo',
       loggedInAt: new Date().toISOString(),
     };

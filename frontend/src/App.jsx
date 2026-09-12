@@ -78,7 +78,14 @@ export default function App() {
   const [authUser, setAuthUser] = useState(() => {
     try {
       const saved = localStorage.getItem('ecoleak_auth_user');
-      return saved ? assignAvatarToUser(JSON.parse(saved)) : null;
+      if (!saved) return null;
+      const user = JSON.parse(saved);
+      // Strip any legacy hardcoded placeholder data so user enters real factory data
+      if (user.facilityName?.includes('GreenPack')) user.facilityName = '';
+      if (user.location?.includes('MIDC Bhosari') || user.location?.includes('MIDC Chakan')) user.location = '';
+      if (user.regId?.includes('MH-SPCB/PUN/CTO-2026/4102') || user.regId?.includes('MH-SPCB/PUN/CTO-2026/0894')) user.regId = '';
+      if (user.phone === '+91 98201 54892') user.phone = '';
+      return assignAvatarToUser(user);
     } catch {
       return null;
     }
@@ -115,13 +122,13 @@ export default function App() {
             uid: fbUser.uid,
             name: fbUser.displayName || prev?.name || (fbUser.email ? fbUser.email.split('@')[0] : 'Operator'),
             email: fbUser.email || prev?.email || '',
-            facilityName: prev?.facilityName || 'GreenPack Plastics Plant',
-            location: prev?.location || 'MIDC Chakan Industrial Area, Pune, Maharashtra',
-            regId: prev?.regId || 'MH-SPCB/PUN/CTO-2026/0894',
-            regCategory: prev?.regCategory || 'Orange Category (SPCB)',
-            regStandard: prev?.regStandard || 'SPCB Consent to Operate & BRSR Core',
-            emissionCap: prev?.emissionCap || '450 MT CO2e / Year',
-            role: prev?.role || 'Plant Manager',
+            facilityName: prev?.facilityName || '',
+            location: prev?.location || '',
+            regId: prev?.regId || '',
+            regCategory: prev?.regCategory || '',
+            regStandard: prev?.regStandard || '',
+            emissionCap: prev?.emissionCap || '',
+            role: prev?.role || 'Plant Operator',
             authMethod: prev?.authMethod || 'firebase-google',
           };
           const updated = assignAvatarToUser(raw);
@@ -217,9 +224,9 @@ export default function App() {
   };
 
   const plantContext = authUser ? {
-    industry: authUser.facilityName || 'Manufacturing SME',
-    location: authUser.location || 'MIDC Industrial Area, Pune',
-    reg_category: authUser.regCategory || 'Orange Category'
+    industry: authUser.facilityName || '',
+    location: authUser.location || '',
+    reg_category: authUser.regCategory || ''
   } : null;
 
   return (

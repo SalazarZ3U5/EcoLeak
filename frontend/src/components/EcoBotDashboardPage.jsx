@@ -26,36 +26,42 @@ const QUICK_INQUIRIES = [
     icon: Zap,
     color: '#00b86b',
     title: 'Scope 2 Electricity Calculation',
+    shortLabel: 'Scope 2 Grid Math',
     prompt: 'State the official mathematical formula and calculate emissions for 20,000 kWh using Central Electricity Authority (CEA) India grid factors.'
   },
   {
     icon: Flame,
     color: '#f43f5e',
     title: 'Scope 1 Diesel Fuel Math',
+    shortLabel: 'Scope 1 Diesel Math',
     prompt: 'What is the exact physical density conversion and emission factor for calculating Scope 1 emissions from 500 liters of diesel in industrial generators?'
   },
   {
     icon: Scale,
     color: '#0284c7',
     title: "Williams' 0.65 Rule Scaling",
+    shortLabel: "Williams' 0.65 Rule",
     prompt: "Explain how capital expenditure scales with capacity using Williams' 0.65 power law C2 = C1 * (Q2/Q1)^0.65 for equipment retrofits."
   },
   {
     icon: ShieldAlert,
     color: '#d97706',
     title: 'SPCB Orange Category Rules',
+    shortLabel: 'SPCB Orange Rules',
     prompt: 'What are the official SPCB / CPCB Pollution Index thresholds (41–59) and mandatory CTO compliance rules for Orange Category manufacturing sites?'
   },
   {
     icon: Layers,
     color: '#8b5cf6',
     title: 'HDPE PCR Polymer Substitution',
+    shortLabel: 'HDPE PCR Polymer',
     prompt: 'Calculate the net CO2e reduction percentage and annual OPEX savings when replacing 50% virgin HDPE with recycled PCR flakes at 60,000 kg throughput.'
   },
   {
     icon: FileCheck,
     color: '#0d9488',
     title: 'SEBI BRSR & ISO 14064-1 Audit',
+    shortLabel: 'SEBI BRSR & ISO',
     prompt: 'How should an Indian industrial manufacturer structure Scope 1, 2, and 3 disclosures for mandatory SEBI BRSR Core sustainability reporting?'
   }
 ];
@@ -203,47 +209,49 @@ export default function EcoBotDashboardPage({
 
   return (
     <div className="ecobot-page-container">
-      {/* ── Page Hero Header ────────────────────────────────────────────────── */}
-      <div className="ecobot-hero-card elite-card">
-        <div className="ecobot-hero-main">
-          <div className="ecobot-mascot-wrap">
-            <CuteEcoBotIcon size={52} isAnimated={true} />
-            <span className="ecobot-live-pulse-badge" title="AI Engine Online">
-              <span className="live-dot" /> LIVE
-            </span>
+      {/* ── Compact Header Toolbar ────────────────────────────────────────── */}
+      <div className="ecobot-compact-toolbar elite-card">
+        <div className="ecobot-toolbar-brand">
+          <div className="ecobot-toolbar-icon-glow">
+            <CuteEcoBotIcon size={30} isAnimated={true} />
           </div>
-
-          <div className="ecobot-hero-text">
-            <div className="ecobot-chips-row">
-              <span className="ecobot-chip chip-online">
-                <Sparkles size={12} /> Live Industrial AI Copilot
+          <div className="ecobot-toolbar-titles">
+            <div className="ecobot-toolbar-name-row">
+              <h1 className="ecobot-toolbar-title">EcoBot AI Copilot</h1>
+              <span className="ecobot-toolbar-live-badge">
+                <span className="live-dot" /> LIVE
               </span>
-              <span className="ecobot-chip chip-math">
-                <ShieldCheck size={12} /> Deterministic Math Invariant
-              </span>
-              <span className="ecobot-chip chip-model">
-                <Bot size={12} /> Groq (gpt-oss-120b) + Gemini
+              <span className="ecobot-toolbar-chip chip-math">
+                <ShieldCheck size={11} /> Deterministic Math Invariant
               </span>
             </div>
-
-            <h1 className="ecobot-page-title">
-              EcoBot AI Intelligence &amp; Compliance Copilot
-            </h1>
-
-            <p className="ecobot-page-desc">
-              Ask natural language inquiries about physical unit conversions, <JargonTooltip term="Scope 1">Scope 1</JargonTooltip>–<JargonTooltip term="Scope 3">3</JargonTooltip> accounting, <JargonTooltip term="SPCB">SPCB</JargonTooltip> <JargonTooltip term="CTO">CTO</JargonTooltip> rules, and <JargonTooltip term="Williams' 0.65 Rule">Williams' 0.65 Rule</JargonTooltip> equipment scaling.
-            </p>
+            <div className="ecobot-toolbar-meta-row">
+              <span className="ecobot-toolbar-meta-item">
+                <Factory size={11} color="var(--mint-hover)" />
+                <strong>{authUser?.facilityName || 'Facility Not Configured'}</strong>
+              </span>
+              <span className="ecobot-toolbar-meta-sep">•</span>
+              <span className="ecobot-toolbar-meta-item">
+                <Scale size={11} color="var(--rose)" />
+                <span>{authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Category Pending'}</span>
+              </span>
+              <span className="ecobot-toolbar-meta-sep">•</span>
+              <span className="ecobot-toolbar-meta-item">
+                <FileCheck size={11} color="var(--cyan-main)" />
+                <span>{authUser?.emissionCap || 'Cap Unset'}</span>
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="ecobot-hero-actions">
+        <div className="ecobot-toolbar-actions">
           <button
             type="button"
             className="btn-ecobot-header-action"
             onClick={handleResetChat}
             title="Reset conversation stream"
           >
-            <RefreshCw size={14} />
+            <RefreshCw size={13} />
             <span>Reset Chat</span>
           </button>
 
@@ -254,75 +262,14 @@ export default function EcoBotDashboardPage({
               onClick={() => onNavigateSection('input')}
               title="Return to process data input"
             >
-              <Factory size={14} />
+              <Factory size={13} />
               <span>Plant Inputs</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* ── Active Factory Context Strip ────────────────────────────────────── */}
-      <div className="ecobot-context-strip elite-card">
-        <div className="context-strip-item">
-          <Factory size={14} color="var(--mint-hover)" />
-          <span className="context-strip-label">Assigned Plant:</span>
-          <strong>{authUser?.facilityName || 'GreenPack Plastics Ltd.'}</strong>
-        </div>
-        <div className="context-strip-divider" />
-        <div className="context-strip-item">
-          <Scale size={14} color="var(--rose)" />
-          <span className="context-strip-label">SPCB Category:</span>
-          <strong>{authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Orange Category'}</strong>
-        </div>
-        <div className="context-strip-divider" />
-        <div className="context-strip-item">
-          <FileCheck size={14} color="var(--cyan-main)" />
-          <span className="context-strip-label">Consented Cap:</span>
-          <strong>{authUser?.emissionCap || '450 MT CO2e / Year'}</strong>
-        </div>
-        <div className="context-strip-divider" />
-        <div className="context-strip-item">
-          <Zap size={14} color="var(--amber)" />
-          <span className="context-strip-label">Throughput:</span>
-          <span>20k kWh · 500L Diesel · 60t Resin</span>
-        </div>
-      </div>
-
-      {/* ── Quick Inquiries Carousel / Grid ─────────────────────────────────── */}
-      <div className="ecobot-quick-inquiries-section">
-        <div className="quick-inquiries-header">
-          <span className="quick-inquiries-title">
-            <HelpCircle size={14} color="var(--mint-hover)" /> ONE-CLICK ENGINEERING &amp; STATUTORY PROMPTS:
-          </span>
-          <span className="quick-inquiries-hint">Click any card to calculate instantly</span>
-        </div>
-
-        <div className="quick-inquiries-grid">
-          {QUICK_INQUIRIES.map((q, idx) => {
-            const Icon = q.icon;
-            return (
-              <button
-                key={idx}
-                type="button"
-                className="quick-inquiry-card"
-                onClick={() => handleSendMessage(q.prompt)}
-                disabled={isLoading}
-              >
-                <div className="inquiry-icon-wrap" style={{ color: q.color, background: `${q.color}15` }}>
-                  <Icon size={16} />
-                </div>
-                <div className="inquiry-card-content">
-                  <strong className="inquiry-card-title">{q.title}</strong>
-                  <p className="inquiry-card-desc">{q.prompt}</p>
-                </div>
-                <ArrowRight size={14} className="inquiry-arrow" />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ── Main Chat Stream Canvas ─────────────────────────────────────────── */}
+      {/* ── Main Chat Stream Canvas (Front & Center on Top) ────────────────── */}
       <div className="ecobot-chat-canvas elite-card">
         <div className="chat-canvas-messages-stream">
           {messages.map((msg, idx) => (
@@ -408,6 +355,33 @@ export default function EcoBotDashboardPage({
 
         {/* ── Chat Prompt Dock Bar ─────────────────────────────────────────── */}
         <div className="chat-canvas-dock">
+          {/* Compact Quick Prompts Pill Row (minimal vertical space) */}
+          <div className="dock-quick-prompts">
+            <span className="quick-prompts-mini-label">
+              <Sparkles size={12} color="var(--mint-hover)" /> Quick Inquiries:
+            </span>
+            <div className="quick-prompts-track">
+              {QUICK_INQUIRIES.map((q, idx) => {
+                const Icon = q.icon;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    className="quick-prompt-pill"
+                    onClick={() => handleSendMessage(q.prompt)}
+                    disabled={isLoading}
+                    title={q.prompt}
+                  >
+                    <span className="pill-icon" style={{ color: q.color }}>
+                      <Icon size={12} />
+                    </span>
+                    <span className="pill-text">{q.shortLabel || q.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="dock-input-wrapper">
             <textarea
               ref={textareaRef}

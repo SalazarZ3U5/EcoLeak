@@ -1124,17 +1124,17 @@ export default function Dashboard({
               EcoLeak Industrial Emission Assessment
             </h3>
             <span style={{ fontSize: '12.5px', color: 'var(--text-muted)' }}>
-              Theme: Circular Carbon Ecosystem · Facility: {authUser?.facilityName || industry}
+              Theme: Circular Carbon Ecosystem · Facility: {authUser?.facilityName || industry || 'Facility Pending'}
             </span>
             <div className="report-compliance-meta-row">
               <span className="report-meta-chip">
-                <MapPin size={11} /> {authUser?.location || 'MIDC Bhosari Industrial Area, Pune'}
+                <MapPin size={11} /> {authUser?.location || 'Location Pending'}
               </span>
               <span className="report-meta-chip">
-                <FileCheck size={11} /> <JargonTooltip term="SPCB">SPCB</JargonTooltip>: {authUser?.regId || 'MH-SPCB/CTO-2026/4102'}
+                <FileCheck size={11} /> <JargonTooltip term="SPCB">SPCB</JargonTooltip>: {authUser?.regId || 'Consent ID Pending'}
               </span>
               <span className="report-meta-chip">
-                <ShieldAlert size={11} /> <JargonTooltip term="Orange Category">{authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Orange Category'}</JargonTooltip>
+                <ShieldAlert size={11} /> <JargonTooltip term="Orange Category">{authUser?.regCategory ? authUser.regCategory.split('(')[0].trim() : 'Uncategorized'}</JargonTooltip>
               </span>
             </div>
           </div>
@@ -1193,7 +1193,6 @@ export default function Dashboard({
     { id: 'report',   icon: Download,          label: '4. Executive Action Plan', sub: 'Compliance & Export' },
     { id: 'profile',  icon: User,              label: '5. Operator Profile',      sub: 'Identity & Credentials' },
     { id: 'plant',    icon: Factory,           label: '6. Plant Information',      sub: 'Facility, GPS & Consents' },
-    { id: 'copilot',  icon: Sparkles,          label: '7. EcoBot AI Copilot',     sub: 'Engineering & Compliance AI' },
   ];
 
   const renderProfileSection = () => (
@@ -1231,9 +1230,9 @@ export default function Dashboard({
       authUser={authUser}
       onOpenAuth={onOpenAuth}
       activePlantContext={{
-        industry: authUser?.facilityName || industry,
-        location: authUser?.location || 'MIDC Industrial Area, Pune',
-        reg_category: authUser?.regCategory || 'Orange Category'
+        industry: authUser?.facilityName || industry || '',
+        location: authUser?.location || '',
+        reg_category: authUser?.regCategory || ''
       }}
       onNavigateSection={handleSectionSelect}
     />
@@ -1247,6 +1246,14 @@ export default function Dashboard({
     profile: renderProfileSection,
     plant: renderPlantSection,
     copilot: renderEcoBotSection,
+  };
+
+  const isProfileIncomplete = (user) => {
+    if (!user) return true;
+    const hasFacility = Boolean(user.facilityName && user.facilityName.trim());
+    const hasLocation = Boolean(user.location && user.location.trim());
+    const hasRegId = Boolean(user.regId && user.regId.trim());
+    return !hasFacility || !hasLocation || !hasRegId;
   };
 
   return (
@@ -1344,8 +1351,8 @@ export default function Dashboard({
                     style={{ cursor: 'pointer' }}
                     title="View Operator Profile & Regulatory Parameters"
                   >
-                    <strong className="sidebar-user-name">{authUser.name}</strong>
-                    <span className="sidebar-user-facility">{authUser.facilityName || 'Active Plant'}</span>
+                    <strong className="sidebar-user-name">{authUser.name || 'Plant Operator'}</strong>
+                    <span className="sidebar-user-facility">{authUser.facilityName || 'Unconfigured Plant'}</span>
                     {authUser.location && (
                       <span className="sidebar-user-location" title={authUser.location}>
                         <MapPin size={10} style={{ flexShrink: 0 }} /> {authUser.location.split(',')[0]}
@@ -1402,6 +1409,49 @@ export default function Dashboard({
       {/* ── Main Work Area ─────────────────────────────────────────────────── */}
       <main className="dash-main">
         <div className="dash-main-scroll">
+          {/* ── Global Incomplete Profile Alert (Across all pages until updated) ── */}
+          {isProfileIncomplete(authUser) && (
+            <div className="dash-incomplete-profile-alert">
+              <div className="incomplete-alert-icon-glow">
+                <AlertTriangle size={20} className="incomplete-pulse-icon" />
+              </div>
+              <div className="incomplete-alert-body">
+                <div className="incomplete-alert-headline-row">
+                  <h4 className="incomplete-alert-title">
+                    Action Required: Incomplete Plant &amp; Compliance Profile
+                  </h4>
+                  <span className="incomplete-alert-badge">Setup Incomplete</span>
+                </div>
+                <p className="incomplete-alert-desc">
+                  Essential plant and regulatory parameters are blank. Please update your factory name, physical location, and SPCB Consent to Operate (CTO) number so all emission factors and executive compliance reports calculate accurately.
+                </p>
+                <div className="incomplete-missing-pills-row">
+                  {!authUser?.facilityName?.trim() && (
+                    <span className="incomplete-missing-pill">• Facility Name missing</span>
+                  )}
+                  {!authUser?.location?.trim() && (
+                    <span className="incomplete-missing-pill">• Plant Location missing</span>
+                  )}
+                  {!authUser?.regId?.trim() && (
+                    <span className="incomplete-missing-pill">• SPCB Consent ID missing</span>
+                  )}
+                </div>
+              </div>
+              <div className="incomplete-alert-action-wrap">
+                <button
+                  type="button"
+                  className="btn-update-plant-alert"
+                  onClick={() => handleSectionSelect('plant')}
+                  title="Configure plant parameters"
+                >
+                  <Factory size={15} />
+                  <span>Update Plant Information</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
+
           {(sectionRenderers[activeSection] || renderInputSection)()}
         </div>
       </main>

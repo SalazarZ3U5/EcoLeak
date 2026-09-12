@@ -91,13 +91,13 @@ export default function AuthPage({
   // Initialize edit fields when authUser is available
   useEffect(() => {
     if (authUser) {
-      setEditFacility(authUser.facilityName || 'GreenPack Plastics Ltd.');
-      setEditLocation(authUser.location || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026');
-      setEditRegId(authUser.regId || 'MH-SPCB/PUN/CTO-2026/4102');
-      setEditRegCategory(authUser.regCategory || 'Orange Category (Pollution Index 41-59 - Moderate)');
-      setEditRegStandard(authUser.regStandard || 'SPCB Consent to Operate & Water/Air Acts');
-      setEditEmissionCap(authUser.emissionCap || '450 MT CO2e / Year');
-      setEditRole(authUser.role || 'Plant Manager');
+      setEditFacility(authUser.facilityName || '');
+      setEditLocation(authUser.location || '');
+      setEditRegId(authUser.regId || '');
+      setEditRegCategory(authUser.regCategory || '');
+      setEditRegStandard(authUser.regStandard || '');
+      setEditEmissionCap(authUser.emissionCap || '');
+      setEditRole(authUser.role || 'Plant Operator');
     }
   }, [authUser]);
 
@@ -291,13 +291,13 @@ export default function AuthPage({
               uid: fbUser.uid,
               name: fbUser.displayName || authEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
               email: fbUser.email,
-              facilityName: authFacility.trim() || 'GreenPack Plastics Ltd.',
-              location: authLocation.trim() || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-              regId: authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/4102',
-              regCategory: authRegCategory || 'Orange Category (Pollution Index 41-59 - Moderate)',
-              regStandard: authRegStandard || 'SPCB Consent to Operate & Water/Air Acts',
-              emissionCap: authEmissionCap.trim() || '450 MT CO2e / Year',
-              role: authRole || 'Plant Manager',
+              facilityName: authFacility.trim() || '',
+              location: authLocation.trim() || '',
+              regId: authRegId.trim() || '',
+              regCategory: authRegCategory || '',
+              regStandard: authRegStandard || '',
+              emissionCap: authEmissionCap.trim() || '',
+              role: authRole || 'Plant Operator',
               authMethod: 'firebase-email',
               loggedInAt: new Date().toISOString(),
             };
@@ -335,13 +335,13 @@ export default function AuthPage({
           loggedUser = {
             name: fallbackName,
             email: authEmail.trim(),
-            facilityName: authFacility.trim() || 'GreenPack Plastics Ltd.',
-            location: authLocation.trim() || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-            regId: authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/4102',
-            regCategory: authRegCategory || 'Orange Category (Pollution Index 41-59 - Moderate)',
-            regStandard: authRegStandard || 'SPCB Consent to Operate & Water/Air Acts',
-            emissionCap: authEmissionCap.trim() || '450 MT CO2e / Year',
-            role: authRole || 'Plant Manager',
+            facilityName: authFacility.trim() || '',
+            location: authLocation.trim() || '',
+            regId: authRegId.trim() || '',
+            regCategory: authRegCategory || '',
+            regStandard: authRegStandard || '',
+            emissionCap: authEmissionCap.trim() || '',
+            role: authRole || 'Plant Operator',
             authMethod: 'email',
             loggedInAt: new Date().toISOString(),
           };
@@ -378,23 +378,16 @@ export default function AuthPage({
         name: fbUser.displayName || 'Google Operator',
         email: fbUser.email,
         picture: fbUser.photoURL || '',
-        facilityName: authFacility.trim() || 'GreenPack Plastics Ltd.',
-        location: authLocation.trim() || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-        regId: authRegId.trim() || 'MH-SPCB/PUN/CTO-2026/4102',
-        regCategory: authRegCategory || 'Orange Category (Pollution Index 41-59 - Moderate)',
-        regStandard: authRegStandard || 'SPCB Consent to Operate & Water/Air Acts',
-        emissionCap: authEmissionCap.trim() || '450 MT CO2e / Year',
-        role: authRole || 'Plant Manager',
+        facilityName: authFacility.trim() || '',
+        location: authLocation.trim() || '',
+        regId: authRegId.trim() || '',
+        regCategory: authRegCategory || '',
+        regStandard: authRegStandard || '',
+        emissionCap: authEmissionCap.trim() || '',
+        role: authRole || 'Plant Operator',
         authMethod: 'firebase-google',
         loggedInAt: new Date().toISOString(),
       };
-
-      localStorage.setItem('ecoleak_auth_user', JSON.stringify(googleUser));
-      setAuthLoading(false);
-      setAuthSuccessMsg(`Signed in as ${googleUser.name}! Redirecting...`);
-      if (onAuthSuccess) {
-        onAuthSuccess(googleUser);
-      }
 
       syncUserToFirestore(fbUser, {
         name: googleUser.name,
@@ -405,40 +398,35 @@ export default function AuthPage({
         regStandard: googleUser.regStandard,
         role: googleUser.role,
         authMethod: 'firebase-google',
-      }).catch((err) => console.warn('Firestore background sync warning:', err));
-    } catch (fbErr) {
-      console.error('Firebase Google Auth error:', fbErr);
+      }).catch((err) => console.warn('Background Firestore sync note:', err));
+
+      if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(googleUser));
       setAuthLoading(false);
-      let friendlyMsg = 'Google Sign-In failed.';
-      if (fbErr.code === 'auth/operation-not-allowed') {
-        friendlyMsg = 'Google Sign-In is not enabled in your Firebase Project. Go to Firebase Console -> Authentication -> Sign-in method -> Click Google -> Enable -> Save.';
-      } else if (fbErr.code === 'auth/unauthorized-domain') {
-        friendlyMsg = `Domain "${window.location.hostname}" is not authorized in Firebase Console -> Authentication -> Settings -> Authorized domains.`;
-      } else if (fbErr.code === 'auth/popup-closed-by-user') {
-        friendlyMsg = 'Google sign-in popup was closed before completing.';
-      } else if (fbErr.code === 'auth/popup-blocked') {
-        friendlyMsg = 'The Google sign-in popup was blocked by your browser. Please allow popups for localhost.';
-      } else if (fbErr.code === 'auth/cancelled-popup-request') {
-        friendlyMsg = 'A previous sign-in popup was active. Please click Google Sign-In again.';
-      } else if (fbErr.message) {
-        friendlyMsg = fbErr.message.replace('Firebase: ', '').replace(/\(auth\/[^)]+\)\.?/, '').trim();
+      setAuthSuccessMsg(`Welcome, ${googleUser.name}! Account authenticated.`);
+      if (onAuthSuccess) onAuthSuccess(googleUser);
+    } catch (err) {
+      setAuthLoading(false);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setAuthErrorMsg('Google Sign-In popup was closed before completing.');
+      } else {
+        setAuthErrorMsg(err.message || 'Google authentication failed.');
       }
-      setAuthErrorMsg(friendlyMsg);
     }
   };
 
   // ── 1-Click Demo Operator Bypass ───────────────────────────────────────────
   const handleDemoSignIn = () => {
     const demoUser = {
-      name: 'Sarthakk Anjariya',
-      email: 'sarthakk@industrial-ops.com',
-      facilityName: 'GreenPack Plastics Ltd.',
-      location: 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026',
-      regId: 'MH-SPCB/PUN/CTO-2026/4102',
-      regCategory: 'Orange Category (Pollution Index: 48 - Moderate)',
-      regStandard: 'SPCB Consent to Operate & BRSR Core Framework',
-      emissionCap: '480 MT CO2e / Year',
-      role: 'Plant Manager',
+      uid: 'demo-operator-' + Math.random().toString(36).slice(2, 7),
+      name: 'Demo Operator',
+      email: 'operator@demo.ecoleak.org',
+      facilityName: '',
+      location: '',
+      regId: '',
+      regCategory: '',
+      regStandard: '',
+      emissionCap: '',
+      role: 'Plant Operator',
       authMethod: 'demo',
       loggedInAt: new Date().toISOString(),
     };
@@ -574,7 +562,7 @@ export default function AuthPage({
                   </div>
                   <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{authUser.email}</span>
                   <span className="profile-role-tag">
-                    {authUser.role || 'Plant Operations Lead'} · {authUser.facilityName || 'Manufacturing Facility'}
+                    {authUser.role || 'Operator'} · {authUser.facilityName || 'Facility Pending'}
                   </span>
                 </div>
                 <button
@@ -721,7 +709,7 @@ export default function AuthPage({
                     <Scale size={15} color="var(--mint-hover)" /> REGULATORY &amp; OFFICE LOCATION PARAMETERS
                   </span>
                   <span className={`reg-cat-badge ${getCategoryColorClass(authUser.regCategory)}`}>
-                    <ShieldAlert size={12} /> {authUser.regCategory || 'Orange Category (SPCB)'}
+                    <ShieldAlert size={12} /> {authUser.regCategory || 'Uncategorized'}
                   </span>
                 </div>
 
@@ -729,7 +717,7 @@ export default function AuthPage({
                   <div className="reg-param-item">
                     <div className="reg-param-label"><MapPin size={13} /> Office / Plant Location</div>
                     <div className="reg-param-val">
-                      {authUser.location || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026'}
+                      {authUser.location || 'Not configured'}
                     </div>
                     <div className="reg-param-sub">
                       <span className="location-verified-pill"><Check size={11} /> Auto-Detect / GPS Compatible</span>
@@ -739,7 +727,7 @@ export default function AuthPage({
                   <div className="reg-param-item">
                     <div className="reg-param-label"><FileCheck size={13} /> SPCB / CPCB Registration No.</div>
                     <div className="reg-param-val font-mono-val">
-                      {authUser.regId || 'MH-SPCB/PUN/CTO-2026/4102'}
+                      {authUser.regId || 'Not registered'}
                     </div>
                     <div className="reg-param-sub">Consent to Operate (CTO) Validated</div>
                   </div>
@@ -747,7 +735,7 @@ export default function AuthPage({
                   <div className="reg-param-item">
                     <div className="reg-param-label"><Scale size={13} /> Compliance Standard</div>
                     <div className="reg-param-val">
-                      {authUser.regStandard || 'SPCB Consent to Operate & BRSR Core'}
+                      {authUser.regStandard || 'Not specified'}
                     </div>
                     <div className="reg-param-sub">BRSR Core &amp; ISO 14064 Aligned</div>
                   </div>
@@ -755,7 +743,7 @@ export default function AuthPage({
                   <div className="reg-param-item">
                     <div className="reg-param-label"><ShieldCheck size={13} /> Consented Emission Cap</div>
                     <div className="reg-param-val" style={{ color: 'var(--mint-hover)', fontWeight: 800 }}>
-                      {authUser.emissionCap || '450 MT CO2e / Year'}
+                      {authUser.emissionCap || 'Not configured'}
                     </div>
                     <div className="reg-param-sub">Pollution Control Board Ceiling</div>
                   </div>
@@ -766,7 +754,7 @@ export default function AuthPage({
               <div className="profile-stats-grid">
                 <div className="profile-stat-box">
                   <small>Connected Plant</small>
-                  <strong>{authUser.facilityName || 'GreenPack Plastics Ltd.'}</strong>
+                  <strong>{authUser.facilityName || 'Not configured'}</strong>
                   <span>Sector: Manufacturing</span>
                 </div>
                 <div className="profile-stat-box">

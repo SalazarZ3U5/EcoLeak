@@ -77,22 +77,22 @@ export default function OperatorProfilePage({
   // Populate state from authUser
   useEffect(() => {
     if (authUser) {
-      setOpName(authUser.name || 'Industrial Operator');
-      setOpRole(authUser.role || 'Plant Manager');
-      setOpEmail(authUser.email || 'operator@ecoleak.org');
-      setOpPhone(authUser.phone || '+91 98201 54892');
-      setOpDepartment(authUser.department || 'Plant Operations & Environmental Compliance');
-      setOpNotes(authUser.notes || 'ISO 14001:2015 & Central Pollution Control Board (CPCB) Certified Lead');
+      setOpName(authUser.name || '');
+      setOpRole(authUser.role || '');
+      setOpEmail(authUser.email || '');
+      setOpPhone(authUser.phone || '');
+      setOpDepartment(authUser.department || '');
+      setOpNotes(authUser.notes || '');
 
-      setPlantFacility(authUser.facilityName || 'GreenPack Plastics Ltd.');
-      setPlantIndustry(authUser.industryType || 'Plastic Processing & Extrusion');
-      setPlantCapacity(authUser.capacity || '2,400 MT / Year');
-      setPlantLocation(authUser.location || 'MIDC Bhosari Industrial Area, Pune, Maharashtra 411026');
-      setPlantRegId(authUser.regId || 'MH-SPCB/PUN/CTO-2026/4102');
-      setPlantRegCategory(authUser.regCategory || 'Orange Category (Pollution Index 41-59 - Moderate)');
-      setPlantRegStandard(authUser.regStandard || 'SPCB Consent to Operate & Water/Air Acts');
-      setPlantEmissionCap(authUser.emissionCap || '450 MT CO2e / Year');
-      setPlantRegionalOffice(authUser.regionalOffice || 'MPCB Regional Office, Pune');
+      setPlantFacility(authUser.facilityName || '');
+      setPlantIndustry(authUser.industryType || '');
+      setPlantCapacity(authUser.capacity || '');
+      setPlantLocation(authUser.location || '');
+      setPlantRegId(authUser.regId || '');
+      setPlantRegCategory(authUser.regCategory || '');
+      setPlantRegStandard(authUser.regStandard || '');
+      setPlantEmissionCap(authUser.emissionCap || '');
+      setPlantRegionalOffice(authUser.regionalOffice || '');
     }
   }, [authUser]);
 
@@ -105,31 +105,10 @@ export default function OperatorProfilePage({
         if (isMounted && data && data.length > 0) {
           setAudits(data);
         } else if (isMounted) {
-          setAudits([
-            {
-              id: 'audit-benchmark-01',
-              industry: 'Plastic Injection & Extrusion (Baseline Run)',
-              total_co2e_kg: 194720,
-              scope_1_kg: 1340,
-              scope_2_kg: 16400,
-              scope_3_kg: 176980,
-              data_quality: 98.4,
-              created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
-            },
-            {
-              id: 'audit-benchmark-02',
-              industry: 'Polymer Compounding (60t HDPE Benchmark)',
-              total_co2e_kg: 182400,
-              scope_1_kg: 1200,
-              scope_2_kg: 15100,
-              scope_3_kg: 166100,
-              data_quality: 96.0,
-              created_at: new Date(Date.now() - 86400000 * 8).toISOString(),
-            }
-          ]);
+          setAudits([]);
         }
       } catch {
-        // graceful fallback
+        if (isMounted) setAudits([]);
       } finally {
         if (isMounted) setLoadingAudits(false);
       }
@@ -367,7 +346,7 @@ export default function OperatorProfilePage({
                   </h1>
                   <p className="profile-hero-sub">
                     Authorized operator credentials, identity verification, role permissions, and active audit history for{' '}
-                    <strong>{authUser.facilityName || 'GreenPack Plastics Ltd.'}</strong>.
+                    <strong>{authUser.facilityName || 'Unconfigured Plant'}</strong>.
                   </p>
                 </div>
 
@@ -419,7 +398,7 @@ export default function OperatorProfilePage({
                   {collapsedCards['op-identity'] ? (
                     <div className="card-collapsed-summary">
                       <User size={14} color="var(--mint-hover)" />
-                      <span>{authUser.name || 'Industrial Operator'} · {authUser.role || 'Plant Manager'} · {authUser.email || 'operator@ecoleak.org'}</span>
+                      <span>{authUser.name || 'Industrial Operator'} · {authUser.role || 'Plant Operator'} · {authUser.email || 'No email configured'}</span>
                     </div>
                   ) : (
                     <>
@@ -430,10 +409,10 @@ export default function OperatorProfilePage({
                         </div>
                         <div className="profile-id-names">
                           <h4 className="profile-operator-name">{authUser.name || 'Industrial Operator'}</h4>
-                          <span className="profile-operator-email">{authUser.email || 'operator@ecoleak.org'}</span>
+                          <span className="profile-operator-email">{authUser.email || 'No email configured'}</span>
                           <div className="profile-role-pill">
                             <Cpu size={12} />
-                            <span>{authUser.role || 'Plant Manager'}</span>
+                            <span>{authUser.role || 'Plant Operator'}</span>
                           </div>
                         </div>
                       </div>
@@ -441,27 +420,27 @@ export default function OperatorProfilePage({
                       <div className="profile-specs-list">
                         <div className="profile-spec-row">
                           <span className="spec-label"><Briefcase size={13} /> Plant Role</span>
-                          <strong className="spec-val">{authUser.role || 'Plant Manager'}</strong>
+                          <strong className="spec-val">{authUser.role || 'Not configured'}</strong>
                         </div>
 
                         <div className="profile-spec-row">
                           <span className="spec-label"><Mail size={13} /> Contact Email</span>
-                          <span className="spec-val font-mono-val">{authUser.email || 'operator@ecoleak.org'}</span>
+                          <span className="spec-val font-mono-val">{authUser.email || 'Not configured'}</span>
                         </div>
 
                         <div className="profile-spec-row">
                           <span className="spec-label"><Phone size={13} /> Direct Mobile</span>
-                          <span className="spec-val font-mono-val">{authUser.phone || '+91 98201 54892'}</span>
+                          <span className="spec-val font-mono-val">{authUser.phone || 'Not configured'}</span>
                         </div>
 
                         <div className="profile-spec-row">
                           <span className="spec-label"><Building2 size={13} /> Assigned Facility</span>
-                          <strong className="spec-val">{authUser.facilityName || 'GreenPack Plastics Ltd.'}</strong>
+                          <strong className="spec-val">{authUser.facilityName || 'Not configured'}</strong>
                         </div>
 
                         <div className="profile-spec-row">
                           <span className="spec-label"><Sliders size={13} /> Department</span>
-                          <span className="spec-val">{authUser.department || 'Plant Operations & Environmental Compliance'}</span>
+                          <span className="spec-val">{authUser.department || 'Not configured'}</span>
                         </div>
 
                         <div className="profile-spec-row">
@@ -745,7 +724,7 @@ export default function OperatorProfilePage({
               <div className="profile-hero-banner elite-card">
                 <div className="profile-hero-left">
                   <h1 className="profile-hero-title">
-                    {authUser.facilityName || plantFacility}
+                    {authUser.facilityName || plantFacility || 'Facility Name Not Configured'}
                   </h1>
                   <p className="profile-hero-sub">
                     Physical location, GPS telemetry, SPCB Consent to Operate (CTO) registration, and permissible emission boundaries.
@@ -780,7 +759,7 @@ export default function OperatorProfilePage({
                   </div>
                   <div className="stat-card-info">
                     <span className="stat-card-label"><JargonTooltip term="SPCB">SPCB</JargonTooltip> <JargonTooltip term="CTO">CTO</JargonTooltip> REGISTRATION</span>
-                    <strong className="stat-card-value font-mono-val">{authUser.regId || plantRegId}</strong>
+                    <strong className="stat-card-value font-mono-val">{authUser.regId || plantRegId || 'Not configured'}</strong>
                     <span className="stat-card-sub">State Pollution Board Consent</span>
                   </div>
                 </div>
@@ -791,7 +770,7 @@ export default function OperatorProfilePage({
                   </div>
                   <div className="stat-card-info">
                     <span className="stat-card-label"><JargonTooltip term="CTO">CONSENTED CAP</JargonTooltip></span>
-                    <strong className="stat-card-value">{authUser.emissionCap || plantEmissionCap}</strong>
+                    <strong className="stat-card-value">{authUser.emissionCap || plantEmissionCap || 'Not configured'}</strong>
                     <span className="stat-card-sub">Air Act Permissible Ceiling</span>
                   </div>
                 </div>
@@ -803,9 +782,9 @@ export default function OperatorProfilePage({
                   <div className="stat-card-info">
                     <span className="stat-card-label">INDUSTRIAL ZONE</span>
                     <strong className="stat-card-value">
-                      {authUser.location ? authUser.location.split(',')[0] : 'MIDC Bhosari Area'}
+                      {authUser.location ? authUser.location.split(',')[0] : 'Not configured'}
                     </strong>
-                    <span className="stat-card-sub">Industrial Development Corp</span>
+                    <span className="stat-card-sub">Industrial Development Zone</span>
                   </div>
                 </div>
 
@@ -816,7 +795,7 @@ export default function OperatorProfilePage({
                   <div className="stat-card-info">
                     <span className="stat-card-label">INDUSTRY SECTOR</span>
                     <strong className="stat-card-value">
-                      {authUser.industryType || plantIndustry}
+                      {authUser.industryType || plantIndustry || 'Not configured'}
                     </strong>
                     <span className="stat-card-sub">Process Classification</span>
                   </div>
@@ -851,7 +830,7 @@ export default function OperatorProfilePage({
                   {collapsedCards['plant-site'] ? (
                     <div className="card-collapsed-summary">
                       <MapPin size={14} color="var(--cyan-main)" />
-                      <span>{authUser.location || plantLocation} · GPS Anchored</span>
+                      <span>{authUser.location || plantLocation || 'Location Pending'} · GPS Anchored</span>
                     </div>
                   ) : (
                     <>
@@ -863,7 +842,7 @@ export default function OperatorProfilePage({
                           <div className="telemetry-pin-text">
                             <span className="telemetry-title">PHYSICAL MANUFACTURING SITE</span>
                             <strong className="telemetry-address">
-                              {authUser.location || plantLocation}
+                              {authUser.location || plantLocation || 'Not configured (Click Update Site Location below)'}
                             </strong>
                           </div>
                         </div>
@@ -871,21 +850,25 @@ export default function OperatorProfilePage({
                         <div className="telemetry-metrics-grid">
                           <div className="telemetry-sub-metric">
                             <span className="telemetry-sub-label">Industrial Zone</span>
-                            <strong className="telemetry-sub-val">MIDC Industrial Complex</strong>
+                            <strong className="telemetry-sub-val">{authUser.location ? 'Local Industrial Zone' : 'Not configured'}</strong>
                           </div>
                           <div className="telemetry-sub-metric">
                             <span className="telemetry-sub-label">Regional Pollution Office</span>
-                            <strong className="telemetry-sub-val">{authUser.regionalOffice || plantRegionalOffice}</strong>
+                            <strong className="telemetry-sub-val">{authUser.regionalOffice || plantRegionalOffice || 'Not configured'}</strong>
                           </div>
                           <div className="telemetry-sub-metric">
                             <span className="telemetry-sub-label">Site Geocoding</span>
                             <span className="telemetry-sub-status">
-                              <CheckCircle2 size={12} color="var(--mint-hover)" /> GPS Anchored
+                              {authUser.location ? (
+                                <><CheckCircle2 size={12} color="var(--mint-hover)" /> GPS Anchored</>
+                              ) : (
+                                <span style={{ color: 'var(--amber)' }}>Pending Setup</span>
+                              )}
                             </span>
                           </div>
                           <div className="telemetry-sub-metric">
                             <span className="telemetry-sub-label">State Jurisdiction</span>
-                            <strong className="telemetry-sub-val">Maharashtra SPCB</strong>
+                            <strong className="telemetry-sub-val">{authUser.location ? 'State SPCB' : 'Not configured'}</strong>
                           </div>
                         </div>
                       </div>
@@ -900,8 +883,8 @@ export default function OperatorProfilePage({
                           <span className="map-stub-title">Telemetric Coordinate Match</span>
                           <span className="map-stub-coords">
                             {authUser.location && authUser.location.includes('Lat:')
-                              ? authUser.location.split('(')[1]?.replace(')', '') || 'Lat: 18.6279, Lon: 73.8423'
-                              : 'Lat: 18.6279, Lon: 73.8423 (MIDC Zone)'}
+                              ? authUser.location.split('(')[1]?.replace(')', '') || 'GPS coordinates captured'
+                              : 'Coordinates Pending (Click Auto-Detect in Edit Plant)'}
                           </span>
                           <span className="map-stub-note">Pinpoint telemetry for regional grid emission factor baseline</span>
                         </div>
@@ -946,7 +929,7 @@ export default function OperatorProfilePage({
                   {collapsedCards['plant-consents'] ? (
                     <div className="card-collapsed-summary">
                       <Scale size={14} color="var(--rose)" />
-                      <span>CTO: {authUser.regId || plantRegId} · Cap: {authUser.emissionCap || plantEmissionCap}</span>
+                      <span>CTO: {authUser.regId || plantRegId || 'Not configured'} · Cap: {authUser.emissionCap || plantEmissionCap || 'Not configured'}</span>
                     </div>
                   ) : (
                     <>
@@ -967,7 +950,7 @@ export default function OperatorProfilePage({
                             </button>
                           </div>
                           <div className="consent-reg-number-display">
-                            <code>{authUser.regId || plantRegId}</code>
+                            <code>{authUser.regId || plantRegId || 'PENDING REGISTRATION'}</code>
                           </div>
                         </div>
 
@@ -975,36 +958,40 @@ export default function OperatorProfilePage({
                           <div className="consent-label-row">
                             <span className="consent-label"><ShieldAlert size={13} /> <JargonTooltip term="Orange Category">Pollution Category</JargonTooltip></span>
                             <span className={`reg-cat-badge ${getCategoryBadgeClass(authUser.regCategory || plantRegCategory)}`}>
-                              {(authUser.regCategory || plantRegCategory).split('(')[0].trim()}
+                              {(authUser.regCategory || plantRegCategory || 'Not configured').split('(')[0].trim()}
                             </span>
                           </div>
                           <p className="category-explanation">
-                            {(authUser.regCategory || plantRegCategory).includes('Red')
+                            {(authUser.regCategory || plantRegCategory || '').includes('Red')
                               ? 'Heavy industrial operations (Pollution Index 60+). Requires continuous online emission monitoring.'
-                              : (authUser.regCategory || plantRegCategory).includes('Green')
+                              : (authUser.regCategory || plantRegCategory || '').includes('Green')
                               ? 'Low impact operations (Pollution Index 21–40). Simplified periodic consent renewals.'
-                              : 'Moderate impact category (PI 41–59). Standard quarterly compliance reporting under Air/Water Acts.'}
+                              : (authUser.regCategory || plantRegCategory || '').includes('Orange')
+                              ? 'Moderate impact category (PI 41–59). Standard quarterly compliance reporting under Air/Water Acts.'
+                              : 'Category not configured. Please select your official CPCB category (Red, Orange, Green, White).'}
                           </p>
                         </div>
 
                         <div className="consent-cap-meter">
                           <div className="cap-meter-header">
                             <span className="cap-meter-title"><JargonTooltip term="tCO2e">Consented Emission Ceiling</JargonTooltip></span>
-                            <strong className="cap-meter-val">{authUser.emissionCap || plantEmissionCap}</strong>
+                            <strong className="cap-meter-val">{authUser.emissionCap || plantEmissionCap || 'Not configured'}</strong>
                           </div>
                           <div className="cap-meter-bar-track">
-                            <div className="cap-meter-bar-fill" style={{ width: '43%' }} />
+                            <div className="cap-meter-bar-fill" style={{ width: authUser.emissionCap ? '43%' : '0%' }} />
                           </div>
                           <div className="cap-meter-footer">
-                            <span>Estimated Current Run-Rate: ~194.7 MT</span>
-                            <span style={{ color: 'var(--mint-hover)', fontWeight: 700 }}>43% of Permissible Cap</span>
+                            <span>Status: {authUser.emissionCap ? 'Cap Configured' : 'No Cap Specified'}</span>
+                            <span style={{ color: 'var(--mint-hover)', fontWeight: 700 }}>
+                              {authUser.emissionCap ? 'Statutory Ceiling Tracked' : 'Update in Edit Plant'}
+                            </span>
                           </div>
                         </div>
 
                         <div className="profile-spec-row" style={{ marginTop: '12px' }}>
                           <span className="spec-label"><Scale size={13} /> <JargonTooltip term="SPCB">Primary Standard</JargonTooltip></span>
                           <span className="spec-val" style={{ fontWeight: 700 }}>
-                            {authUser.regStandard || plantRegStandard}
+                            {authUser.regStandard || plantRegStandard || 'Not configured'}
                           </span>
                         </div>
                       </div>

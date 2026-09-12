@@ -5,7 +5,7 @@ import {
   Building2, AlertTriangle, TrendingDown, Coins, ShieldCheck,
   RefreshCw, ArrowRight, CheckCircle2, Lock, Mail, Menu,
   Download, Printer, Sparkles, Sliders, Factory, Check, Info,
-  Eye, EyeOff, User, UserPlus, LogOut, UserCheck, Key
+  Eye, EyeOff, User, UserPlus, LogOut, UserCheck, Key, Cog, Package
 } from 'lucide-react';
 import {
   analyzeActivities,
@@ -41,7 +41,7 @@ const GoogleIcon = () => (
 // ─── 1-Click Pre-filled Facility Profiles ─────────────────────────────────────
 const PRESET_SCENARIOS = {
   'Plastic Moulding (60t Resin)': {
-    icon: '🏭',
+    Icon: Factory,
     industry: 'Plastic manufacturing',
     tag: 'Extrusion & Moulding',
     kwh: 20000,
@@ -60,7 +60,7 @@ const PRESET_SCENARIOS = {
     ]
   },
   'Metal Fabrication (2t Steel)': {
-    icon: '⚙️',
+    Icon: Cog,
     industry: 'Metal fabrication',
     tag: 'Furnace & CNC Milling',
     kwh: 30000,
@@ -78,7 +78,7 @@ const PRESET_SCENARIOS = {
     ]
   },
   'Packaging SME (5t HDPE)': {
-    icon: '📦',
+    Icon: Package,
     industry: 'Packaging',
     tag: 'Blow Moulding & Boxes',
     kwh: 15000,
@@ -97,7 +97,7 @@ const PRESET_SCENARIOS = {
     ]
   },
   'Textile & Dyeing Mill': {
-    icon: '🧵',
+    Icon: Layers,
     industry: 'Textile',
     tag: 'Boiler & Weaving Unit',
     kwh: 32000,
@@ -391,26 +391,33 @@ export default function Dashboard({ onBack, initialSection = 'input' }) {
       {/* 1-Click Pre-filled Facility Profiles (Prominent & Clean) */}
       <div className="dash-card elite-card" style={{ marginBottom: '20px' }}>
         <div className="dash-card-label-row">
-          <span className="dash-card-label">⚡ 1-CLICK PRE-FILLED PLANT PROFILES (TEST INSTANTLY)</span>
+          <span className="dash-card-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Sparkles size={13} color="var(--mint-hover)" /> 1-CLICK PRE-FILLED PLANT PROFILES (TEST INSTANTLY)
+          </span>
           <span style={{ fontSize: '11.5px', color: 'var(--text-muted)' }}>Select to test real benchmark data</span>
         </div>
         <div className="preset-btn-grid">
-          {Object.entries(PRESET_SCENARIOS).map(([key, data]) => (
-            <button
-              key={key}
-              type="button"
-              disabled={loading}
-              onClick={() => handleApplyPreset(key, false)}
-              className={`dash-preset-pill ${selectedPresetKey === key ? 'preset-active' : ''}`}
-            >
-              <span className="preset-icon">{data.icon}</span>
-              <div className="preset-info">
-                <strong className="preset-name">{key}</strong>
-                <span className="preset-tag">{data.tag}</span>
-              </div>
-              {selectedPresetKey === key && <Check size={14} className="preset-check" />}
-            </button>
-          ))}
+          {Object.entries(PRESET_SCENARIOS).map(([key, data]) => {
+            const PresetIconComponent = data.Icon || Factory;
+            return (
+              <button
+                key={key}
+                type="button"
+                disabled={loading}
+                onClick={() => handleApplyPreset(key, false)}
+                className={`dash-preset-pill ${selectedPresetKey === key ? 'preset-active' : ''}`}
+              >
+                <span className="preset-icon">
+                  <PresetIconComponent size={18} color="var(--mint-hover)" />
+                </span>
+                <div className="preset-info">
+                  <strong className="preset-name">{key}</strong>
+                  <span className="preset-tag">{data.tag}</span>
+                </div>
+                {selectedPresetKey === key && <Check size={14} className="preset-check" />}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -800,7 +807,9 @@ export default function Dashboard({ onBack, initialSection = 'input' }) {
         {/* Top Emission Hotspots / Pareto Leak Points */}
         <div className="dash-card elite-card">
           <div className="dash-card-label-row">
-            <span className="dash-card-label">🔥 TOP EMISSION LEAK POINTS (RANKED BY SEVERITY)</span>
+            <span className="dash-card-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Flame size={14} color="var(--rose)" /> TOP EMISSION LEAK POINTS (RANKED BY SEVERITY)
+            </span>
             <span className="badge-pill-danger">80/20 Rule Hotspot Analysis</span>
           </div>
 
@@ -913,7 +922,19 @@ export default function Dashboard({ onBack, initialSection = 'input' }) {
               </h4>
             </div>
             <span className="balancer-tag">
-              {circularRatio >= 80 ? '🌿 Fully Circular Loop' : (circularRatio >= 50 ? '⚡ Hybrid Transition' : '⚠️ Linear Heavy')}
+              {circularRatio >= 80 ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <RefreshCw size={12} className="spin-on-active" /> Fully Circular Loop
+                </span>
+              ) : circularRatio >= 50 ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <Zap size={12} color="var(--amber)" /> Hybrid Transition
+                </span>
+              ) : (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <AlertTriangle size={12} color="var(--rose)" /> Linear Heavy
+                </span>
+              )}
             </span>
           </div>
 
@@ -986,7 +1007,7 @@ export default function Dashboard({ onBack, initialSection = 'input' }) {
                   <div>
                     <span className="rec-type-label">CIRCULAR INTERVENTION #{i + 1}</span>
                     <h3 className="rec-title">
-                      {rec.target_activity} ➔ <strong className="gradient-text">{rec.alternative}</strong>
+                      {rec.target_activity} <span style={{ color: 'var(--mint-hover)', margin: '0 4px' }}>→</span> <strong className="gradient-text">{rec.alternative}</strong>
                     </h3>
                   </div>
                   <div className="rec-badge-group">
@@ -1430,12 +1451,15 @@ export default function Dashboard({ onBack, initialSection = 'input' }) {
       {/* ── Glassy Modern Sidebar ───────────────────────────────────────────── */}
       <aside className={`dash-sidebar ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
         <div className="sidebar-header">
-          <div className="sidebar-brand">
-            <div className="brand-mark-small"><span></span><span></span></div>
+          <div className="sidebar-brand" onClick={onBack} style={{ cursor: 'pointer' }} title="Back to Overview">
+            <div className="brand-mark">
+              <span></span>
+              <span></span>
+            </div>
             {sidebarOpen && (
               <div>
                 <span className="sidebar-brand-text">Eco<span className="brand-accent">Leak</span></span>
-                <div className="sidebar-tagline">Circular Carbon Ecosystem</div>
+                <div className="sidebar-tagline">Emission Intelligence</div>
               </div>
             )}
           </div>

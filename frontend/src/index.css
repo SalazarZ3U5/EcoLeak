@@ -1415,7 +1415,7 @@ h1, h2, h3, h4, .font-heading {
 .brand-mark-small span:last-child  { width: 8px; height: 8px; bottom: 5px; right: 5px; background: rgba(255,255,255,0.3); }
 
 .sidebar-brand-text {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
   color: var(--text-primary);
   letter-spacing: -0.4px;
@@ -1424,13 +1424,12 @@ h1, h2, h3, h4, .font-heading {
 
 .sidebar-tagline {
   font-size: 10px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--mint-hover);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-top: 2px;
+  margin-top: 1px;
   white-space: nowrap;
-  overflow: hidden;
 }
 
 .sidebar-toggle {
@@ -2380,8 +2379,22 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .preset-icon {
-  font-size: 24px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--mint-light);
+  border: 1px solid rgba(0, 184, 107, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.dash-preset-pill:hover .preset-icon {
+  background: rgba(0, 184, 107, 0.18);
+  border-color: rgba(0, 184, 107, 0.4);
+  transform: scale(1.05);
 }
 
 .preset-info {

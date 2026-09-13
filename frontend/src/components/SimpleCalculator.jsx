@@ -17,7 +17,7 @@ export default function SimpleCalculator({ onOpenAssessment }) {
   const co2CutTons = Math.round(co2Tons * 0.35);
 
   return (
-    <section className="section" id="calculator" style={{ background: '#f2f7f4' }}>
+    <section className="section" id="calculator" style={{ background: 'transparent' }}>
       <div className="container">
         <div className="section-header center">
           <h2>

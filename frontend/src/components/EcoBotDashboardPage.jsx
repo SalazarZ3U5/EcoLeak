@@ -86,7 +86,7 @@ export default function EcoBotDashboardPage({
   const factoryList = userPlants.map((p, idx) => ({
     id: p.id || `plant_${idx + 1}`,
     name: p.facilityName || `Facility ${idx + 1}`,
-    badgeIcon: idx === 0 ? '📍' : '🏭',
+    badgeIcon: '',
     statusLabel: idx === 0 ? 'Active Facility' : `Plant #${idx + 1}`,
     location: p.location || '',
     industry: p.industryType || '',
@@ -215,7 +215,7 @@ export default function EcoBotDashboardPage({
       ...prev,
       {
         role: 'assistant',
-        content: `📍 **Active Target Facility Switched:** **${target.name}**\n\nEcoBot context is now strictly isolated to **${target.name}**${locationPart}.\n\n*Token Guard active: Single-plant context window locked (~1,100 tokens).*`,
+        content: `**Active Target Facility Switched:** **${target.name}**\n\nEcoBot context is now strictly isolated to **${target.name}**${locationPart}.\n\n*Token Guard active: Single-plant context window locked (~1,100 tokens).*`,
         source: 'Scope Switcher'
       }
     ]);
@@ -516,18 +516,18 @@ export default function EcoBotDashboardPage({
                 <div className="dock-context-selector">
                   <Building2 size={13} className="dock-ctx-icon" />
                   <select
-                    className="dock-factory-select"
+                    className="dock-factory-select font-mono-val"
                     value={showProBadge ? 'all_pro' : selectedFactoryId}
                     onChange={(e) => handleFactorySelect(e.target.value)}
                     title="Select which factory's emissions & circular context is sent to EcoBot"
                   >
                     {factoryList.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {f.badgeIcon} {f.name}
+                        {f.name}
                       </option>
                     ))}
                     <option value="all_pro">
-                      🔒 All Factories (Cross-Plant) — PRO
+                      All Factories (Cross-Plant) — PRO
                     </option>
                   </select>
                 </div>
@@ -667,10 +667,10 @@ export default function EcoBotDashboardPage({
                   <span className="comp-tag">Standard (Current)</span>
                   <h4>Single-Plant Scope</h4>
                   <ul>
-                    <li>✓ 1 factory context isolated per query</li>
-                    <li>✓ ~1,100 tokens per prompt (Budget Guard)</li>
-                    <li>✓ Sub-second Groq gpt-oss-120b inference</li>
-                    <li>✓ Dedicated SPCB consent compliance</li>
+                    <li>Included: 1 factory context isolated per query</li>
+                    <li>Included: ~1,100 tokens per prompt (Budget Guard)</li>
+                    <li>Included: Sub-second Groq gpt-oss-120b inference</li>
+                    <li>Included: Dedicated SPCB consent compliance</li>
                   </ul>
                 </div>
 
@@ -678,10 +678,10 @@ export default function EcoBotDashboardPage({
                   <span className="comp-tag pro-tag">EcoLeak PRO</span>
                   <h4>Enterprise Portfolio</h4>
                   <ul>
-                    <li>🔒 Cross-plant emission leak correlation</li>
-                    <li>🔒 Multi-facility industrial symbiosis</li>
-                    <li>🔒 Enterprise SEBI BRSR Core rollups</li>
-                    <li>🔒 Dedicated high-throughput token pipeline</li>
+                    <li>PRO: Cross-plant emission leak correlation</li>
+                    <li>PRO: Multi-facility industrial symbiosis</li>
+                    <li>PRO: Enterprise SEBI BRSR Core rollups</li>
+                    <li>PRO: Dedicated high-throughput token pipeline</li>
                   </ul>
                 </div>
               </div>

@@ -225,6 +225,7 @@ export default function App() {
     syncBrowserUrl('dashboard', targetSec);
   };
 
+
   const handleUpdateUser = (updatedUser) => {
     const updated = assignAvatarToUser(updatedUser);
     setAuthUser(updated);
@@ -264,19 +265,27 @@ export default function App() {
     };
   }, []);
 
-  const plantContext = authUser ? {
-    industry: authUser.facilityName || '',
-    location: authUser.location || '',
-    reg_category: authUser.regCategory || ''
-  } : null;
-
   return (
     <>
-      {/* ── Vision Manifesto Page ── */}
+      {/* ── Vision Manifesto Page (Has Identical Navbar) ── */}
       {view === 'vision' && (
         <VisionPage 
           onBack={openLanding} 
           onOpenApp={() => openDashboard('input')} 
+          authUser={authUser}
+          onOpenSignIn={openLogin}
+          onOpenSignUp={openSignup}
+        />
+      )}
+
+      {/* ── Operator Profile Page (STRICTLY NO NAVBAR) ── */}
+      {view === 'profile' && (
+        <OperatorProfilePage
+          authUser={authUser}
+          user={authUser}
+          onUpdateUser={handleUpdateUser}
+          onSignOut={handleSignOut}
+          onBack={() => openDashboard('overview')}
         />
       )}
 
@@ -290,6 +299,7 @@ export default function App() {
           onBack={openLanding}
           onOpenDashboard={() => openDashboard('overview')}
           onNavigateToSignup={openSignup}
+          onOpenVision={openVision}
         />
       )}
 
@@ -300,10 +310,12 @@ export default function App() {
           onAuthSuccess={handleAuthSuccess}
           onBack={openLanding}
           onNavigateToLogin={openLogin}
+          onOpenDashboard={() => openDashboard('overview')}
+          onOpenVision={openVision}
         />
       )}
 
-      {/* ── Integrated Dashboard (STRICTLY NO NAVBAR - Contains Operator Profile) ── */}
+      {/* ── Integrated Dashboard (STRICTLY NO NAVBAR) ── */}
       {view === 'dashboard' && (
         !authUser ? (
           <LoginPage
@@ -329,7 +341,7 @@ export default function App() {
         )
       )}
 
-      {/* ── Landing Page (Has Navbar) ─────────────────────────────────────── */}
+      {/* ── Landing Page (Has Navbar) ── */}
       {view === 'landing' && (
         <div className="app-root">
           <AnimatedBackground />
@@ -337,9 +349,9 @@ export default function App() {
 
           <Navbar
             authUser={authUser}
-            onOpenApp={() => openDashboard('overview')}
+            onOpenDashboard={() => openDashboard('overview')}
             onOpenSignIn={openLogin}
-            onOpenSignUp={openSignup}
+            onOpenRegister={openSignup}
             onOpenVision={openVision}
             onBack={openLanding}
           />

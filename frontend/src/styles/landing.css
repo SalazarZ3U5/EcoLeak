@@ -410,10 +410,12 @@
    INTERACTIVE LEDGER (WITH HOVER BREAKDOWNS)
    ============================================================ */
 .ledger-container {
-  background: #ffffff;
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 184, 107, 0.16);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 45px -15px rgba(10, 37, 24, 0.08);
   overflow: hidden;
   position: relative;
   perspective: 800px;
@@ -421,8 +423,10 @@
 
 .ledger-header-bar {
   padding: 24px 36px;
-  background: var(--bg-subtle);
-  border-bottom: 1px solid var(--line);
+  background: rgba(248, 250, 248, 0.70);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 184, 107, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -451,6 +455,7 @@
 .sector-btn:hover {
   border-color: var(--mint);
   color: var(--mint-hover);
+  background: #ffffff;
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
@@ -468,7 +473,7 @@
 
 .ledger-left-controls {
   padding: 36px;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid rgba(0, 184, 107, 0.12);
 }
 
 .ledger-slider-wrap {
@@ -509,17 +514,17 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: var(--bg-subtle);
+  background: rgba(255, 255, 255, 0.55);
   border-radius: var(--radius-md);
   font-size: 13.5px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(0, 184, 107, 0.10);
   transition: all 0.25s ease;
   cursor: pointer;
 }
 
 .ledger-breakdown-row:hover {
-  background: #ffffff;
-  border-color: var(--line-strong);
+  background: rgba(255, 255, 255, 0.90);
+  border-color: rgba(0, 184, 107, 0.25);
   transform: translateX(4px);
   box-shadow: var(--shadow-sm);
 }
@@ -555,7 +560,9 @@
 /* Right Summary Panel */
 .ledger-right-summary {
   padding: 36px;
-  background: linear-gradient(180deg, #ffffff 0%, var(--bg-subtle) 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.70) 0%, rgba(248, 250, 248, 0.60) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   display: flex;
   flex-direction: column;
   justify-content: space-between;

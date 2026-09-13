@@ -23,7 +23,7 @@ export default function Hero({ onOpenAssessment }) {
             </h1>
 
             <p className="hero-subtitle">
-              Small and medium industries often don't know where their carbon footprint originates or what circular alternatives exist. Input your process data (energy source, materials, waste streams) to pinpoint emission leak points and discover concrete circular interventions with estimated costs and CO₂ savings.
+              Small and medium industries often don't know where their carbon footprint originates or what circular alternatives exist. Input process data or utility invoices — with <strong>multilingual document parsing</strong>, <strong>interactive technical jargon tooltips</strong>, and <strong>voice-enabled AI Copilot support</strong> — to pinpoint emission leaks and quantify circular payback in ₹ INR.
             </p>
 
             <div className="hero-actions">
@@ -35,11 +35,12 @@ export default function Hero({ onOpenAssessment }) {
               </a>
             </div>
 
-            <div className="hero-guarantee-line" style={{ marginTop: '18px' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Built for:</span>
-              <span><CheckCircle2 size={15} color="var(--mint)" />SMEs &amp; Factory Operators</span>
-              <span><CheckCircle2 size={15} color="var(--mint)" />Sustainability Consultants</span>
-              <span><CheckCircle2 size={15} color="var(--mint)" />Industry Regulators</span>
+            <div className="hero-guarantee-line" style={{ marginTop: '18px', flexWrap: 'wrap', gap: '16px' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Key Capabilities:</span>
+              <span><CheckCircle2 size={15} color="var(--mint)" />Multilingual Document Ingestion</span>
+              <span><CheckCircle2 size={15} color="var(--mint)" />Interactive Jargon Tooltips</span>
+              <span><CheckCircle2 size={15} color="var(--mint)" />Voice-Enabled AI Support</span>
+              <span><CheckCircle2 size={15} color="var(--mint)" />Deterministic Q × EF Math</span>
             </div>
           </div>
 

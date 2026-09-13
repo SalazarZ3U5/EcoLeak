@@ -1525,13 +1525,6 @@ export default function Dashboard({
                 <div className="ai-bot-btn-title-row">
                   <span className="ai-bot-btn-title">EcoBot AI</span>
                 </div>
-                <span className="ai-bot-btn-status">
-                  {authUser ? (
-                    <span className="ai-online-text"><span className="ai-live-dot" /> Copilot Active</span>
-                  ) : (
-                    <span className="ai-locked-text"><Lock size={10} /> Auth Required</span>
-                  )}
-                </span>
               </div>
             )}
           </button>

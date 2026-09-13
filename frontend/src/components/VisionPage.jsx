@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { 
   Heart, 
-  ArrowLeft, 
   Factory, 
   Leaf, 
   TrendingDown, 
@@ -16,45 +15,31 @@ import {
   Eye,
   Activity
 } from 'lucide-react';
+import Navbar from './Navbar';
 import EcoLeakLogo from './EcoLeakLogo';
+import AnimatedBackground from './AnimatedBackground';
 
-export default function VisionPage({ onBack, onOpenApp }) {
+export default function VisionPage({ onBack, onOpenApp, authUser, onOpenSignIn, onOpenSignUp }) {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   return (
     <div className="vision-page-wrapper">
+      <AnimatedBackground />
+      <div className="noise-overlay"></div>
       {/* ── Top Ambient Atmosphere ── */}
       <div className="vision-ambient-glow" />
 
-      {/* ── Vision Top Navigation Header ── */}
-      <nav className="vision-nav container">
-        <button 
-          type="button" 
-          className="vision-back-btn" 
-          onClick={onBack}
-          aria-label="Return to Home"
-        >
-          <ArrowLeft size={18} />
-          <span>Back to Home</span>
-        </button>
-
-        <div className="vision-brand-badge" onClick={onBack} style={{ cursor: 'pointer' }}>
-          <EcoLeakLogo size={24} />
-          <span>Eco<strong style={{ color: 'var(--mint)' }}>Leak</strong></span>
-          <span className="vision-manifesto-tag">MANIFESTO</span>
-        </div>
-
-        <button 
-          type="button" 
-          className="btn btn-primary vision-launch-btn"
-          onClick={onOpenApp}
-        >
-          <span>Try the Engine</span>
-          <ArrowRight size={15} />
-        </button>
-      </nav>
+      {/* ── Identical Homepage Navbar ── */}
+      <Navbar
+        authUser={authUser}
+        onOpenDashboard={onOpenApp}
+        onOpenSignIn={onOpenSignIn}
+        onOpenRegister={onOpenSignUp}
+        onOpenVision={() => {}}
+        onBack={onBack}
+      />
 
       {/* ── Main Manifesto Container ── */}
       <main className="container vision-main-content">
@@ -111,16 +96,17 @@ export default function VisionPage({ onBack, onOpenApp }) {
             </div>
 
             <div className="empathetic-card-visual">
-              <div className="quote-box">
-                <p className="quote-body">
-                  "We don't want to pollute. Our families breathe this very air in the township next to the plant. But nobody ever showed us an alternative that didn't risk shutting our presses down or costing months of payroll."
-                </p>
-                <div className="quote-author">
-                  <div className="author-avatar">MS</div>
-                  <div>
-                    <strong>Manoj Sharma</strong>
-                    <span>Plant Head, 2nd-Gen Injection Molding Unit</span>
-                  </div>
+              <div className="reality-focus-box">
+                <span className="reality-pill">GROUND REALITY</span>
+                <h4 className="reality-heading">Why Small Plants Struggle</h4>
+                <div className="reality-point">
+                  <strong>82% of factory carbon</strong> originates in virgin materials and power tariffs outside direct operational control.
+                </div>
+                <div className="reality-point">
+                  <strong>Traditional audits</strong> cost ₹5L-₹20L and deliver static slide decks with zero day-to-day operational utility.
+                </div>
+                <div className="reality-point">
+                  <strong>EcoLeak's mandate:</strong> Zero consultant overhead, deterministic equations ($Q \times EF$), and practical rupee savings within 3 clicks.
                 </div>
               </div>
             </div>

@@ -8,6 +8,7 @@ export default function Navbar({
   onOpenSignIn,
   onOpenRegister,
   onOpenVision,
+  onBack,
   authUser,
 }) {
   const [scrolled, setScrolled] = useState(false);
@@ -34,6 +35,10 @@ export default function Navbar({
 
   const handleBrandClick = (e) => {
     e.preventDefault();
+    if (onBack) {
+      onBack();
+      return;
+    }
     if (window.location.hash) {
       window.history.pushState(null, '', window.location.pathname);
     }
@@ -64,12 +69,22 @@ export default function Navbar({
         </a>
 
         <div className="nav-links">
-          <a href="#how" className="nav-item">How It Works</a>
-          <a href="#multilingual" className="nav-item" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-            <span>Multilingual</span>
-            <span style={{ fontSize: '9.5px', background: 'rgba(0,184,107,0.12)', color: 'var(--mint-hover)', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>Indic</span>
+          <a 
+            href="#how" 
+            className="nav-item"
+            onClick={(e) => {
+              if (onBack) {
+                e.preventDefault();
+                onBack();
+                setTimeout(() => {
+                  const el = document.getElementById('how');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+              }
+            }}
+          >
+            How It Works
           </a>
-          <a href="#calculator" className="nav-item">Calculator</a>
           <button 
             type="button" 
             className="nav-item" 
@@ -77,9 +92,9 @@ export default function Navbar({
               if (onOpenVision) onOpenVision();
               else if (window.onOpenVision) window.onOpenVision();
             }}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#dc2626' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer' }}
           >
-            <span>❤️ Vision</span>
+            Vision
           </button>
         </div>
 

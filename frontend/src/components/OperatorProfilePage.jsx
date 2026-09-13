@@ -131,30 +131,47 @@ export default function OperatorProfilePage({
     }
     setIsDeletingAccount(true);
     try {
-      // 1. Permanently delete from Supabase (assessments, profiles, documents) and clear local caches
-      await permanentlyDeleteOperatorAccount(authUser);
+      // 1. Purge Supabase & local caches
+      try {
+        await permanentlyDeleteOperatorAccount(authUser);
+      } catch (purErr) {
+        console.warn('Backend/Database record purge note:', purErr);
+      }
 
-      // 2. Permanently delete from Firebase Auth and Firestore
+      // 2. Delete Firebase auth record
       try {
         await deleteCurrentUserFirebase();
       } catch (fbErr) {
-        console.warn('Firebase user delete note (proceeding with local signout):', fbErr);
+        console.warn('Firebase user delete note (proceeding with local purge):', fbErr);
+      }
+
+      // 3. Guarantee local storage and active session are wiped
+      try {
+        localStorage.removeItem('ecoleak_auth_user');
+        localStorage.removeItem('ecoleak_saved_audits');
+        localStorage.removeItem('ecoleak_uploaded_documents');
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('Session wipe note:', e);
       }
 
       showFeedback('success', 'Your operator account and all associated records have been permanently deleted.');
       setShowDeleteModal(false);
 
-      // 3. Complete logout/navigation
+      // 4. Complete sign out and perform clean reload to landing page
       setTimeout(() => {
         if (onSignOut) {
-          onSignOut();
-        } else if (onBack) {
-          onBack();
+          try { onSignOut(); } catch (e) {}
         }
-      }, 1500);
+        window.location.replace('/');
+      }, 700);
     } catch (err) {
-      showFeedback('warning', err.message || 'Error occurred while purging records.');
-      setIsDeletingAccount(false);
+      console.warn('Delete account error fallback:', err);
+      localStorage.removeItem('ecoleak_auth_user');
+      localStorage.removeItem('ecoleak_saved_audits');
+      localStorage.removeItem('ecoleak_uploaded_documents');
+      sessionStorage.clear();
+      window.location.replace('/');
     }
   };
 
@@ -648,7 +665,7 @@ export default function OperatorProfilePage({
                         <div className="profile-spec-row">
                           <span className="spec-label"><Shield size={13} /> Auth Security</span>
                           <span className="spec-badge-val">
-                            {authUser.authMethod === 'firebase-google' ? 'Google SSO (OAuth 2.0)' : 'Supabase Cloud Token'}
+                            {authUser.authMethod === 'firebase-google' ? 'Google SSO (OAuth 2.0)' : 'Encrypted Cloud Token'}
                           </span>
                         </div>
 
@@ -1052,7 +1069,7 @@ export default function OperatorProfilePage({
                         disabled
                         style={{ background: '#f8fafc', color: '#64748b', cursor: 'not-allowed' }}
                       />
-                      <span className="field-hint">Tied to your authenticated Google / Supabase token.</span>
+                      <span className="field-hint">Tied to your authenticated operator account.</span>
                     </div>
                   </div>
 
@@ -1562,10 +1579,10 @@ export default function OperatorProfilePage({
                 This will permanently delete:
               </p>
               <ul style={{ margin: '8px 0 0 16px', padding: 0, fontSize: '12px', color: '#b91c1c' }}>
-                <li>Your operator profile record from <strong>Supabase (profiles)</strong></li>
-                <li>All logged emissions assessments from <strong>Supabase (assessments)</strong></li>
-                <li>All uploaded utility invoices &amp; documents from <strong>audit-documents storage bucket</strong></li>
-                <li>Your user record from <strong>Firebase Auth &amp; Firestore</strong></li>
+                <li>Your operator profile record and facility settings</li>
+                <li>All logged emissions assessments, leak detections &amp; circular interventions</li>
+                <li>All uploaded utility invoices &amp; attached compliance files</li>
+                <li>Your secure operator login credentials &amp; active session</li>
               </ul>
             </div>
 

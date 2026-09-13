@@ -47,7 +47,8 @@ export default function LoginPage({
   onSignOut,
   onBack,
   onOpenDashboard,
-  onNavigateToSignup
+  onNavigateToSignup,
+  onOpenVision
 }) {
   useEffect(() => {
     if (authUser && onOpenDashboard) {
@@ -277,15 +278,16 @@ export default function LoginPage({
       {/* Unified Top Navbar */}
       <Navbar
         authUser={authUser}
-        onOpenApp={onOpenDashboard}
+        onOpenDashboard={onOpenDashboard}
         onOpenSignIn={() => {}}
-        onOpenSignUp={onNavigateToSignup}
+        onOpenRegister={onNavigateToSignup}
+        onOpenVision={onOpenVision || window.onOpenVision}
         onBack={onBack}
       />
 
       {/* Main Container */}
       <main className="auth-page-main">
-        <div className="auth-page-wrap">
+        <div className="auth-page-wrap auth-page-wrap-signin">
           <div className="auth-header-block">
             <div className="auth-badge-pill">
               <ShieldCheck size={13} color="var(--mint-hover)" />
@@ -501,7 +503,7 @@ export default function LoginPage({
             </div>
           ) : (
             /* Dedicated Sign In Form */
-            <div className="dash-login-form elite-auth-card">
+            <div className="dash-login-form elite-auth-card elite-signin-card">
               {/* Google One-Click Button */}
               <button
                 type="button"

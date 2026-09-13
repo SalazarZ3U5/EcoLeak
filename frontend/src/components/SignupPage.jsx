@@ -46,7 +46,8 @@ export default function SignupPage({
   onSignOut,
   onBack,
   onOpenDashboard,
-  onNavigateToLogin
+  onNavigateToLogin,
+  onOpenVision
 }) {
   // Registration credentials
   const [authName, setAuthName] = useState('');
@@ -293,9 +294,10 @@ export default function SignupPage({
       {/* Unified Top Navbar */}
       <Navbar
         authUser={authUser}
-        onOpenApp={onOpenDashboard}
+        onOpenDashboard={onOpenDashboard}
         onOpenSignIn={onNavigateToLogin}
-        onOpenSignUp={() => {}}
+        onOpenRegister={() => {}}
+        onOpenVision={onOpenVision || window.onOpenVision}
         onBack={onBack}
       />
 
@@ -450,7 +452,7 @@ export default function SignupPage({
                 )}
               </div>
 
-              <div className="dash-form-row" style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+              <div className="dash-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="dash-form-group">
                   <label className="dash-label">SPCB / CPCB Registration (CTO No.)</label>
                   <div className="input-with-icon">
@@ -473,15 +475,15 @@ export default function SignupPage({
                     onChange={(e) => setAuthRegCategory(e.target.value)}
                     className="dash-select"
                   >
-                    <option value="Orange Category (Pollution Index 41-59 - Moderate)">Orange Category (PI 41-59)</option>
-                    <option value="Red Category (Pollution Index 60+ - High Impact)">Red Category (PI 60+)</option>
-                    <option value="Green Category (Pollution Index 21-40 - Low Impact)">Green Category (PI 21-40)</option>
-                    <option value="White Category (Pollution Index up to 20 - Non-Polluting)">White Category (PI 0-20)</option>
+                    <option value="Orange Category (Pollution Index 41-59 - Moderate)">Orange Category (PI 41-59 - Moderate)</option>
+                    <option value="Red Category (Pollution Index 60+ - High Impact)">Red Category (PI 60+ - High Impact)</option>
+                    <option value="Green Category (Pollution Index 21-40 - Low Impact)">Green Category (PI 21-40 - Low Impact)</option>
+                    <option value="White Category (Pollution Index up to 20 - Non-Polluting)">White Category (PI 0-20 - Clean)</option>
                   </select>
                 </div>
               </div>
 
-              <div className="dash-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div className="dash-form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                 <div className="dash-form-group">
                   <label className="dash-label">Consented Emission Ceiling</label>
                   <input

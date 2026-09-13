@@ -1,4 +1,5 @@
 import React from 'react';
+import { Sparkles } from 'lucide-react';
 import EcoLeakLogo from './EcoLeakLogo';
 
 export default function Footer({ onOpenVision }) {
@@ -17,14 +18,14 @@ export default function Footer({ onOpenVision }) {
           <div style={{ display: 'flex', gap: '20px', fontSize: '13px', alignItems: 'center' }}>
             <a href="#top" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Home</a>
             <a href="#how" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>How It Works</a>
-            <a href="#multilingual" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Indic OCR</a>
+            <a href="#multilingual" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Multilingual Docs</a>
             <a href="#calculator" style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>Calculator</a>
             <button
               type="button"
               onClick={onOpenVision}
-              style={{ background: 'none', border: 'none', color: '#dc2626', fontSize: '13px', cursor: 'pointer', padding: 0, fontWeight: 700 }}
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer', padding: 0 }}
             >
-              ❤️ Vision Manifesto
+              Vision Manifesto
             </button>
           </div>
 
@@ -42,7 +43,8 @@ export default function Footer({ onOpenVision }) {
               fontWeight: 700, 
               border: '1px solid rgba(0, 184, 107, 0.2)' 
             }}>
-              🚀 Made for Hackout 2026
+              <Sparkles size={12} />
+              <span>Made for Hackout 2026</span>
             </span>
           </div>
         </div>

@@ -41,7 +41,11 @@
 
 .auth-page-wrap {
   width: 100%;
-  max-width: 500px;
+  max-width: 840px;
+}
+
+.auth-page-wrap-signin {
+  max-width: 480px;
 }
 
 .auth-header-block {
@@ -167,16 +171,25 @@
   margin-top: 5px;
 }
 
-.elite-auth-card {
-  max-width: 540px;
+.elite-auth-card,
+.dash-login-form.elite-auth-card {
+  width: 100% !important;
+  max-width: 840px !important;
   margin: 0 auto;
-  padding: 34px 32px;
+  padding: 44px 48px;
   background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1.5px solid rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(0, 184, 107, 0.20);
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.07), 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+/* Compact size exclusively for Sign In */
+.elite-signin-card,
+.dash-login-form.elite-signin-card {
+  max-width: 480px !important;
+  padding: 36px 32px !important;
 }
 
 .auth-mode-tabs {
@@ -293,6 +306,26 @@
   display: flex;
   align-items: center;
   width: 100%;
+}
+
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-with-icon .field-lead-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--mint-hover);
+  pointer-events: none;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.input-with-icon .dash-input {
+  padding-left: 42px !important;
 }
 
 .password-input-field {

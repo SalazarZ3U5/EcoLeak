@@ -4,7 +4,7 @@
 
 .vision-page-wrapper {
   min-height: 100vh;
-  background-color: var(--bg-main, #fafbfa);
+  background-color: transparent;
   color: var(--text-main, #141f19);
   position: relative;
   overflow-x: hidden;
@@ -154,10 +154,12 @@
 }
 
 .vision-card {
-  background: #ffffff;
-  border: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 184, 107, 0.16);
   border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 16px 40px -12px rgba(10, 37, 24, 0.08);
   overflow: hidden;
 }
 
@@ -223,51 +225,52 @@
   margin-top: 2px;
 }
 
-.quote-box {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
+.reality-focus-box {
+  background: linear-gradient(135deg, #091a13 0%, #0d281e 100%);
+  border: 1px solid rgba(0, 184, 107, 0.35);
   border-radius: 16px;
   padding: 28px;
-  position: relative;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: #f1f5f9;
 }
 
-.quote-body {
-  font-size: 15.5px;
-  font-style: italic;
-  line-height: 1.65;
-  color: #1e293b;
-  margin: 0 0 20px;
-}
-
-.quote-author {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.author-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--mint, #00b86b);
-  color: #ffffff;
+.reality-pill {
+  display: inline-block;
+  background: rgba(0, 230, 135, 0.15);
+  border: 1px solid rgba(0, 230, 135, 0.4);
+  color: #34d399;
+  font-size: 10.5px;
   font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
 }
 
-.quote-author strong {
-  display: block;
+.reality-heading {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 16px;
+  letter-spacing: -0.2px;
+}
+
+.reality-point {
   font-size: 13.5px;
-  color: #0f172a;
+  line-height: 1.6;
+  color: #cbd5e1;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.quote-author span {
-  font-size: 12px;
-  color: #64748b;
+.reality-point:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.reality-point strong {
+  color: #34d399;
 }
 
 /* ── Pillars Section ── */
@@ -303,18 +306,22 @@
 }
 
 .vision-pillar-card {
-  background: #ffffff;
-  border: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(0, 184, 107, 0.14);
   border-radius: 18px;
   padding: 30px 24px;
   display: flex;
   flex-direction: column;
-  transition: transform 0.25s, box-shadow 0.25s;
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
 }
 
 .vision-pillar-card:hover {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(0, 184, 107, 0.35);
   transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.06);
 }
 
 .pillar-icon-box {
@@ -347,7 +354,7 @@
   font-size: 11px;
   font-weight: 700;
   color: #475569;
-  background: #f1f5f9;
+  background: rgba(241, 245, 249, 0.8);
   padding: 4px 10px;
   border-radius: 6px;
   align-self: flex-start;
@@ -356,8 +363,10 @@
 /* ── Ripple Card ── */
 .ripple-card {
   padding: 40px;
-  background: linear-gradient(135deg, #ffffff 0%, #f7fcf9 100%);
-  border: 1px solid rgba(0, 184, 107, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.75) 0%, rgba(247, 252, 249, 0.65) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 184, 107, 0.16);
 }
 
 .ripple-header {
@@ -398,11 +407,13 @@
 }
 
 .ripple-metric-box {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 184, 107, 0.12);
   border-radius: 14px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
 }
 
 .ripple-metric-num {
@@ -481,7 +492,9 @@
 }
 
 .vision-footer {
-  border-top: 1px solid var(--line, rgba(0, 0, 0, 0.08));
+  border-top: 1px solid rgba(0, 184, 107, 0.12);
   padding: 24px 0;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

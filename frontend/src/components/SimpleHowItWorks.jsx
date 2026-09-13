@@ -6,8 +6,8 @@ const steps = [
   {
     num: '01',
     title: 'Input Plant Process Data',
-    desc: "Enter energy sources, raw materials, and waste streams, or drop last month's utility invoices. Zero sensor hardware needed.",
-    tag: 'Takes 2 minutes',
+    desc: "Enter energy sources, raw materials, and waste streams, or drop last month's utility invoices with full multilingual document support (Hindi, Marathi, Tamil, etc.).",
+    tag: 'Multilingual PDF & Invoices',
     accent: 'var(--mint)',
   },
   {
@@ -62,15 +62,15 @@ export default function SimpleHowItWorks({ onOpenAssessment, onOpenEcoBot, authU
         <div className="section-header">
           <h2>From plant process data to high-ROI circular alternatives.</h2>
           <p>
-            No complex consulting fees. A guided intelligence tool designed for SMEs, factory operators, and consultants to pinpoint emission hotspots and quantify payback.
+            No complex consulting fees. A guided intelligence tool with <strong>built-in technical jargon tooltips</strong> (explaining CEA grid factors, Scope 1-3 boundaries, Williams' 0.65 Rule, and SPCB standards in plain English) to help operators pinpoint emission hotspots and quantify payback.
           </p>
         </div>
 
         {/* AI Bot banner above workflow pipeline */}
         <div className="pipeline-exclusive-ai-strip">
           <div className="pipeline-ai-info">
-            <span className="pipeline-ai-badge">OPERATOR AI COPILOT</span>
-            <p>Need real-time engineering calculations or official Indian emission formula guidance?</p>
+            <span className="pipeline-ai-badge">VOICE &amp; TEXT AI COPILOT</span>
+            <p>Speak via microphone or type to query official Indian emission factors, Scope 1-3 formulas, and SPCB compliance guidelines.</p>
           </div>
           <button
             type="button"
@@ -79,7 +79,7 @@ export default function SimpleHowItWorks({ onOpenAssessment, onOpenEcoBot, authU
             title={authUser ? "Launch EcoBot AI Assistant" : "Sign In to Access EcoBot"}
           >
             <CuteEcoBotIcon size={18} isAnimated={Boolean(authUser)} />
-            <span>Consult EcoBot AI</span>
+            <span>Consult EcoBot AI (Voice/Text)</span>
             {!authUser && <Lock size={13} style={{ marginLeft: '4px' }} />}
           </button>
         </div>

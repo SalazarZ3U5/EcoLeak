@@ -245,6 +245,23 @@ async def get_facilities(profile_id: Optional[str] = None, limit: int = 50) -> l
         return []
 
 
+async def delete_facility(facility_id: str) -> bool:
+    """Delete a facility from Supabase `facilities` table."""
+    client = _get_client()
+    if client is None or not facility_id:
+        return False
+
+    try:
+        f_id = _safe_uuid(facility_id)
+        if not f_id:
+            return False
+        res = client.table("facilities").delete().eq("id", f_id).execute()
+        return True
+    except Exception as e:
+        logger.warning("Failed to delete facility from Supabase: %s", e)
+        return False
+
+
 # ---------------------------------------------------------------------------
 # 2. Audit Assessments & Activity Streams Persistence
 # ---------------------------------------------------------------------------
@@ -621,6 +638,27 @@ async def sync_profile(
         return res.data[0] if res.data else None
     except Exception as e:
         logger.warning("Failed to sync profile to Supabase: %s", e)
+        return None
+
+
+async def get_operator_profile(auth_uid: str) -> Optional[dict]:
+    """Retrieve an operator profile by auth_uid from Supabase `profiles` table along with linked facilities."""
+    client = _get_client()
+    if client is None or not auth_uid:
+        return None
+
+    try:
+        res = client.table("profiles").select("*").eq("auth_uid", auth_uid).execute()
+        if res.data and len(res.data) > 0:
+            profile = res.data[0]
+            # Also fetch facilities linked to this profile
+            profile_id = profile.get("id")
+            facilities = await get_facilities(profile_id=profile_id)
+            profile["plants"] = facilities
+            return profile
+        return None
+    except Exception as e:
+        logger.warning("Failed to get operator profile from Supabase: %s", e)
         return None
 
 

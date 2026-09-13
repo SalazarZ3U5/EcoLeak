@@ -160,8 +160,6 @@ export default function LoginPage({
           loggedInAt: new Date().toISOString(),
         };
       }
-
-      if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(loggedUser));
       setAuthLoading(false);
       setAuthSuccessMsg(`Welcome back, ${loggedUser.name}!`);
       if (onAuthSuccess) onAuthSuccess(loggedUser);
@@ -214,7 +212,6 @@ export default function LoginPage({
         authMethod: 'firebase-google',
       }).catch((err) => console.warn('Background Firestore sync note:', err));
 
-      if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(googleUser));
       setAuthLoading(false);
       setAuthSuccessMsg(`Welcome, ${googleUser.name}! Google authentication verified.`);
       if (onAuthSuccess) onAuthSuccess(googleUser);
@@ -243,7 +240,6 @@ export default function LoginPage({
       authMethod: 'demo',
       loggedInAt: new Date().toISOString(),
     };
-    if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(demoUser));
     if (onAuthSuccess) onAuthSuccess(demoUser);
   };
 
@@ -262,8 +258,6 @@ export default function LoginPage({
       role: editRole || authUser.role,
       lastUpdated: new Date().toISOString(),
     };
-
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     if (onUpdateUser) onUpdateUser(updated);
     setIsEditingProfile(false);
     setAuthSuccessMsg('Plant parameters & location updated successfully.');

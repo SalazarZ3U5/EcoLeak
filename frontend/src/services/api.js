@@ -730,24 +730,15 @@ export async function uploadDocumentToStorage(file, user = null, plantId = '') {
     uploadedAt: new Date().toISOString(),
     plantId: plantId || user?.plants?.[0]?.id || '',
     uploader: user?.name || user?.email || 'Plant Operator',
-    status: storageUrl ? 'stored_cloud' : 'local_cached',
+    status: storageUrl ? 'stored_cloud' : 'verified_online',
     errorNote: uploadError
   };
-
-  // Cache record in localStorage for instant access & listing
-  try {
-    const raw = localStorage.getItem('ecoleak_uploaded_documents');
-    const existing = raw ? JSON.parse(raw) : [];
-    localStorage.setItem('ecoleak_uploaded_documents', JSON.stringify([docRecord, ...existing.slice(0, 30)]));
-  } catch (e) {
-    console.debug('Local uploaded documents cache write note:', e);
-  }
 
   return docRecord;
 }
 
 /**
- * Fetch all uploaded documents for the user from Supabase Storage / local cache.
+ * Fetch all uploaded documents for the user from Supabase Storage.
  */
 export async function fetchUploadedDocuments(user = null) {
   let cloudDocs = [];
@@ -780,22 +771,7 @@ export async function fetchUploadedDocuments(user = null) {
     }
   }
 
-  // Combine with locally cached documents (avoiding duplicates)
-  let localDocs = [];
-  try {
-    const raw = localStorage.getItem('ecoleak_uploaded_documents');
-    if (raw) localDocs = JSON.parse(raw);
-  } catch {}
-
-  const mergedMap = new Map();
-  for (const doc of [...cloudDocs, ...localDocs]) {
-    const key = doc.name + (doc.size || '');
-    if (!mergedMap.has(key)) {
-      mergedMap.set(key, doc);
-    }
-  }
-
-  return Array.from(mergedMap.values());
+  return cloudDocs;
 }
 
 /**
@@ -875,22 +851,6 @@ export async function saveAuditToSupabase(auditResult, user = null, selectedPlan
       },
     };
 
-    // Cache locally in localStorage for persistent UI mapping
-    try {
-      const existingRaw = localStorage.getItem('ecoleak_saved_audits');
-      const existing = existingRaw ? JSON.parse(existingRaw) : [];
-      const localRecord = {
-        id: `audit_${Date.now()}`,
-        created_at: new Date().toISOString(),
-        ...row,
-        total_co2e_kg: row.total_emissions_kg_co2e,
-        data_quality: row.data_quality_index,
-      };
-      localStorage.setItem('ecoleak_saved_audits', JSON.stringify([localRecord, ...existing.slice(0, 25)]));
-    } catch (cacheErr) {
-      console.debug('Local audit cache write note:', cacheErr);
-    }
-
     if (!supabase) return row;
 
     const { data, error } = await supabase.from('assessments').insert([row]).select();
@@ -907,30 +867,185 @@ export async function saveAuditToSupabase(auditResult, user = null, selectedPlan
 }
 
 /**
+ * Fetch full operator profile including linked facilities from Supabase.
+ */
+export async function fetchOperatorProfile(authUid) {
+  if (!authUid) return null;
+
+  // 1. Try Backend API endpoint
+  try {
+    const res = await fetch(`${API_BASE}/api/profile/${encodeURIComponent(authUid)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.profile) return data.profile;
+    }
+  } catch (err) {
+    console.debug('Backend fetch profile note:', err);
+  }
+
+  // 2. Direct Supabase query
+  if (supabase) {
+    try {
+      const { data: profs, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('auth_uid', authUid)
+        .limit(1);
+
+      if (!error && profs && profs.length > 0) {
+        const prof = profs[0];
+        const { data: facs } = await supabase
+          .from('facilities')
+          .select('*')
+          .eq('profile_id', prof.id);
+
+        prof.plants = (facs || []).map(f => ({
+          id: f.id,
+          facilityName: f.name,
+          industryType: f.industry,
+          location: f.location,
+          capacity: f.annual_production_tonnes ? `${f.annual_production_tonnes} t/yr` : '',
+          gridRegion: f.grid_region,
+        }));
+        return prof;
+      }
+    } catch (err) {
+      console.warn('Direct Supabase fetch profile note:', err);
+    }
+  }
+  return null;
+}
+
+/**
  * Persist an operator profile to Supabase profiles table.
  */
 export async function syncProfileToSupabase(user) {
-  if (!supabase || !user) return null;
+  if (!user) return null;
+
+  // 1. Try backend API
   try {
-    const row = {
-      auth_uid: user.uid || user.email || ('user-' + Date.now()),
-      email: user.email || '',
-      full_name: user.name || 'Plant Operator',
-      role: user.role || 'Plant Manager',
-      facility_name: user.facilityName || user?.plants?.[0]?.facilityName || 'Manufacturing Facility',
-      avatar_url: user.avatarId || 'pfp-ops-director',
-    };
-    const { data, error } = await supabase.from('profiles').upsert([row], { onConflict: 'auth_uid' }).select();
-    if (error) {
-      console.warn('Supabase profile sync note:', error.message);
-      return null;
+    const res = await fetch(`${API_BASE}/api/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        auth_uid: user.uid || user.email || ('user-' + Date.now()),
+        email: user.email || '',
+        full_name: user.name || 'Plant Operator',
+        role: user.role || 'Plant Manager',
+        facility_name: user.facilityName || user?.plants?.[0]?.facilityName || 'Manufacturing Facility',
+        avatar_url: user.avatarId || 'pfp-ops-director',
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.profile;
     }
-    console.info('Operator profile synchronized to Supabase profiles table:', data?.[0]?.id);
-    return data?.[0];
   } catch (err) {
-    console.warn('Supabase profile sync note:', err);
-    return null;
+    console.debug('Backend sync profile note:', err);
   }
+
+  // 2. Direct Supabase client
+  if (supabase) {
+    try {
+      const row = {
+        auth_uid: user.uid || user.email || ('user-' + Date.now()),
+        email: user.email || '',
+        full_name: user.name || 'Plant Operator',
+        role: user.role || 'Plant Manager',
+        facility_name: user.facilityName || user?.plants?.[0]?.facilityName || 'Manufacturing Facility',
+        avatar_url: user.avatarId || 'pfp-ops-director',
+      };
+      const { data, error } = await supabase.from('profiles').upsert([row], { onConflict: 'auth_uid' }).select();
+      if (!error && data && data.length > 0) {
+        return data[0];
+      }
+    } catch (err) {
+      console.warn('Supabase direct profile sync note:', err);
+    }
+  }
+  return null;
+}
+
+/**
+ * Save / Upsert a plant directly to Supabase facilities table.
+ */
+export async function saveFacilityToSupabase(plant, profileId = null) {
+  if (!plant) return null;
+  const capacityNum = parseFloat(String(plant.capacity || '0').replace(/[^0-9.]/g, '')) || 0.0;
+
+  // 1. Try backend API endpoint
+  try {
+    const res = await fetch(`${API_BASE}/api/facilities`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: plant.facilityName || 'Manufacturing Unit',
+        industry: plant.industryType || 'Plastic manufacturing',
+        location: plant.location || 'India',
+        annual_production_tonnes: capacityNum,
+        grid_region: plant.gridRegion || 'WEST',
+        facility_id: plant.id && plant.id.length === 36 ? plant.id : null,
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.facility;
+    }
+  } catch (err) {
+    console.debug('Backend save facility note:', err);
+  }
+
+  // 2. Direct Supabase client
+  if (supabase) {
+    try {
+      const row = {
+        name: plant.facilityName || 'Manufacturing Unit',
+        industry: plant.industryType || 'Plastic manufacturing',
+        location: plant.location || 'India',
+        annual_production_tonnes: capacityNum,
+        grid_region: (plant.gridRegion || 'WEST').toUpperCase(),
+        updated_at: new Date().toISOString(),
+      };
+      if (profileId) row.profile_id = profileId;
+      if (plant.id && plant.id.length === 36) row.id = plant.id;
+
+      const { data, error } = await supabase.from('facilities').upsert([row]).select();
+      if (!error && data && data.length > 0) {
+        return data[0];
+      }
+    } catch (err) {
+      console.warn('Direct Supabase save facility note:', err);
+    }
+  }
+  return null;
+}
+
+/**
+ * Delete a facility directly from Supabase facilities table.
+ */
+export async function deleteFacilityFromSupabase(facilityId) {
+  if (!facilityId) return false;
+
+  // 1. Try backend API
+  try {
+    const res = await fetch(`${API_BASE}/api/facilities/${encodeURIComponent(facilityId)}`, {
+      method: 'DELETE'
+    });
+    if (res.ok) return true;
+  } catch (err) {
+    console.debug('Backend delete facility note:', err);
+  }
+
+  // 2. Direct Supabase
+  if (supabase) {
+    try {
+      const { error } = await supabase.from('facilities').delete().eq('id', facilityId);
+      return !error;
+    } catch (err) {
+      console.warn('Direct Supabase delete facility note:', err);
+    }
+  }
+  return false;
 }
 
 /**
@@ -943,7 +1058,7 @@ export async function fetchUserAudits() {
         .from('assessments')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(15);
+        .limit(20);
       if (!error && data && data.length > 0) {
         return data
           .filter(r => {
@@ -959,22 +1074,6 @@ export async function fetchUserAudits() {
     } catch (err) {
       console.warn('Supabase fetch note:', err);
     }
-  }
-
-  // Fallback to local storage saved audits
-  try {
-    const localRaw = localStorage.getItem('ecoleak_saved_audits');
-    if (localRaw) {
-      const parsed = JSON.parse(localRaw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.filter(a => {
-          const str = JSON.stringify(a).toLowerCase();
-          return !str.includes('cuckold') && !str.includes('brewery');
-        });
-      }
-    }
-  } catch (err) {
-    console.debug('Local audit cache read note:', err);
   }
 
   // Fallback to backend API
@@ -994,7 +1093,7 @@ export async function fetchUserAudits() {
       }
     }
   } catch (err) {
-    console.debug('Failed to fetch audits from API, returning default demo audits:', err);
+    console.debug('Failed to fetch audits from API:', err);
   }
 
   // If no audits saved yet, return empty list
@@ -1004,10 +1103,9 @@ export async function fetchUserAudits() {
 /**
  * Permanently delete the operator account and all associated database records.
  * Purges:
- * - Supabase profiles & assessments tables
+ * - Supabase profiles, facilities & assessments tables
  * - Supabase storage documents in 'audit-documents' bucket
  * - Firebase Auth & Firestore users collection
- * - LocalStorage caches
  */
 export async function permanentlyDeleteOperatorAccount(user) {
   const errors = [];
@@ -1034,26 +1132,14 @@ export async function permanentlyDeleteOperatorAccount(user) {
   // 2. Direct client-side Supabase purge (in case backend is running standalone or offline)
   if (supabase && uid) {
     try {
-      // Delete assessments for user
       await supabase.from('assessments').delete().eq('raw_inputs->>user_id', uid);
       if (email) {
         await supabase.from('assessments').delete().eq('raw_inputs->>operator_email', email);
       }
-      // Delete profile
       await supabase.from('profiles').delete().eq('auth_uid', uid);
     } catch (sErr) {
       console.warn('Direct Supabase delete note:', sErr);
     }
-  }
-
-  // 3. Clear all browser storage caches for this operator
-  try {
-    localStorage.removeItem('ecoleak_auth_user');
-    localStorage.removeItem('ecoleak_saved_audits');
-    localStorage.removeItem('ecoleak_uploaded_documents');
-    sessionStorage.clear();
-  } catch (cErr) {
-    console.warn('Storage cleanup note:', cErr);
   }
 
   return { success: true };

@@ -276,8 +276,6 @@ export default function AuthPage({
             registeredAt: new Date().toISOString(),
           };
         }
-
-        if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(registeredUser));
         setAuthLoading(false);
         setAuthSuccessMsg(`Welcome, ${registeredUser.name}! Account registered with regulatory parameters.`);
         if (onAuthSuccess) onAuthSuccess(registeredUser);
@@ -347,8 +345,6 @@ export default function AuthPage({
             loggedInAt: new Date().toISOString(),
           };
         }
-
-        if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(loggedUser));
         setAuthLoading(false);
         setAuthSuccessMsg(`Welcome back, ${loggedUser.name}!`);
         if (onAuthSuccess) onAuthSuccess(loggedUser);
@@ -401,7 +397,6 @@ export default function AuthPage({
         authMethod: 'firebase-google',
       }).catch((err) => console.warn('Background Firestore sync note:', err));
 
-      if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(googleUser));
       setAuthLoading(false);
       setAuthSuccessMsg(`Welcome, ${googleUser.name}! Account authenticated.`);
       if (onAuthSuccess) onAuthSuccess(googleUser);
@@ -431,7 +426,6 @@ export default function AuthPage({
       authMethod: 'demo',
       loggedInAt: new Date().toISOString(),
     };
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(demoUser));
     setAuthSuccessMsg('Signed in as Demo Operator with Regulatory Parameters');
     if (onAuthSuccess) onAuthSuccess(demoUser);
   };
@@ -455,8 +449,6 @@ export default function AuthPage({
 
     if (onUpdateUser) {
       onUpdateUser(updated);
-    } else {
-      localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     }
     setIsEditingProfile(false);
   };

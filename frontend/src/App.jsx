@@ -16,7 +16,8 @@ import SignupPage from './components/SignupPage';
 import VisionPage from './components/VisionPage';
 import MultilingualShowcase from './components/MultilingualShowcase';
 import { assignAvatarToUser } from './services/avatarService';
-import { syncProfileToSupabase } from './services/api';
+import { syncProfileToSupabase, fetchOperatorProfile } from './services/api';
+import { supabase } from './services/supabase';
 
 // Parse initial view and section from URL pathname and hash
 const parseLocationRoute = () => {
@@ -81,49 +82,7 @@ const syncBrowserUrl = (v, s) => {
 };
 
 export default function App() {
-  const [authUser, setAuthUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ecoleak_auth_user');
-      if (!saved) return null;
-      const user = JSON.parse(saved);
-      // Strip any legacy hardcoded placeholder data so user enters real factory data
-      if (user.facilityName?.includes('GreenPack') || user.facilityName?.toLowerCase().includes('cuckold') || user.facilityName?.toLowerCase().includes('brewery')) user.facilityName = '';
-      if (user.location && (user.location.toLowerCase().includes('chakan') || user.location.toLowerCase().includes('bhosari'))) {
-        user.location = '';
-      }
-      if (user.regId?.includes('MH-SPCB/PUN/CTO-2026/4102') || user.regId?.includes('MH-SPCB/PUN/CTO-2026/0894')) user.regId = '';
-      if (user.phone === '+91 98201 54892') user.phone = '';
-
-      // Clean cached audits from localStorage if any legacy cuckold data exists
-      try {
-        const rawAudits = localStorage.getItem('ecoleak_saved_audits');
-        if (rawAudits && (rawAudits.toLowerCase().includes('cuckold') || rawAudits.toLowerCase().includes('brewery'))) {
-          const parsed = JSON.parse(rawAudits);
-          const cleaned = parsed.filter(a => !JSON.stringify(a).toLowerCase().includes('cuckold') && !JSON.stringify(a).toLowerCase().includes('brewery'));
-          localStorage.setItem('ecoleak_saved_audits', JSON.stringify(cleaned));
-        }
-      } catch {}
-
-      // Ensure plants is an array if present, but never auto-populate plants for users
-      if (!user.plants) {
-        user.plants = [];
-      } else if (Array.isArray(user.plants)) {
-        // Strip mock demo plants and any cuckold/brewery references
-        user.plants = user.plants.filter(p => 
-          p.facilityName && 
-          !p.facilityName.includes('EcoLeak Unit 1') && 
-          !p.facilityName.includes('EcoLeak Unit 2') &&
-          !p.facilityName.includes('GreenPack') &&
-          !p.facilityName.toLowerCase().includes('cuckold') &&
-          !p.facilityName.toLowerCase().includes('brewery')
-        );
-      }
-
-      return assignAvatarToUser(user);
-    } catch {
-      return null;
-    }
-  });
+  const [authUser, setAuthUser] = useState(null);
 
   const initialRoute = parseLocationRoute();
   const [view, setView] = useState(() => {
@@ -146,18 +105,57 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Load active Supabase session on startup directly from Supabase
+  useEffect(() => {
+    let isMounted = true;
+    async function loadActiveSession() {
+      if (supabase) {
+        try {
+          const { data } = await supabase.auth.getSession();
+          const sbUser = data?.session?.user;
+          if (sbUser && isMounted) {
+            const prof = await fetchOperatorProfile(sbUser.id);
+            if (prof && isMounted) {
+              const userObj = assignAvatarToUser({
+                uid: sbUser.id,
+                email: sbUser.email || prof.email,
+                name: prof.full_name || prof.name || (sbUser.email ? sbUser.email.split('@')[0] : 'Operator'),
+                role: prof.role || 'Plant Manager',
+                facilityName: prof.facility_name || '',
+                avatarId: prof.avatar_url || 'pfp-ops-director',
+                plants: prof.plants || [],
+              });
+              setAuthUser(userObj);
+            }
+          }
+        } catch (e) {
+          console.debug('Supabase session load note:', e);
+        }
+      }
+    }
+    loadActiveSession();
+    return () => { isMounted = false; };
+  }, []);
+
   // Keep state synchronized with Firebase Auth in real time
   useEffect(() => {
     if (!auth) return;
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       if (fbUser) {
+        let remoteProf = null;
+        try {
+          remoteProf = await fetchOperatorProfile(fbUser.uid);
+        } catch (e) {
+          console.debug('Firebase auth profile load note:', e);
+        }
+
         setAuthUser((prev) => {
           const raw = {
             uid: fbUser.uid,
-            name: fbUser.displayName || prev?.name || (fbUser.email ? fbUser.email.split('@')[0] : 'Operator'),
-            email: fbUser.email || prev?.email || '',
-            plants: prev?.plants || [],
-            facilityName: prev?.facilityName || '',
+            name: fbUser.displayName || remoteProf?.full_name || prev?.name || (fbUser.email ? fbUser.email.split('@')[0] : 'Operator'),
+            email: fbUser.email || remoteProf?.email || prev?.email || '',
+            plants: remoteProf?.plants || prev?.plants || [],
+            facilityName: remoteProf?.facility_name || prev?.facilityName || '',
             industryType: prev?.industryType || '',
             capacity: prev?.capacity || '',
             location: prev?.location || '',
@@ -166,14 +164,13 @@ export default function App() {
             regStandard: prev?.regStandard || '',
             emissionCap: prev?.emissionCap || '',
             regionalOffice: prev?.regionalOffice || '',
-            role: prev?.role || 'Plant Operator',
+            role: remoteProf?.role || prev?.role || 'Plant Operator',
             department: prev?.department || '',
             phone: prev?.phone || '',
             notes: prev?.notes || '',
             authMethod: prev?.authMethod || 'firebase-google',
           };
           const updated = assignAvatarToUser(raw);
-          localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
           syncProfileToSupabase(updated).catch((e) => console.debug('Supabase profile sync note:', e));
           return updated;
         });
@@ -228,7 +225,6 @@ export default function App() {
   const handleAuthSuccess = (user) => {
     const updated = assignAvatarToUser(user);
     setAuthUser(updated);
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     syncProfileToSupabase(updated).catch((e) => console.debug('Supabase profile sync note:', e));
     // If user arrived intending to view the operator profile, route them there directly, else default to 'input'
     const targetSec = dashSection === 'profile' ? 'profile' : (dashSection && dashSection !== 'overview' ? dashSection : 'input');
@@ -237,16 +233,13 @@ export default function App() {
     syncBrowserUrl('dashboard', targetSec);
   };
 
-
   const handleUpdateUser = (updatedUser) => {
     const updated = assignAvatarToUser(updatedUser);
     setAuthUser(updated);
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     syncProfileToSupabase(updated).catch((e) => console.debug('Supabase profile sync note:', e));
   };
 
   const handleSignOut = async () => {
-    localStorage.removeItem('ecoleak_auth_user');
     setAuthUser(null);
     try {
       await logoutFirebase();

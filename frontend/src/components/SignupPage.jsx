@@ -199,8 +199,6 @@ export default function SignupPage({
           registeredAt: new Date().toISOString(),
         };
       }
-
-      if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(registeredUser));
       setAuthLoading(false);
       setAuthSuccessMsg(`Welcome, ${registeredUser.name}! Account registered with regulatory parameters.`);
       if (onAuthSuccess) onAuthSuccess(registeredUser);
@@ -253,7 +251,6 @@ export default function SignupPage({
         authMethod: 'firebase-google',
       }).catch((err) => console.warn('Background Firestore sync note:', err));
 
-      if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(googleUser));
       setAuthLoading(false);
       setAuthSuccessMsg(`Welcome, ${googleUser.name}! Account registered with Google.`);
       if (onAuthSuccess) onAuthSuccess(googleUser);
@@ -282,7 +279,6 @@ export default function SignupPage({
       authMethod: 'demo',
       loggedInAt: new Date().toISOString(),
     };
-    if (rememberMe) localStorage.setItem('ecoleak_auth_user', JSON.stringify(demoUser));
     if (onAuthSuccess) onAuthSuccess(demoUser);
   };
 

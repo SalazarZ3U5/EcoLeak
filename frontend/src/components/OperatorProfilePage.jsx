@@ -9,7 +9,7 @@ import {
   Plus, Trash2, FileText
 } from 'lucide-react';
 import AnimatedBackground from './AnimatedBackground';
-import { formatINR, formatCO2e, fetchUserAudits, syncProfileToSupabase, permanentlyDeleteOperatorAccount } from '../services/api';
+import { formatINR, formatCO2e, fetchUserAudits, syncProfileToSupabase, saveFacilityToSupabase, deleteFacilityFromSupabase, permanentlyDeleteOperatorAccount } from '../services/api';
 import { syncUserToFirestore, deleteCurrentUserFirebase } from '../services/firebase';
 import { UserPfp } from '../services/avatarService';
 import Navbar from './Navbar';
@@ -145,16 +145,7 @@ export default function OperatorProfilePage({
         console.warn('Firebase user delete note (proceeding with local purge):', fbErr);
       }
 
-      // 3. Guarantee local storage and active session are wiped
-      try {
-        localStorage.removeItem('ecoleak_auth_user');
-        localStorage.removeItem('ecoleak_saved_audits');
-        localStorage.removeItem('ecoleak_uploaded_documents');
-        sessionStorage.clear();
-      } catch (e) {
-        console.warn('Session wipe note:', e);
-      }
-
+      // 3. Clear active session
       showFeedback('success', 'Your operator account and all associated records have been permanently deleted.');
       setShowDeleteModal(false);
 
@@ -167,10 +158,6 @@ export default function OperatorProfilePage({
       }, 700);
     } catch (err) {
       console.warn('Delete account error fallback:', err);
-      localStorage.removeItem('ecoleak_auth_user');
-      localStorage.removeItem('ecoleak_saved_audits');
-      localStorage.removeItem('ecoleak_uploaded_documents');
-      sessionStorage.clear();
       window.location.replace('/');
     }
   };
@@ -335,8 +322,6 @@ export default function OperatorProfilePage({
       regionalOffice: primary.regionalOffice || authUser.regionalOffice || '',
       lastUpdated: new Date().toISOString(),
     };
-
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     if (onUpdateUser) onUpdateUser(updated);
     if (!isSilent || newPlants.length > 0) {
       showFeedback('success', `Mapped ${newPlants.length} plant facility record${newPlants.length !== 1 ? 's' : ''} from profile audit ledger.`);
@@ -358,7 +343,6 @@ export default function OperatorProfilePage({
       lastUpdated: new Date().toISOString(),
     };
 
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     if (onUpdateUser) onUpdateUser(updated);
 
     syncProfileToSupabase(updated).catch((err) => console.debug('Supabase sync note:', err));
@@ -413,11 +397,10 @@ export default function OperatorProfilePage({
       regionalOffice: primary.regionalOffice || '',
       lastUpdated: new Date().toISOString(),
     };
-
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     if (onUpdateUser) onUpdateUser(updated);
 
     syncProfileToSupabase(updated).catch((err) => console.debug('Supabase sync note:', err));
+    saveFacilityToSupabase(plantData).catch((err) => console.debug('Supabase facility save note:', err));
     if (authUser.uid && !authUser.uid.startsWith('demo-')) {
       syncUserToFirestore({ uid: authUser.uid }, updated).catch((err) => console.debug('Firestore sync note:', err));
     }
@@ -448,9 +431,8 @@ export default function OperatorProfilePage({
       regionalOffice: primary.regionalOffice || '',
       lastUpdated: new Date().toISOString(),
     };
-
-    localStorage.setItem('ecoleak_auth_user', JSON.stringify(updated));
     if (onUpdateUser) onUpdateUser(updated);
+    deleteFacilityFromSupabase(plantId).catch((err) => console.debug('Supabase facility delete note:', err));
     showFeedback('success', 'Plant removed from your account.');
   };
 

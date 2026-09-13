@@ -144,7 +144,7 @@ flowchart TD
 
 | 1. Dynamic Landing & Loop Balancer | 2. Plant Process Data Ingestion |
 | :---: | :---: |
-| ![Landing Hero](docs/screenshots/01_landing_hero.png) | ![Process Data Input](docs/screenshots/02_process_data_input.png) |
+| ![Landing Hero](docs/screenshots/01_landing_herov2.png) | ![Process Data Input](docs/screenshots/02_process_data_inputv2.png) |
 | *Simulate transition from linear waste bleed to 100% closed loop.* | *OCR document parsing, voice ingestion, and 1-click presets.* |
 
 | 3. Pareto 80/20 Hotspot Detection | 4. Circular Solutions & ROI Simulator |

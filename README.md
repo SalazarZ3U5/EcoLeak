@@ -10,20 +10,21 @@
 [![React](https://img.shields.io/badge/React-18.3-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.2-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-FF6F00?style=for-the-badge&logo=databricks&logoColor=white)](https://www.trychroma.com)
+[![Sarvam AI](https://img.shields.io/badge/Sarvam_AI-Indic_DocAgent-7C3AED?style=for-the-badge)](https://www.sarvam.ai/)
 [![Groq](https://img.shields.io/badge/Groq-gpt--oss--120b-F55036?style=for-the-badge&logo=openai&logoColor=white)](https://groq.com)
 [![Supabase](https://img.shields.io/badge/Supabase-Auth%20&%20DB-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![Firebase](https://img.shields.io/badge/Firebase-Admin%20SDK-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
-[![Tests](https://img.shields.io/badge/Tests-102%2F102%20Passed-00C853?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/Tests-121%2F121%20Passed-00C853?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-3D5AFE?style=for-the-badge)](LICENSE)
 
 <p align="center">
-  <strong>Pinpoint emission leak points across factory operations. Deliver engineering-grounded circular substitutions. Model dynamic CAPEX/OPEX ROI in Indian Rupees (₹).</strong>
+  <strong>Pinpoint industrial carbon leaks. Enforce engineering-grounded circular substitutions. Model dynamic CAPEX/OPEX ROI in Indian Rupees (₹).</strong>
 </p>
 
-[Explore System Architecture](#-system-architecture--deterministic-first) •
+[Mission & Goals](#-mission--executive-summary) •
+[System Architecture](#-system-architecture--deterministic-first) •
+[Core Features](#-core-features) •
 [Visual Product Tour](#-visual-product-tour) •
-[EcoBot AI Copilot](#-ecobot-ai-copilot) •
-[Technical Comparison](#-technical-comparison) •
+[Comparative Advantage](#-comparative-advantage) •
 [API Reference](#-api-reference) •
 [Quickstart](#-installation--local-setup)
 
@@ -31,346 +32,270 @@
 
 ---
 
-## 📌 Executive Summary
+## 📌 Mission & Executive Summary
 
-Small and medium-sized manufacturing facilities (plastics moulding, metal fabrication, packaging, textiles, and chemicals) generate over **40% of industrial greenhouse gas emissions**, yet they face structural hurdles when trying to decarbonize:
+Small and Medium Enterprises (SMEs) in plastics, metal fabrication, chemicals, and textiles generate over **40% of industrial emissions**, yet face crippling barriers when decarbonizing:
 
-1. **The ₹5L–₹25L Consulting Barrier:** Big-4 environmental sustainability audits cost ₹5,00,000 to ₹25,00,000 and take 4 to 8 weeks—pricing out independent factory operators.
-2. **Unstructured Operational Data:** SME energy and material data is trapped in paper utility bills, fuel delivery challans, and fragmented ERP spreadsheets.
-3. **The Danger of LLM Hallucinations:** Generic generative AI solutions hallucinate emission factors, make basic mathematical errors, and recommend infeasible circular substitutions that cause polymer degradation or destroy machinery.
+1. **The ₹5L–₹25L ESG Consulting Barrier:** Traditional environmental audits cost lakhs, take 6 to 8 weeks, and produce static slides with zero actionable day-to-day utility.
+2. **Unstructured & Multilingual Shop-Floor Data:** Utility bills, diesel receipts, and scrap weighbridge slips are trapped on paper or written across regional Indian languages.
+3. **The Danger of LLM Hallucinations:** Generative AI chatbots hallucinate emission factors, make basic arithmetic errors, and propose chemically incompatible substitutions that ruin machinery.
 
-### The EcoLeak Solution
-EcoLeak bridges this gap with a **Deterministic-First Architecture**:
-- **Multi-Modal AI Ingestion:** PyPDF, Groq (`openai/gpt-oss-120b`), and Google Gemini (`gemini-3.6-flash`) parse messy bills, delivery slips, and natural conversational text.
-- **100% Deterministic Local Math Core:** Zero LLMs perform arithmetic or select emission factors. Python physics engines compute Scope 1–3 emissions, identify Pareto 80/20 leak points, and apply Williams' 0.65 Rule to dynamically scale CAPEX and payback timelines in **Indian Rupees (₹ INR)**.
-- **EcoBot AI Copilot:** An operational assistant integrated into the platform to assist plant managers with formula derivations, SPCB compliance thresholds, and substitution mechanics.
-
----
-
-## 📸 Visual Product Tour
-
-### 1. Interactive Landing & Loop Balancer
-> Real-time circular loop balancer simulating the transition from linear waste bleed to 100% closed-loop manufacturing with projected ₹ Lakh bottom-line savings and carbon abatement.
-
-![Landing Hero](docs/screenshots/01_landing_hero.png)
-
----
-
-### 2. Step 1 — Plant Process Data Ingestion
-> Granular input of electricity, backup fuels, virgin polymers, metals, chemicals, and process scrap. Features 1-click SME factory benchmarks (Plastic Moulding, Metal Fabrication, Packaging SME, Textile Mill) alongside OCR PDF utility bill extraction and conversational prompt ingestion.
-
-![Process Data Input](docs/screenshots/02_process_data_input.png)
-
----
-
-### 3. Step 2 — Pareto 80/20 Emission Leak-Point Detection
-> Automatic isolation of the critical 20% of operational inputs driving 80% of factory emissions. Highlights dominant leak points (e.g. Virgin Plastic Pellets contributing 81% of footprint) with color-coded severity bars, total monthly emissions, and reducible circular fractions.
-
-![Emission Leak Points](docs/screenshots/03_emission_leaks_hotspots.png)
-
----
-
-### 4. Step 3 — Pre-Engineered Circular Solutions & ROI Simulator
-> Pre-engineered closed-loop substitutions retrieved from local ChromaDB vectors. Includes an interactive substitution slider (0% to 100% closed-loop) that dynamically scales upfront CAPEX via Williams' 0.65 Rule, calculates annual OPEX savings in ₹ Crore, and displays technical feasibility and mechanical complexity ratings.
-
-![Circular Solutions and ROI](docs/screenshots/04_circular_solutions_roi.png)
-
----
-
-### 5. Step 4 — Executive Decarbonization Action Plan
-> Audit-ready executive report formatted for plant managers, green commercial loans, and state pollution control boards (SPCB / BRSR). Displays plant regulatory metadata (MIDC Bhosari, Pune, Consent to Operate CTO, Orange Category), verified Scope 1–3 footprints, and ranked engineering roadmaps with 1-click PDF export.
-
-![Executive Action Plan](docs/screenshots/05_executive_action_plan.png)
-
----
-
-### 6. EcoBot AI — Operator Intelligence Copilot
-> AI assistant accessible to factory operators. Resolves official Indian emission math (CEA grid electricity factors, diesel stoichiometric mass-to-volume density), explains SPCB Orange/Red category pollution index criteria, and guides circular polymer replacement ratios.
-
-<div align="center">
-  <img src="docs/screenshots/06_ecobot_ai_assistant.png" alt="EcoBot AI Assistant" width="550" />
-</div>
-
----
-
-## ⚖️ Technical Comparison
-
-| Dimension | Traditional ESG Audits | Generic LLM Wrappers | EcoLeak Platform |
-| :--- | :--- | :--- | :--- |
-| **Audit Cost** | ₹5,00,000 – ₹25,00,000 | ₹0 – ₹2,000 | **100% Free & Open Source Core** |
-| **Turnaround Time** | 4 – 8 Weeks | Instant (Unverified) | **Sub-3 Seconds (Deterministic)** |
-| **Calculation Integrity** | Audited Spreadsheets | Unreliable (Hallucinates Math) | **100% Deterministic Local Python Engine** |
-| **Data Ingestion** | Manual Consultant Entry | Prompt-Only Text | **PDF Invoices, ERP Slips, Plain Words, 1-Click Presets** |
-| **Engineering Boundaries** | Varies by Consultant | Ignored (Breaks Equipment) | **Enforced Technical Caps (Max 70% PCR for HDPE)** |
-| **Financial Localization** | Static Ballpark | USD Estimates | **Williams' 0.65 Rule & Dynamic ₹ INR Modeling** |
-| **Hotspot Discovery** | Subjective Analysis | None | **Mathematical Pareto 80/20 Cumulative Ranking** |
-| **Operator AI Copilot** | None | Generic Chatbot | **EcoBot AI: Formula & Compliance Gated Copilot** |
-| **Regulatory Framework** | Manual Documentation | None | **SEBI BRSR Core, GHG Scope 1-3, ISO 14064-1, CEA India** |
+### The EcoLeak Solution & Impact
+EcoLeak provides an **audit-ready, real-time industrial decarbonization platform** that delivers:
+- **Instant Hotspot Discovery:** Isolates the vital 20% of operational inputs causing 80% of emissions via Pareto analysis in sub-3 seconds.
+- **Feasible Circular Substitutions:** Recommends verified alternatives (PCR polymers, scrap regrind, bio-resins) bounded by strict mechanical caps (e.g., max 70% PCR for HDPE to prevent crack failure).
+- **Localized Financial ROI (₹ INR):** Scales equipment CAPEX dynamically using **Williams' 0.65 Rule** and calculates real payback periods in months.
+- **Indic Document Intelligence:** Extracts line items from invoices across 22+ Indian languages via Sarvam AI DocAgent and PyMuPDF.
+- **Zero Hallucinations:** 100% of arithmetic and emission math is locked to local deterministic Python engines.
 
 ---
 
 ## 🔬 System Architecture: "Deterministic First"
 
-EcoLeak enforces an unbreachable boundary between language models and deterministic computation:
+EcoLeak operates under an absolute architectural boundary:
 
 > **CRITICAL INVARIANT:**  
-> **LLMs are NEVER permitted to execute arithmetic, select numerical emission factors, compute financial ROI, or scale CAPEX.**
+> **LLMs are NEVER permitted to perform arithmetic, estimate emissions, compute financial ROI, or scale CAPEX.** LLMs are strictly confined to natural language comprehension and document extraction.
 
 ```mermaid
 flowchart TD
-    subgraph Ingestion["1. Multi-Modal Ingestion Layer"]
-        A1["PDF Utility Bills & Fuel Invoices"] --> B["PyPDF + Groq / Gemini Extractor"]
-        A2["Conversational Operational Notes"] --> B
-        A3["1-Click Industrial SME Presets"] --> C["Canonical Activity JSON Stream"]
-        B --> C
+    subgraph Layer1["1. Multi-Modal Ingestion Layer"]
+        A1["Regional Utility Bills / Slips (PDF/Images)"] --> B1["Sarvam AI DocAgent (22+ Indic Languages)"]
+        A2["English Invoices & Delivery Challans"] --> B2["PyMuPDF + Groq / Gemini Extractor"]
+        A3["Natural Language Voice / Chat Prompt"] --> B3["Conversational Activity Parser"]
+        A4["1-Click Industrial SME Presets"] --> C["Canonical Activity JSON Stream"]
+        B1 --> C
+        B2 --> C
+        B3 --> C
     end
 
-    subgraph DeterministicCore["2. Local Deterministic Core (Zero-LLM Math)"]
-        C --> D["Entity Resolver + Negative Lifecycle Guardrails"]
-        D --> E["Dimensional Converter (Fuel Densities & Calorific Equivalents)"]
-        E --> F["Emission Engine (Verified Factors CSV)"]
-        F --> G["Pareto 80/20 Hotspot Classifier"]
+    subgraph Layer2["2. Local Deterministic Core (Zero-LLM Math)"]
+        C --> D["Entity Resolver + Lifecycle Guardrails (entity_mapper.py)"]
+        D --> E["Physical & Density Unit Normalizer (emission_engine.py)"]
+        E --> F["Deterministic Emission Math: Q x EF (Verified CSVs)"]
+        F --> G["Pareto 80/20 Emission Leak Classifier (leak_detector.py)"]
     end
 
-    subgraph CircularEconomy["3. Circular Interventions & ₹ Economics"]
-        G --> H["ChromaDB Vector Store (./chroma_db)"]
-        H --> I["Technical Substitution Limits (PCR / rPET Caps)"]
+    subgraph Layer3["3. Circular Vector Engine & Economics"]
+        G --> H["ChromaDB Semantic Intervention Matcher"]
+        H --> I["Engineering Blend Caps (ESCR / Viscosity Limits)"]
         I --> J["Williams' 0.65 Rule Dynamic CAPEX Scaler (₹ INR)"]
-        J --> K["OPEX Savings & Simple Payback Engine"]
+        J --> K["OPEX Savings & Simple Payback Timeline"]
     end
 
-    subgraph AuthAndPersistence["4. Security & Audit Persistence"]
-        AUTH["Firebase / Supabase Auth"] -.->|"Bearer Token Verification"| SEC["FastAPI Auth Dependencies"]
-        SEC --> DB[("Supabase Audits Table")]
-        K --> DB
-    end
-
-    subgraph Delivery["5. Executive Interface & Intelligence"]
-        K --> L1["Interactive React Dashboard"]
-        K --> L2["Audit-Ready PDF Export"]
-        SEC --> ECOBOT["EcoBot AI Copilot"]
+    subgraph Layer4["4. Persistence & Delivery"]
+        K --> L1["Interactive React Dashboard & Visualizers"]
+        K --> L2["Audit-Ready SPCB / BRSR PDF Action Plan Booklet"]
+        K --> L3[("Supabase Audit & Facility Database")]
+        M["EcoBot AI Copilot"] -.->|"Formula & Compliance Assistance"| L1
     end
 ```
 
 ---
 
-## ⚡ Key Features & Engineering Modules
+## ⚡ Core Features
 
-### 1. Multi-Modal Ingestion Layer
-- **Utility Bill OCR (`/api/analyze/document`):** Ingests PDF utility bills, fuel invoices, and weighing slips using PyPDF and structured JSON extraction via Groq (`openai/gpt-oss-120b`) with Gemini fallback.
-- **Conversational Copilot (`/api/analyze/chat`):** Translates operational descriptions (*"Our plant burned 500 liters of diesel and consumed 20,000 kWh of grid electricity"*) into standardized activity streams.
-- **1-Click Industrial Benchmarks:** Instant operational profiles for:
-  - **Plastic Moulding (60t Resin):** Injection moulding, color additives, sprue scrap.
-  - **Metal Fabrication (2t Steel):** Heat treatment furnaces, CNC fluids, LPG, swarf.
-  - **Packaging SME (5t HDPE):** Blow moulding, virgin HDPE, cardboard waste.
-  - **Textile & Dyeing Mill:** Coal boilers, steam pipelines, process water, effluent.
+### 1. Multi-Modal & Multilingual Ingestion
+- **Sarvam AI Indic DocAgent:** Native support for Indian language invoices, utility bills, and weight slips across Hindi, Marathi, Gujarati, Tamil, Telugu, Bengali, Kannada, and Punjabi.
+- **Vision & PDF OCR:** High-throughput document parsing powered by Groq (`openai/gpt-oss-120b`) and PyMuPDF with Google Gemini fallback.
+- **Conversational & Voice Extraction:** Transcribes plant operator voice or chat notes (*"We ran 18,000 kWh of grid power and 450 liters of diesel in the backup gen"*).
+- **1-Click Industrial SME Benchmarks:** Instant profiles for **Plastic Injection Moulding (60t)**, **Metal Fabrication (2t Steel)**, **Packaging SME (5t HDPE)**, and **Textile & Dyeing Mills**.
 
 ### 2. Guardrailed Entity Resolution (`entity_mapper.py`)
-- **Negative Lifecycle Filtering:** Prevents catastrophic classification errors. Terms containing tokens like `"waste"`, `"scrap"`, `"reject"`, or `"effluent"` are strictly barred from mapping to virgin material emission factors.
-- **Five-Stage Resolution Pipeline:**
-  1. *Exact Alias Lookup:* Normalized token matching against 35+ canonical activities.
-  2. *Lifecycle Hint Disambiguation:* Routes virgin vs recycled vs post-industrial streams.
-  3. *Semantic Vector Matching:* Local Hugging Face sentence transformers (`all-MiniLM-L6-v2`).
-  4. *Constrained Groq Fallback:* Structured LLM disambiguation when novel terms appear.
-  5. *Data Quality Index (DQI):* Explicitly flags unresolved inputs with remediation notes.
+- **Negative Lifecycle Filtering:** Terms containing `"waste"`, `"scrap"`, or `"effluent"` are strictly barred from resolving to virgin material emission factors.
+- **5-Tier Disambiguation Pipeline:**
+  1. *Exact Alias Lookup:* Normalized token matching across 35+ canonical activities.
+  2. *Lifecycle Hinting:* Automatic routing between virgin, recycled, and scrap streams.
+  3. *Semantic Vector Matching:* Local Hugging Face embeddings (`all-MiniLM-L6-v2`).
+  4. *Constrained Groq Fallback:* Structured LLM disambiguation for unknown commercial names.
+  5. *Data Quality Index (DQI):* Quantifies data fidelity and flags unmapped entries.
 
 ### 3. Pareto 80/20 Emission Leak Detection (`leak_detector.py`)
-- Ranks activities by descending carbon intensity ($Q \times EF$).
-- Isolates the top 20% of contributors driving 80% of total facility emissions.
-- Visualizes linear bleed to ensure operators invest in high-leverage interventions first.
+- Automatically sorts and isolates the critical 20% of inputs driving 80% of factory emissions ($Q \times EF$).
+- Highlights immediate, high-leverage targets so plant managers don't waste capital on low-impact fixes.
 
-### 4. ChromaDB Circular Recommendations & Economics (`circular_engine.py`)
-- **Vector Retrieval:** Queries a persistent local ChromaDB instance (`./chroma_db`) populated with verified industrial circular interventions.
-- **Mechanical Substitution Limits:** Enforces physical caps to maintain mechanical integrity:
+### 4. ChromaDB Circular Interventions & Localized Economics (`circular_engine.py`)
+- **ChromaDB Vector Matching:** Queries verified industrial intervention databases for circular alternatives.
+- **Mechanical Integrity Guardrails:**
   - *HDPE:* Capped at **70% PCR** to prevent Environmental Stress Crack Resistance (ESCR) failure.
-  - *PET:* Capped at **60% rPET** to prevent intrinsic viscosity drop.
-  - *Steel:* 100% scrap EAF recycling permitted with flux adjustments.
-- **Williams' 0.65 Rule for CAPEX Scaling:**
-  $$\text{CAPEX}_{\text{actual}} = \text{Base CAPEX} \times \left(\frac{\text{Throughput}_{\text{facility}}}{\text{Capacity}_{\text{base}}}\right)^{0.65}$$
-- **Localized Indian Economics (₹ INR):** Models real market rates for virgin polymers (₹130/kg) vs recycled PCR (₹95/kg), diesel (₹90/L), and grid power (₹7.50/kWh) with dynamic payback in months.
+  - *PET:* Capped at **60% rPET** to prevent intrinsic viscosity drop in preforms.
+  - *Metals:* Up to 100% scrap EAF recycling with flux normalization.
+- **Williams' 0.65 Rule Dynamic CAPEX Scaling:**
+  $$\text{CAPEX}_{\text{scaled}} = \text{Base CAPEX} \times \left(\frac{\text{Throughput}_{\text{facility}}}{\text{Capacity}_{\text{base}}}\right)^{0.65}$$
+- **Indian Market Economics (₹ INR):** Real localized pricing for virgin resins (₹130/kg) vs PCR (₹95/kg), diesel (₹90/L), and grid power (₹7.50/kWh) with dynamic payback in months.
 
-### 5. EcoBot AI — Operator Intelligence Copilot (`EcoBotChat.jsx`)
-- **Workflow Pipeline Placement:** Positioned directly on the top workflow bar and sidebar above the pipeline steps—completely replacing intrusive floating widgets.
-- **Authentication Gated:** Accessible strictly to verified plant operators authenticated through Firebase or Supabase.
-- **Domain Expertise:** Pre-loaded with official Indian regulatory guidelines:
-  - CEA Central Electricity Authority Grid Emission Factors (`0.716 kg CO2e / kWh`).
-  - Stoichiometric diesel conversion (`0.84 kg/L` density $\times$ `2.68 kg CO2e / L`).
-  - SPCB Pollution Index formulas (Orange Category: 41–59 score).
-  - Clean energy kits and Schedule VII CSR carbon offset alignment.
+### 5. EcoBot AI — Operator Intelligence Copilot
+- Integrated directly into the plant workflow bar and sidebar.
+- Pre-loaded with official Indian regulatory formulas:
+  - CEA National Grid Factor: `0.716 kg CO2e / kWh`.
+  - Diesel Stoichiometric Density Conversion: `0.84 kg/L` density $\times$ `2.68 kg CO2e / L`.
+  - SPCB Orange/Red Category Pollution Index thresholds.
 
-### 6. Dual Authentication & Audit Persistence (`auth_service.py` & `supabase_service.py`)
-- **Dual Token Verification:** Inspects incoming JWTs and validates against either **Firebase Admin SDK** or **Supabase Auth** (`supabase.auth.get_user`).
-- **Audit History Database:** Automatically saves completed audit assessments to the Supabase `audits` table for authenticated users.
-- **Non-Breaking Optional Auth:** Public access remains functional; logging in activates cloud persistence and unlocks EcoBot AI.
+### 6. Facility Profiles & Audit Persistence
+- Manage multiple plant facilities with localized grid regions, annual capacities, and Consent to Operate (CTO) metadata.
+- Automatic audit history persistence to Supabase with dual Firebase / Supabase JWT authentication.
+- One-click export of an executive Decarbonization Action Plan booklet formatted for SPCB regulators, commercial green loans, and corporate supply-chain ESG reporting (SEBI BRSR).
 
 ---
 
-## 🛠️ Tech Stack
+## 📸 Visual Product Tour
 
 <div align="center">
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Frontend UI** | React 18.3, Vite 6.2, Lucide React, Custom Cyber-Industrial CSS (No Tailwind) |
-| **Backend API** | FastAPI 0.115+, Uvicorn ASGI, Pydantic v2 |
-| **Vector Store** | ChromaDB (Local Persistent Storage) |
-| **Multi-Modal AI** | Groq SDK (`openai/gpt-oss-120b`), Google GenAI (`gemini-3.6-flash`), PyPDF |
-| **Embeddings** | Hugging Face Sentence Transformers (`all-MiniLM-L6-v2`) |
-| **Authentication** | Firebase Admin SDK, Supabase Python Client, PyJWT |
-| **Cloud Database** | Supabase PostgreSQL (`audits` table) |
-| **Testing** | Pytest 8.3+, HTTPX, Starlette TestClient (102 test cases) |
+| 1. Dynamic Landing & Loop Balancer | 2. Plant Process Data Ingestion |
+| :---: | :---: |
+| ![Landing Hero](docs/screenshots/01_landing_hero.png) | ![Process Data Input](docs/screenshots/02_process_data_input.png) |
+| *Simulate transition from linear waste bleed to 100% closed loop.* | *OCR document parsing, voice ingestion, and 1-click presets.* |
+
+| 3. Pareto 80/20 Hotspot Detection | 4. Circular Solutions & ROI Simulator |
+| :---: | :---: |
+| ![Emission Leaks](docs/screenshots/03_emission_leaks_hotspots.png) | ![Circular Solutions](docs/screenshots/04_circular_solutions_roi.png) |
+| *Identifies the critical 20% inputs causing 80% emissions.* | *Dynamic Williams' 0.65 CAPEX scaling and payback in ₹ INR.* |
+
+| 5. Executive Decarbonization Action Plan | 6. EcoBot AI Copilot |
+| :---: | :---: |
+| ![Executive Action Plan](docs/screenshots/05_executive_action_plan.png) | <img src="docs/screenshots/06_ecobot_ai_assistant.png" width="400" /> |
+| *Audit-ready report for SPCB, BRSR, and green financing.* | *In-depth Indian regulatory compliance & engineering math.* |
 
 </div>
 
 ---
 
-## 🗂️ Directory Map
+## ⚖️ Comparative Advantage
+
+| Dimension | Traditional ESG Audits | Generic LLM Wrappers | EcoLeak Platform |
+| :--- | :--- | :--- | :--- |
+| **Audit Cost** | ₹5,00,000 – ₹25,00,000 | ₹0 – ₹2,000 | **100% Free & Open-Source Core** |
+| **Turnaround Time** | 4 – 8 Weeks | Instant (Unverified) | **Sub-3 Seconds (Deterministic)** |
+| **Calculation Accuracy** | Audited Spreadsheets | Unreliable (Hallucinates Math) | **100% Deterministic Local Python Core** |
+| **Data Ingestion** | Manual Entry by Consultants | Text Prompts Only | **Indic Invoices (Sarvam AI), PDFs, Voice, Presets** |
+| **Engineering Boundaries**| Consultant Discretion | Ignored (Breaks Machines) | **Strict Mechanical Caps (70% PCR for HDPE)** |
+| **Financial Localization**| High-Level USD/EUR | Uncalibrated USD Estimates | **Williams' 0.65 Rule & Dynamic ₹ INR Modeling** |
+| **Hotspot Discovery** | Subjective Analysis | None | **Mathematical Pareto 80/20 Cumulative Ranking** |
+| **Compliance Support** | Static Final Report | Generic Chat | **EcoBot Copilot (CEA, SPCB, BRSR, CBAM)** |
+
+---
+
+## 🛠️ Tech Stack
+
+- **Backend:** FastAPI 0.115+, Uvicorn ASGI, Pydantic v2
+- **Deterministic Math:** NumPy, Python Physical Dimensional Units Engine
+- **Vector Database:** ChromaDB (Local Persistent Storage)
+- **Multi-Modal AI:** Sarvam AI DocAgent (Indic Vision), Groq (`openai/gpt-oss-120b`), Google Gemini (`gemini-3.6-flash`), PyMuPDF
+- **Embeddings:** Hugging Face Sentence Transformers (`all-MiniLM-L6-v2`)
+- **Frontend:** React 18.3, Vite 6.2, Lucide React, Custom Cyber-Industrial CSS (Zero Tailwind bloat)
+- **Database & Auth:** Supabase PostgreSQL, Firebase Admin SDK, PyJWT
+- **Testing:** Pytest 8.3+, HTTPX, Starlette TestClient (121 automated tests)
+
+---
+
+## 🗂️ Project Structure
 
 ```
 EcoLeak/
 ├── backend/
-│   ├── main.py                     # Lifespan, CORS, router mounting, static SPA serving
+│   ├── main.py                     # App lifespan, CORS, static SPA serving, router mounts
 │   ├── api/
-│   │   ├── analyze.py              # POST /api/analyze & /api/analyze/document (with auto-save)
-│   │   ├── audits.py               # GET /api/audits & GET /api/audits/{id} (protected)
-│   │   ├── chat.py                 # POST /api/analyze/chat (conversational ingestion)
-│   │   ├── health.py               # GET /health (diagnostic telemetry)
-│   │   └── recommendations.py      # POST /api/recommend (direct circular queries)
+│   │   ├── analyze.py              # POST /api/analyze & /api/analyze/document (core pipeline)
+│   │   ├── audits.py               # GET /api/audits (historical assessment retrieval)
+│   │   ├── chat.py                 # POST /api/analyze/chat (conversational extraction)
+│   │   ├── health.py               # GET /health (service readiness & diagnostics)
+│   │   ├── recommendations.py      # POST /api/recommend (direct circular query)
+│   │   └── storage.py              # Facility and operator profile management
 │   ├── models/
-│   │   └── schemas.py              # Pydantic v2 request & response contracts
+│   │   └── schemas.py              # Pydantic v2 schemas: AnalyzeRequest, AnalyzeResponse, etc.
 │   └── services/
-│       ├── auth_service.py         # Dual Firebase / Supabase token verification & dependencies
+│       ├── assistant_service.py    # EcoBot domain knowledge & SPCB compliance logic
+│       ├── auth_service.py         # Dual Firebase / Supabase token verification
 │       ├── chroma_service.py       # ChromaDB vector store synchronization & querying
 │       ├── circular_engine.py      # Williams' 0.65 rule, substitution caps, ₹ INR payback
-│       ├── csv_loader.py           # Robust parsing of emission factor & intervention tables
+│       ├── csv_loader.py           # Robust parsing of canonical CSV databases
 │       ├── emission_engine.py      # Deterministic CO2e math & physical density conversions
 │       ├── entity_mapper.py        # 5-stage entity resolution with lifecycle guardrails
 │       ├── gemini_service.py       # Google Gemini 3.6 Flash fallback
 │       ├── groq_service.py         # Primary Groq gpt-oss-120b extractor
 │       ├── hf_service.py           # Local sentence transformers semantic fallback
 │       ├── leak_detector.py        # Mathematical Pareto 80/20 cumulative classifier
+│       ├── pdf_parser.py           # PyMuPDF table & layout extraction fallback
+│       ├── sarvam_service.py       # Sarvam AI DocAgent (Indic OCR across 22+ languages)
 │       └── supabase_service.py     # Supabase client & audit record persistence
-├── chroma_db/                      # Persistent ChromaDB vector files
 ├── data/
 │   ├── circular_interventions.csv  # Verified circular alternatives, CAPEX & base payback
 │   └── emission_factors.csv        # Scope 1, 2, and 3 emission factor table
-├── docs/
-│   └── screenshots/                # High-resolution application screenshots
+├── docs/screenshots/               # High-resolution platform screenshots
 ├── frontend/
-│   ├── index.html                  # HTML5 application entry point
-│   ├── package.json                # Frontend dependencies
-│   ├── vite.config.js              # Vite configuration with API proxy to port 8000
+│   ├── index.html                  # HTML entry point
+│   ├── vite.config.js              # Vite bundler configuration
 │   └── src/
-│       ├── App.jsx                 # View state coordinator (Landing, Dashboard, Auth)
-│       ├── index.css               # Cyber-industrial design system (tokens, glassmorphism)
+│       ├── App.jsx                 # Application state coordinator & router
+│       ├── index.css               # Design tokens, cyber-industrial utilities & animations
 │       ├── components/
-│       │   ├── AnimatedBackground.jsx # Canvas mesh and dynamic particle effects
-│       │   ├── AuthPage.jsx           # Firebase & Supabase authentication modal
-│       │   ├── Dashboard.jsx          # Core audit dashboard with interactive sections
-│       │   ├── EcoBotChat.jsx         # EcoBot AI assistant modal & math engine
-│       │   ├── Hero.jsx               # Landing page hero with live loop balancer
-│       │   ├── ImpactROI.jsx          # Projected carbon savings showcase
-│       │   ├── Navbar.jsx             # Top bar with operator authentication indicators
-│       │   ├── SimpleCalculator.jsx   # Quick interactive carbon estimator
-│       │   ├── SimpleHowItWorks.jsx   # 3-step pipeline with EcoBot launcher
-│       │   └── Ticker.jsx             # Real-time industrial telemetry ticker
+│       │   ├── ActionPlanBookletModal.jsx # SPCB/BRSR executive compliance booklet
+│       │   ├── AssessmentModal.jsx        # Audit run detail modal
+│       │   ├── Dashboard.jsx              # Core 4-step audit dashboard
+│       │   ├── EcoBotChat.jsx             # EcoBot AI copilot
+│       │   ├── Hero.jsx                   # Landing hero with interactive loop balancer
+│       │   ├── OperatorProfilePage.jsx    # Plant & operator profile manager
+│       │   ├── TangibleImpactSuite.jsx    # Real-world equivalent impact visualizations
+│       │   └── VisionPage.jsx             # EcoLeak manifesto and human impact story
 │       └── services/
-│           ├── api.js                 # API client with automatic Bearer token injection
-│           ├── firebase.js            # Firebase Web client setup
-│           └── supabase.js            # Supabase JS client setup
-├── tests/                          # 102 automated unit and integration tests
+│           ├── api.js                     # API client with token injection & formatting
+│           ├── firebase.js                # Firebase Auth web client
+│           └── supabase.js                # Supabase client
+├── tests/                          # 121 automated unit & integration tests
 ├── .env.example                    # Environment variable configuration template
-├── package.json                    # Monorepo root workspace config
+├── package.json                    # Workspace dependencies
 ├── requirements.txt                # Python backend dependencies
-└── AGENTS.md                       # Strict architectural handbook for AI coding agents
+└── AGENTS.md                       # Architectural handbook & invariants for AI agents
 ```
 
 ---
 
 ## 🔌 API Reference
 
-### 1. Structured Emission Analysis
-- **`POST /api/analyze`**
-- **Auth:** Optional (`Bearer <token>`). Automatically persists audit to Supabase when logged in.
-- **Request Body:**
-  ```json
-  {
-    "industry": "Plastic manufacturing",
-    "activities": [
-      { "name": "Grid Electricity", "quantity": 20000, "unit": "kWh" },
-      { "name": "Diesel Fuel", "quantity": 500, "unit": "liters" },
-      { "name": "Virgin HDPE Plastic", "quantity": 10000, "unit": "kg" }
-    ]
-  }
-  ```
-- **Response:**
-  ```json
-  {
-    "facility_summary": { "total_co2e_kg": 37240.0, "total_co2e_tonnes": 37.24 },
-    "scope_breakdown": { "scope_1_direct": 1340.0, "scope_2_electricity": 14320.0, "scope_3_indirect": 21580.0 },
-    "leak_points": [
-      { "rank": 1, "activity": "Virgin HDPE Plastic", "co2e_kg": 21580.0, "share_percent": 57.9, "is_pareto_hotspot": true }
-    ],
-    "circular_recommendations": [
-      { "target_activity": "Virgin HDPE Plastic", "alternative": "Post-Consumer Recycled HDPE (PCR)", "estimated_capex_inr": 294000.0, "payback_months": 6 }
-    ]
-  }
-  ```
-
-### 2. Document Analysis (Invoices & Bills)
-- **`POST /api/analyze/document`**
-- **Payload:** `multipart/form-data` with `file` (PDF, PNG, JPG) and optional `industry`.
-- **Behavior:** Runs PyPDF extraction + Groq LLM table parsing, then feeds line items directly into the deterministic calculation engine.
-
-### 3. Natural Language Ingestion
-- **`POST /api/analyze/chat`**
-- **Request Body:** `{"message": "We burned 800L of diesel in our generator and ran 15,000 kWh from the Maharashtra grid."}`
-
-### 4. Direct Circular Intervention Query
-- **`POST /api/recommend`**
-- **Request Body:** `{"material_key": "virgin_hdpe_plastic", "quantity_kg": 50000, "substitution_percent": 70}`
-
-### 5. User Audit History (Protected)
-- **`GET /api/audits`**
-- **Auth:** Required (`Bearer <token>`). Returns paginated past audit runs for the authenticated operator.
-
-### 6. Audit Detail (Protected)
-- **`GET /api/audits/{audit_id}`**
-- **Auth:** Required (`Bearer <token>`). Returns full JSON calculation snapshot for compliance re-generation.
-
-### 7. Health & Diagnostic Check
-- **`GET /health`**
-- **Response:** `{"status": "ok", "vector_store": "ready", "primary_llm": "groq/gpt-oss-120b"}`
+| Method | Endpoint | Description | Auth |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/analyze` | Run deterministic carbon analysis & circular matching | Optional |
+| `POST` | `/api/analyze/document` | Ingest utility bills/slips (Sarvam AI / PyMuPDF OCR) | Optional |
+| `POST` | `/api/analyze/chat` | Natural language activity extraction & audit pipeline | Optional |
+| `POST` | `/api/recommend` | Query circular alternative & scale CAPEX via Williams' rule | None |
+| `GET` | `/api/facilities` | Retrieve plant facilities for operator | Optional |
+| `POST` | `/api/facilities` | Upsert facility profile and metadata | Optional |
+| `GET` | `/api/profile/{auth_uid}` | Retrieve operator details & facility mappings | Optional |
+| `GET` | `/api/audits` | List historical audit assessments | Bearer Token |
+| `GET` | `/api/audits/{id}` | Retrieve complete calculation snapshot | Bearer Token |
+| `GET` | `/health` | System health, vector store status & active LLMs | None |
 
 ---
 
 ## 🚀 Installation & Local Setup
 
 ### Prerequisites
-- Python 3.10+ (Tested on Python 3.11 & 3.13)
-- Node.js 18+ & npm
-- (Optional) `GROQ_API_KEY` for OCR parsing (`openai/gpt-oss-120b`)
-- (Optional) Firebase Project ID & Supabase Project URL for authentication
+- **Python 3.10+** (Tested on 3.11 & 3.13)
+- **Node.js 18+** & npm
+- *(Optional)* `SARVAM_API_KEY` for Indic language invoice OCR
+- *(Optional)* `GROQ_API_KEY` or `GEMINI_API_KEY` for natural language & PDF extraction
+- *(Optional)* `SUPABASE_*` and `FIREBASE_*` for cloud persistence & authentication
 
-### 1. Clone & Configure Environment
+### 1. Clone Repository & Setup Environment
 ```bash
 git clone https://github.com/SalazarZ3U5/EcoLeak.git
 cd EcoLeak
 cp .env.example .env
 ```
 
-### 2. Backend Installation
+### 2. Backend Setup
 ```bash
 # Create and activate virtual environment
 python -m venv .venv
-.venv\Scripts\Activate.ps1   # Windows PowerShell
-# source .venv/bin/activate  # macOS / Linux
+.venv\Scripts\Activate.ps1       # Windows PowerShell
+# source .venv/bin/activate      # macOS / Linux
 
 # Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Frontend Installation
+### 3. Frontend Setup
 ```bash
 cd frontend
 npm install
@@ -378,23 +303,23 @@ cd ..
 ```
 
 ### 4. Launch Services
-In Terminal 1 (Backend API on port 8000):
+**Terminal 1 — Backend API (Port 8000):**
 ```bash
 uvicorn backend.main:app --reload --port 8000
 ```
 
-In Terminal 2 (Frontend on port 5173):
+**Terminal 2 — Frontend Dev Server (Port 5173):**
 ```bash
 npm run dev --workspace=frontend
 ```
 
-Open **`http://localhost:5173`** in your browser.
+Access the application at **`http://localhost:5173`**. Interactive API docs are available at **`http://localhost:8000/docs`**.
 
 ---
 
 ## 🧪 Verification & Test Suite
 
-The EcoLeak test suite covers **102 test cases** across all core mathematical engines, security boundaries, and API routes:
+All mathematical calculations, lifecycle guardrails, vector retrieval, and authentication routes are validated across **121 automated tests**:
 
 ```bash
 python -m pytest tests/ -v
@@ -402,36 +327,38 @@ python -m pytest tests/ -v
 
 ```
 ============================== test session starts ==============================
-collected 102 items
+collected 121 items
 
-tests/test_api.py .........                                              [  9%]
-tests/test_auth.py ......................                                 [ 31%]
-tests/test_chroma.py .......                                             [ 38%]
-tests/test_circular_engine.py ..........                                 [ 48%]
-tests/test_csv_loader.py ............                                    [ 60%]
-tests/test_emission_engine.py ............                               [ 72%]
-tests/test_entity_mapper.py .................                            [ 89%]
-tests/test_groq.py ........                                              [ 97%]
-tests/test_leak_detector.py .....                                        [100%]
+tests/test_api.py .........                                              [  7%]
+tests/test_auth.py ......................                                [ 25%]
+tests/test_chroma.py .......                                             [ 31%]
+tests/test_circular_engine.py ............                               [ 41%]
+tests/test_csv_loader.py ..................                              [ 56%]
+tests/test_emission_engine.py ............                               [ 66%]
+tests/test_entity_mapper.py .................                            [ 80%]
+tests/test_groq.py ........                                              [ 86%]
+tests/test_leak_detector.py .....                                        [ 90%]
+tests/test_sarvam.py .......                                             [ 96%]
+tests/test_supabase_storage.py ....                                      [100%]
 
-====================== 102 passed, 1 warning in 33.93s =======================
+======================= 121 passed, 1 warning in 54.75s =======================
 ```
 
 ---
 
-## 📜 Regulatory Framework Alignment
+## 📜 Regulatory & Standards Alignment
 
-- **GHG Protocol Corporate Accounting Standard:** Full Scope 1 (direct combustion), Scope 2 (grid location-based), and Scope 3 (purchased goods & upstream logistics) boundary segregation.
-- **SEBI Business Responsibility and Sustainability Reporting (BRSR):** Tailored for SME suppliers reporting carbon intensity to India's top 1,000 listed anchor companies.
-- **Central Electricity Authority (CEA India):** Uses official national grid baseline emission factors (`0.716 kg CO2e / kWh`).
-- **ISO 14064-1:** Traceable audit notes attached to every conversion (e.g., fuel specific gravity and volumetric density).
-- **EU CBAM:** Prepares Indian manufacturing exporters with verified embedded carbon calculations.
+- **GHG Protocol Corporate Standard:** Scope 1 (direct combustion), Scope 2 (grid electricity), and Scope 3 (purchased raw materials).
+- **SEBI BRSR Core (India):** Tailored for SME suppliers reporting carbon intensity to India's top 1,000 listed anchor enterprises.
+- **Central Electricity Authority (CEA India):** Uses the official Indian grid emission baseline (`0.716 kg CO2e / kWh`).
+- **ISO 14064-1 Audit Traceability:** Transparent conversion logs with fuel specific gravity and density multipliers recorded for every line item.
+- **EU CBAM Readiness:** Computes verified embedded carbon metrics for Indian exporters facing European carbon border adjustments.
 
 ---
 
 ## 📄 License
 
-EcoLeak is licensed under the **MIT License**. See [LICENSE](LICENSE) for full details.
+Distributed under the **MIT License**. See [LICENSE](LICENSE) for full terms.
 
 <div align="center">
   <sub>Built for industrial resilience and SME circular decarbonization. Hackout 2026.</sub>

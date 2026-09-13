@@ -13,7 +13,7 @@ from backend.models.schemas import (
     AssistantChatRequest,
     AssistantChatResponse,
 )
-from backend.services import gemini_service, assistant_service
+from backend.services import gemini_service, assistant_service, supabase_service
 from backend.api.analyze import run_analysis_pipeline
 from backend.services.auth_service import get_current_user_optional
 

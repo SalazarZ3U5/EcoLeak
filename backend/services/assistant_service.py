@@ -114,7 +114,7 @@ def _format_audit_context(context: Optional[dict]) -> str:
     activities = context.get("activities") or []
     if activities and isinstance(activities, list):
         act_lines = []
-        for act in activities[:8]:
+        for act in activities:
             if isinstance(act, dict):
                 name = act.get("name", "Unknown Activity")
                 qty = act.get("quantity")
@@ -140,7 +140,7 @@ def _format_audit_context(context: Optional[dict]) -> str:
     hotspots = context.get("hotspots") or context.get("leaks") or []
     if hotspots and isinstance(hotspots, list):
         hs_lines = []
-        for idx, hs in enumerate(hotspots[:5], 1):
+        for idx, hs in enumerate(hotspots, 1):
             if isinstance(hs, dict):
                 act_name = hs.get("activity") or hs.get("name", "Unknown Stream")
                 co2 = hs.get("emissions_kg_co2e")
@@ -167,7 +167,7 @@ def _format_audit_context(context: Optional[dict]) -> str:
     recs = context.get("circular_recommendations") or context.get("recommendations") or []
     if recs and isinstance(recs, list):
         rec_lines = []
-        for idx, r in enumerate(recs[:5], 1):
+        for idx, r in enumerate(recs, 1):
             if isinstance(r, dict):
                 target = r.get("target_activity", "Virgin Material")
                 alt = r.get("alternative", "Circular Alternative")
@@ -238,8 +238,8 @@ def chat_with_assistant(
             client = groq_service._get_client()
             if client is not None:
                 messages = [{"role": "system", "content": augmented_system_prompt}]
-                # Append rolling history (last 6 turns)
-                for turn in history[-6:]:
+                # Append rolling history
+                for turn in history[-25:]:
                     r = turn.get("role", "user")
                     c = turn.get("content", "")
                     if r in {"user", "assistant"} and c:
@@ -252,7 +252,6 @@ def chat_with_assistant(
                     model=model_name,
                     messages=messages,
                     temperature=0.2,
-                    max_tokens=800,
                 )
                 content = (resp.choices[0].message.content or "").strip()
                 if content:

@@ -87,23 +87,35 @@ export default function App() {
       if (!saved) return null;
       const user = JSON.parse(saved);
       // Strip any legacy hardcoded placeholder data so user enters real factory data
-      if (user.facilityName?.includes('GreenPack')) user.facilityName = '';
+      if (user.facilityName?.includes('GreenPack') || user.facilityName?.toLowerCase().includes('cuckold') || user.facilityName?.toLowerCase().includes('brewery')) user.facilityName = '';
       if (user.location && (user.location.toLowerCase().includes('chakan') || user.location.toLowerCase().includes('bhosari'))) {
         user.location = '';
       }
       if (user.regId?.includes('MH-SPCB/PUN/CTO-2026/4102') || user.regId?.includes('MH-SPCB/PUN/CTO-2026/0894')) user.regId = '';
       if (user.phone === '+91 98201 54892') user.phone = '';
 
+      // Clean cached audits from localStorage if any legacy cuckold data exists
+      try {
+        const rawAudits = localStorage.getItem('ecoleak_saved_audits');
+        if (rawAudits && (rawAudits.toLowerCase().includes('cuckold') || rawAudits.toLowerCase().includes('brewery'))) {
+          const parsed = JSON.parse(rawAudits);
+          const cleaned = parsed.filter(a => !JSON.stringify(a).toLowerCase().includes('cuckold') && !JSON.stringify(a).toLowerCase().includes('brewery'));
+          localStorage.setItem('ecoleak_saved_audits', JSON.stringify(cleaned));
+        }
+      } catch {}
+
       // Ensure plants is an array if present, but never auto-populate plants for users
       if (!user.plants) {
         user.plants = [];
       } else if (Array.isArray(user.plants)) {
-        // Strip mock demo plants that might have been automatically injected previously
+        // Strip mock demo plants and any cuckold/brewery references
         user.plants = user.plants.filter(p => 
           p.facilityName && 
           !p.facilityName.includes('EcoLeak Unit 1') && 
           !p.facilityName.includes('EcoLeak Unit 2') &&
-          !p.facilityName.includes('GreenPack')
+          !p.facilityName.includes('GreenPack') &&
+          !p.facilityName.toLowerCase().includes('cuckold') &&
+          !p.facilityName.toLowerCase().includes('brewery')
         );
       }
 

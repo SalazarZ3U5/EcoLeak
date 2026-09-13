@@ -92,7 +92,7 @@ export default function ActionPlanBookletModal({
     };
   });
 
-  const maxParetoVal = Math.max(...paretoPoints.map(p => p.emissions_kg), 1);
+  const maxParetoVal = validTotal;
 
   // SVG Chart Geometry
   const pChartW = 540;

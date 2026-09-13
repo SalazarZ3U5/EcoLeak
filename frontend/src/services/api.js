@@ -945,11 +945,16 @@ export async function fetchUserAudits() {
         .order('created_at', { ascending: false })
         .limit(15);
       if (!error && data && data.length > 0) {
-        return data.map(r => ({
-          ...r,
-          total_co2e_kg: r.total_emissions_kg_co2e || 0,
-          data_quality: r.data_quality_index || 98.0
-        }));
+        return data
+          .filter(r => {
+            const str = JSON.stringify(r).toLowerCase();
+            return !str.includes('cuckold') && !str.includes('brewery');
+          })
+          .map(r => ({
+            ...r,
+            total_co2e_kg: r.total_emissions_kg_co2e || 0,
+            data_quality: r.data_quality_index || 98.0
+          }));
       }
     } catch (err) {
       console.warn('Supabase fetch note:', err);
@@ -962,7 +967,10 @@ export async function fetchUserAudits() {
     if (localRaw) {
       const parsed = JSON.parse(localRaw);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
+        return parsed.filter(a => {
+          const str = JSON.stringify(a).toLowerCase();
+          return !str.includes('cuckold') && !str.includes('brewery');
+        });
       }
     }
   } catch (err) {

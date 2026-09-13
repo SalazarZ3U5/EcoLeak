@@ -48,7 +48,7 @@ export default function LeakVisualizer({ leakPoints = [], scopeBreakdown = {}, t
     };
   });
 
-  const maxVal = Math.max(...paretoPoints.map(p => p.emissions_kg), 1);
+  const axisMaxVal = validTotal;
 
   // 2. Prepare Scope Breakdown Data for Donut
   const scope1 = scopeBreakdown.scope_1_kg || 0;
@@ -233,7 +233,7 @@ export default function LeakVisualizer({ leakPoints = [], scopeBreakdown = {}, t
                       fill="#94a3b8"
                       fontFamily="sans-serif"
                     >
-                      {Math.round((pct / 100) * maxVal).toLocaleString()}
+                      {Math.round((pct / 100) * axisMaxVal).toLocaleString()}
                     </text>
                     <text
                       x={svgWidth - padRight + 8}
@@ -273,7 +273,7 @@ export default function LeakVisualizer({ leakPoints = [], scopeBreakdown = {}, t
 
               {/* Bars */}
               {paretoPoints.map((p, i) => {
-                const barHeight = Math.max(4, (p.emissions_kg / maxVal) * chartH);
+                const barHeight = Math.max(4, (p.emissions_kg / axisMaxVal) * chartH);
                 const x = padLeft + (i * slotW) + ((slotW - barW) / 2);
                 const y = padTop + chartH - barHeight;
                 const isHovered = hoveredIndex === i;

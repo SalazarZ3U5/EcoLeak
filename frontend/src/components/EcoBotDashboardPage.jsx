@@ -215,7 +215,7 @@ export default function EcoBotDashboardPage({
       ...prev,
       {
         role: 'assistant',
-        content: `**Active Target Facility Switched:** **${target.name}**\n\nEcoBot context is now strictly isolated to **${target.name}**${locationPart}.\n\n*Token Guard active: Single-plant context window locked (~1,100 tokens).*`,
+        content: `**Active Target Facility Switched:** **${target.name}**\n\nEcoBot context is now strictly isolated to **${target.name}**${locationPart}.`,
         source: 'Scope Switcher'
       }
     ]);
@@ -233,7 +233,6 @@ export default function EcoBotDashboardPage({
 
     try {
       const formattedHistory = newHistory.map(m => ({ role: m.role, content: m.content }));
-      // ONLY send the selected factory's context to prevent token explosion
       const res = await askEcoBotAssistant(text.trim(), formattedHistory, currentActiveFactory.context);
 
       setMessages(prev => [
@@ -544,9 +543,9 @@ export default function EcoBotDashboardPage({
                   </button>
                 )}
 
-                <div className="dock-token-guard" title="Single-plant context isolation keeps token usage minimal">
+                <div className="dock-token-guard" title="Plant telemetry and engineering context active">
                   <ShieldCheck size={11} />
-                  <span>~1.1k tokens</span>
+                  <span>Plant Telemetry Active</span>
                 </div>
               </div>
             ) : (
@@ -657,7 +656,7 @@ export default function EcoBotDashboardPage({
                 <div className="pro-alert-text">
                   <strong>Multi-Facility Cross-Analysis is Locked in Standard Tier.</strong>
                   <p>
-                    Aggregating operational telemetry, live meters, and circular interventions across multiple factories expands LLM context window payloads by <strong>500%+</strong>, causing token consumption to skyrocket.
+                    Aggregating operational telemetry, live meters, and circular interventions across multiple factories provides enterprise-wide portfolio rollups and cross-site optimization.
                   </p>
                 </div>
               </div>
@@ -668,7 +667,7 @@ export default function EcoBotDashboardPage({
                   <h4>Single-Plant Scope</h4>
                   <ul>
                     <li>Included: 1 factory context isolated per query</li>
-                    <li>Included: ~1,100 tokens per prompt (Budget Guard)</li>
+                    <li>Included: Full unmetered plant telemetry analysis</li>
                     <li>Included: Sub-second Groq gpt-oss-120b inference</li>
                     <li>Included: Dedicated SPCB consent compliance</li>
                   </ul>

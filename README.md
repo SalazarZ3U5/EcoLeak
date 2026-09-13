@@ -13,7 +13,7 @@
 [![Sarvam AI](https://img.shields.io/badge/Sarvam_AI-Indic_DocAgent-7C3AED?style=for-the-badge)](https://www.sarvam.ai/)
 [![Groq](https://img.shields.io/badge/Groq-gpt--oss--120b-F55036?style=for-the-badge&logo=openai&logoColor=white)](https://groq.com)
 [![Supabase](https://img.shields.io/badge/Supabase-Auth%20&%20DB-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![Tests](https://img.shields.io/badge/Tests-121%2F121%20Passed-00C853?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+
 [![License](https://img.shields.io/badge/License-MIT-3D5AFE?style=for-the-badge)](LICENSE)
 
 <p align="center">
@@ -32,7 +32,7 @@
 
 ---
 
-## 📌 Mission & Executive Summary
+## Mission & Executive Summary
 
 Small and Medium Enterprises (SMEs) in plastics, metal fabrication, chemicals, and textiles generate over **40% of industrial emissions**, yet face crippling barriers when decarbonizing:
 
@@ -50,7 +50,7 @@ EcoLeak provides an **audit-ready, real-time industrial decarbonization platform
 
 ---
 
-## 🔬 System Architecture: "Deterministic First"
+## System Architecture: "Deterministic First"
 
 EcoLeak operates under an absolute architectural boundary:
 
@@ -93,7 +93,7 @@ flowchart TD
 
 ---
 
-## ⚡ Core Features
+## Core Features
 
 ### 1. Multi-Modal & Multilingual Ingestion
 - **Sarvam AI Indic DocAgent:** Native support for Indian language invoices, utility bills, and weight slips across Hindi, Marathi, Gujarati, Tamil, Telugu, Bengali, Kannada, and Punjabi.
@@ -138,7 +138,7 @@ flowchart TD
 
 ---
 
-## 📸 Visual Product Tour
+## Visual Product Tour
 
 <div align="center">
 
@@ -161,7 +161,7 @@ flowchart TD
 
 ---
 
-## ⚖️ Comparative Advantage
+## Comparative Advantage
 
 | Dimension | Traditional ESG Audits | Generic LLM Wrappers | EcoLeak Platform |
 | :--- | :--- | :--- | :--- |
@@ -176,7 +176,7 @@ flowchart TD
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Backend:** FastAPI 0.115+, Uvicorn ASGI, Pydantic v2
 - **Deterministic Math:** NumPy, Python Physical Dimensional Units Engine
@@ -189,86 +189,8 @@ flowchart TD
 
 ---
 
-## 🗂️ Project Structure
 
-```
-EcoLeak/
-├── backend/
-│   ├── main.py                     # App lifespan, CORS, static SPA serving, router mounts
-│   ├── api/
-│   │   ├── analyze.py              # POST /api/analyze & /api/analyze/document (core pipeline)
-│   │   ├── audits.py               # GET /api/audits (historical assessment retrieval)
-│   │   ├── chat.py                 # POST /api/analyze/chat (conversational extraction)
-│   │   ├── health.py               # GET /health (service readiness & diagnostics)
-│   │   ├── recommendations.py      # POST /api/recommend (direct circular query)
-│   │   └── storage.py              # Facility and operator profile management
-│   ├── models/
-│   │   └── schemas.py              # Pydantic v2 schemas: AnalyzeRequest, AnalyzeResponse, etc.
-│   └── services/
-│       ├── assistant_service.py    # EcoBot domain knowledge & SPCB compliance logic
-│       ├── auth_service.py         # Dual Firebase / Supabase token verification
-│       ├── chroma_service.py       # ChromaDB vector store synchronization & querying
-│       ├── circular_engine.py      # Williams' 0.65 rule, substitution caps, ₹ INR payback
-│       ├── csv_loader.py           # Robust parsing of canonical CSV databases
-│       ├── emission_engine.py      # Deterministic CO2e math & physical density conversions
-│       ├── entity_mapper.py        # 5-stage entity resolution with lifecycle guardrails
-│       ├── gemini_service.py       # Google Gemini 3.6 Flash fallback
-│       ├── groq_service.py         # Primary Groq gpt-oss-120b extractor
-│       ├── hf_service.py           # Local sentence transformers semantic fallback
-│       ├── leak_detector.py        # Mathematical Pareto 80/20 cumulative classifier
-│       ├── pdf_parser.py           # PyMuPDF table & layout extraction fallback
-│       ├── sarvam_service.py       # Sarvam AI DocAgent (Indic OCR across 22+ languages)
-│       └── supabase_service.py     # Supabase client & audit record persistence
-├── data/
-│   ├── circular_interventions.csv  # Verified circular alternatives, CAPEX & base payback
-│   └── emission_factors.csv        # Scope 1, 2, and 3 emission factor table
-├── docs/screenshots/               # High-resolution platform screenshots
-├── frontend/
-│   ├── index.html                  # HTML entry point
-│   ├── vite.config.js              # Vite bundler configuration
-│   └── src/
-│       ├── App.jsx                 # Application state coordinator & router
-│       ├── index.css               # Design tokens, cyber-industrial utilities & animations
-│       ├── components/
-│       │   ├── ActionPlanBookletModal.jsx # SPCB/BRSR executive compliance booklet
-│       │   ├── AssessmentModal.jsx        # Audit run detail modal
-│       │   ├── Dashboard.jsx              # Core 4-step audit dashboard
-│       │   ├── EcoBotChat.jsx             # EcoBot AI copilot
-│       │   ├── Hero.jsx                   # Landing hero with interactive loop balancer
-│       │   ├── OperatorProfilePage.jsx    # Plant & operator profile manager
-│       │   ├── TangibleImpactSuite.jsx    # Real-world equivalent impact visualizations
-│       │   └── VisionPage.jsx             # EcoLeak manifesto and human impact story
-│       └── services/
-│           ├── api.js                     # API client with token injection & formatting
-│           ├── firebase.js                # Firebase Auth web client
-│           └── supabase.js                # Supabase client
-├── tests/                          # 121 automated unit & integration tests
-├── .env.example                    # Environment variable configuration template
-├── package.json                    # Workspace dependencies
-├── requirements.txt                # Python backend dependencies
-└── AGENTS.md                       # Architectural handbook & invariants for AI agents
-```
-
----
-
-## 🔌 API Reference
-
-| Method | Endpoint | Description | Auth |
-| :--- | :--- | :--- | :--- |
-| `POST` | `/api/analyze` | Run deterministic carbon analysis & circular matching | Optional |
-| `POST` | `/api/analyze/document` | Ingest utility bills/slips (Sarvam AI / PyMuPDF OCR) | Optional |
-| `POST` | `/api/analyze/chat` | Natural language activity extraction & audit pipeline | Optional |
-| `POST` | `/api/recommend` | Query circular alternative & scale CAPEX via Williams' rule | None |
-| `GET` | `/api/facilities` | Retrieve plant facilities for operator | Optional |
-| `POST` | `/api/facilities` | Upsert facility profile and metadata | Optional |
-| `GET` | `/api/profile/{auth_uid}` | Retrieve operator details & facility mappings | Optional |
-| `GET` | `/api/audits` | List historical audit assessments | Bearer Token |
-| `GET` | `/api/audits/{id}` | Retrieve complete calculation snapshot | Bearer Token |
-| `GET` | `/health` | System health, vector store status & active LLMs | None |
-
----
-
-## 🚀 Installation & Local Setup
+## Installation & Local Setup
 
 ### Prerequisites
 - **Python 3.10+** (Tested on 3.11 & 3.13)
@@ -317,36 +239,7 @@ Access the application at **`http://localhost:5173`**. Interactive API docs are 
 
 ---
 
-## 🧪 Verification & Test Suite
-
-All mathematical calculations, lifecycle guardrails, vector retrieval, and authentication routes are validated across **121 automated tests**:
-
-```bash
-python -m pytest tests/ -v
-```
-
-```
-============================== test session starts ==============================
-collected 121 items
-
-tests/test_api.py .........                                              [  7%]
-tests/test_auth.py ......................                                [ 25%]
-tests/test_chroma.py .......                                             [ 31%]
-tests/test_circular_engine.py ............                               [ 41%]
-tests/test_csv_loader.py ..................                              [ 56%]
-tests/test_emission_engine.py ............                               [ 66%]
-tests/test_entity_mapper.py .................                            [ 80%]
-tests/test_groq.py ........                                              [ 86%]
-tests/test_leak_detector.py .....                                        [ 90%]
-tests/test_sarvam.py .......                                             [ 96%]
-tests/test_supabase_storage.py ....                                      [100%]
-
-======================= 121 passed, 1 warning in 54.75s =======================
-```
-
----
-
-## 📜 Regulatory & Standards Alignment
+## Regulatory & Standards Alignment
 
 - **GHG Protocol Corporate Standard:** Scope 1 (direct combustion), Scope 2 (grid electricity), and Scope 3 (purchased raw materials).
 - **SEBI BRSR Core (India):** Tailored for SME suppliers reporting carbon intensity to India's top 1,000 listed anchor enterprises.
@@ -356,7 +249,7 @@ tests/test_supabase_storage.py ....                                      [100%]
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the **MIT License**. See [LICENSE](LICENSE) for full terms.
 

@@ -30,10 +30,10 @@
   --rose: #e11d48;
   --rose-light: #ffe4e6;
   
-  --text-primary: #071f16;
-  --text-secondary: #425e52;
-  --text-muted: #739184;
-  --text-dim: #9cb5a9;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
   
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -80,7 +80,7 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .gradient-text {
-  background: linear-gradient(135deg, #0a3325 0%, #00b86b 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -134,7 +134,12 @@ h1, h2, h3, h4, .font-heading {
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.12em;
-  color: var(--mint-hover);
+  color: #0f172a;
+  background: #ffffff;
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   text-transform: uppercase;
 }
 
@@ -142,7 +147,7 @@ h1, h2, h3, h4, .font-heading {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--mint);
+  background: #0f172a;
 }
 
 /* ============================================================
@@ -266,7 +271,7 @@ h1, h2, h3, h4, .font-heading {
 }
 
 .brand-accent {
-  color: var(--mint-hover);
+  color: #0f172a;
 }
 
 .brand-mark {

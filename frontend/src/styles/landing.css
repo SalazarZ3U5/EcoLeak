@@ -57,7 +57,14 @@
 .hero-guarantee-line span {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
+  background: #ffffff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 /* Dual-Stream Workbench — 3D tilt base */
@@ -339,7 +346,7 @@
   font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 800;
-  color: var(--step-accent, var(--mint));
+  color: #0f172a;
   letter-spacing: 0.06em;
   white-space: nowrap;
 }
@@ -394,15 +401,16 @@
   margin-top: 20px;
   font-size: 11.5px;
   font-weight: 700;
-  color: var(--step-accent, var(--mint-hover));
-  background: var(--mint-light);
+  color: #0f172a;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   padding: 4px 12px;
   border-radius: var(--radius-full);
   transition: background 0.25s ease, color 0.25s ease;
 }
 
 .pipeline-step-card:hover .pipeline-step-tag {
-  background: var(--step-accent, var(--mint));
+  background: #0f172a;
   color: #ffffff;
 }
 
@@ -453,8 +461,8 @@
 }
 
 .sector-btn:hover {
-  border-color: var(--mint);
-  color: var(--mint-hover);
+  border-color: #0f172a;
+  color: #0f172a;
   background: #ffffff;
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
@@ -548,8 +556,9 @@
 }
 
 .row-tag.closed {
-  background: var(--mint-light);
-  color: var(--mint-hover);
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
 }
 
 .row-val {
@@ -585,7 +594,7 @@
   font-size: clamp(38px, 4.5vw, 56px);
   font-family: var(--font-display);
   font-weight: 800;
-  color: var(--mint-hover);
+  color: #0f172a;
   display: block;
   line-height: 1;
 }
@@ -627,27 +636,30 @@
 .editorial-impact-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 48px;
-  padding: 48px 0;
-  border-top: 2px solid var(--mint-light);
-  border-bottom: 1px solid var(--line);
+  gap: 28px;
   margin: 40px 0 60px;
 }
 
 .editorial-stat-block {
-  transition: transform 0.25s ease;
+  background: #ffffff;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 36px 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
 }
 
 .editorial-stat-block:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
 }
 
 .editorial-stat-block strong {
-  font-size: clamp(40px, 5vw, 68px);
+  font-size: clamp(38px, 4.5vw, 56px);
   font-family: var(--font-display);
   font-weight: 800;
-  color: var(--emerald-deep);
+  color: #0f172a;
   line-height: 1;
   display: block;
 }
@@ -745,7 +757,7 @@
 }
 
 .footer-links a:hover {
-  color: var(--mint-hover);
+  color: #0f172a;
 }
 
 /* ============================================================
@@ -799,7 +811,7 @@
 .modal-tag {
   font-size: 11px;
   font-weight: 800;
-  color: var(--mint-hover);
+  color: #0f172a;
   letter-spacing: 0.08em;
   margin-bottom: 8px;
 }
@@ -927,14 +939,14 @@
   align-items: center;
   gap: 8px;
   background: #ffffff;
-  border: 1px solid rgba(0, 184, 107, 0.25);
+  border: 1px solid #cbd5e1;
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.6px;
-  color: var(--mint-hover);
-  box-shadow: 0 2px 6px rgba(0, 184, 107, 0.08);
+  color: #0f172a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   margin-bottom: 16px;
 }
 
@@ -1001,9 +1013,9 @@
 }
 
 .multilingual-tab-btn:hover {
-  border-color: var(--mint);
-  color: var(--mint-hover);
-  background: #f0fdf4;
+  border-color: #0f172a;
+  color: #0f172a;
+  background: #f8fafc;
 }
 
 .multilingual-tab-btn.active {
@@ -1206,7 +1218,7 @@
 }
 
 .carbon-val {
-  color: #059669;
+  color: #0f172a;
   font-weight: 850;
   font-family: var(--font-mono, monospace);
   font-size: 15px;
@@ -1216,13 +1228,13 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  background: rgba(0, 184, 107, 0.08);
-  border: 1px solid rgba(0, 184, 107, 0.2);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
   border-radius: 8px;
   padding: 10px 12px;
   font-size: 11.5px;
   line-height: 1.45;
-  color: #065f46;
+  color: #334155;
 }
 
 .multilingual-pills-footer {

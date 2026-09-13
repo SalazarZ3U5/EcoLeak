@@ -43,6 +43,8 @@ class AnalyzeRequest(BaseModel):
     """Structured analysis request with known activities."""
     industry: str = Field(default="Other", description="Industry type, e.g. 'Plastic Manufacturing'")
     activities: list[ActivityInput] = Field(..., min_length=1, description="List of activities to analyze")
+    facility_id: Optional[str] = Field(default=None, description="Optional facility UUID in Supabase")
+    facility_name: Optional[str] = Field(default=None, description="Optional facility name")
 
 
 class ChatRequest(BaseModel):
@@ -185,10 +187,45 @@ class AssistantChatRequest(BaseModel):
     message: str = Field(..., min_length=1, description="Question for EcoBot regarding EcoLeak, emission math, or circularity")
     history: list[dict] = Field(default_factory=list, description="Recent conversation history [{'role': '...', 'content': '...'}]")
     context: Optional[dict] = Field(default=None, description="Active facility context")
+    session_id: Optional[str] = Field(default=None, description="Chat session UUID in Supabase")
+    facility_id: Optional[str] = Field(default=None, description="Facility UUID linked to this chat")
 
 
 class AssistantChatResponse(BaseModel):
     response: str
     source: str = "groq"
+    session_id: Optional[str] = Field(default=None, description="Active chat session UUID in Supabase")
+    stored_in_supabase: bool = Field(default=False, description="True if message was persisted to Supabase")
+
+
+# ---------------------------------------------------------------------------
+# Facility & Storage Test models
+# ---------------------------------------------------------------------------
+
+class FacilityInput(BaseModel):
+    name: str = Field(..., description="Facility name")
+    industry: str = Field(default="Plastic manufacturing", description="Industry classification")
+    location: str = Field(default="Industrial Estate, India", description="Facility location")
+    annual_production_tonnes: float = Field(default=0.0, description="Annual throughput in metric tonnes")
+    grid_region: str = Field(default="WEST", description="CEA regional electricity grid (WEST/NORTH/SOUTH/EAST)")
+    facility_id: Optional[str] = Field(default=None, description="Existing facility UUID if updating")
+
+
+class FacilityResponse(BaseModel):
+    id: str
+    name: str
+    industry: str
+    location: str
+    annual_production_tonnes: float
+    grid_region: str
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
+
+
+class StorageTestResponse(BaseModel):
+    status: str
+    supabase_configured: bool
+    tables_tested: dict[str, dict]
+    summary: str
 
 

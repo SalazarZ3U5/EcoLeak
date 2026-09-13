@@ -23,13 +23,13 @@ export default function ImpactROI({ onOpenAssessment }) {
           </div>
 
           <div className="editorial-stat-block">
-            <strong style={{ color: 'var(--mint-hover)' }}>₹8L–25L</strong>
+            <strong>₹8L–25L</strong>
             <h4>Annual Cash Recovery</h4>
             <p>Average recurring annual cash savings achieved through waste heat and motor friction optimization.</p>
           </div>
 
           <div className="editorial-stat-block">
-            <strong style={{ color: 'var(--cyan-fresh)' }}>&lt; 9 Mo</strong>
+            <strong>&lt; 9 Mo</strong>
             <h4>CapEx Payback Velocity</h4>
             <p>Average amortized payback period across vetted interventions without production downtime.</p>
           </div>

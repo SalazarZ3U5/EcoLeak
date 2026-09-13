@@ -226,18 +226,24 @@ async def analyze(
     ]
     result = run_analysis_pipeline(request.industry, activities)
 
-    # Auto-save audit if user is authenticated and Supabase is configured
-    if user and supabase_service.is_configured():
+    # Auto-save audit if Supabase is configured
+    if supabase_service.is_configured():
         try:
+            uid = user["uid"] if user else "anonymous-operator"
+            email = user.get("email", "") if user else ""
             await supabase_service.save_audit(
-                user_id=user["uid"],
-                user_email=user.get("email", ""),
+                user_id=uid,
+                user_email=email,
                 industry=request.industry,
                 total_co2e=result.facility_summary.total_emissions_kg_co2e,
                 scope_breakdown=result.facility_summary.scope_breakdown.model_dump(),
-                leak_points=[lp.model_dump() for lp in result.leak_points[:10]],
-                circular_recommendations=[r.model_dump() for r in result.circular_recommendations[:5]],
+                leak_points=[lp.model_dump() for lp in result.leak_points],
+                circular_recommendations=[r.model_dump() for r in result.circular_recommendations],
+                activities=[a.model_dump() for a in result.activities],
                 data_quality_index=result.facility_summary.data_quality_index,
+                facility_id=request.facility_id,
+                facility_name=request.facility_name,
+                operator_id=user["uid"] if user else None,
             )
         except Exception as e:
             logger.warning("Auto-save audit failed (non-fatal): %s", e)
@@ -352,5 +358,26 @@ async def analyze_document(
 
     result = run_analysis_pipeline(industry, activities)
     result.warnings = warnings + result.warnings
+
+    if supabase_service.is_configured():
+        try:
+            uid = user["uid"] if user else "anonymous-operator"
+            email = user.get("email", "") if user else ""
+            await supabase_service.save_audit(
+                user_id=uid,
+                user_email=email,
+                industry=industry,
+                total_co2e=result.facility_summary.total_emissions_kg_co2e,
+                scope_breakdown=result.facility_summary.scope_breakdown.model_dump(),
+                leak_points=[lp.model_dump() for lp in result.leak_points],
+                circular_recommendations=[r.model_dump() for r in result.circular_recommendations],
+                activities=[a.model_dump() for a in result.activities],
+                data_quality_index=result.facility_summary.data_quality_index,
+                facility_name=f"Document Audit ({filename})",
+                operator_id=user["uid"] if user else None,
+            )
+        except Exception as e:
+            logger.warning("Auto-save document audit note: %s", e)
+
     return result
 

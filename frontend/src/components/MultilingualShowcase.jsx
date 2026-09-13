@@ -79,7 +79,7 @@ export default function MultilingualShowcase({ onOpenAssessment }) {
         {/* Header */}
         <div className="multilingual-header">
           <div className="multilingual-badge">
-            <Languages size={15} color="var(--mint-hover)" />
+            <Languages size={15} color="#0f172a" />
             <span>INDIC OCR &amp; NATURAL LANGUAGE INGESTION · POWERED BY SARVAM AI</span>
           </div>
 
@@ -144,7 +144,7 @@ export default function MultilingualShowcase({ onOpenAssessment }) {
 
               <div className="multilingual-engine-flow">
                 <div className="flow-step">
-                  <Cpu size={14} color="var(--mint)" />
+                  <Cpu size={14} color="#0284c7" />
                   <span>Sarvam Indic OCR &amp; Unit Disambiguation</span>
                 </div>
                 <span className="flow-arrow">→</span>
@@ -159,7 +159,7 @@ export default function MultilingualShowcase({ onOpenAssessment }) {
             <div className="multilingual-panel parsed-panel">
               <div className="panel-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Sparkles size={16} color="var(--mint)" />
+                  <Sparkles size={16} color="#0f172a" />
                   <strong>Deterministic Clean Extracted Activity</strong>
                 </div>
                 <span className="panel-badge-green">

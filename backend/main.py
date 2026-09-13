@@ -28,7 +28,7 @@ from fastapi.responses import FileResponse
 # Load environment variables before anything else
 load_dotenv()
 
-from backend.api import health, analyze, chat, recommendations, audits
+from backend.api import health, analyze, chat, recommendations, audits, storage
 from backend.services import csv_loader, chroma_service, auth_service, supabase_service
 
 # ---------------------------------------------------------------------------
@@ -115,6 +115,7 @@ app.include_router(analyze.router)
 app.include_router(chat.router)
 app.include_router(recommendations.router)
 app.include_router(audits.router)
+app.include_router(storage.router)
 
 # ---------------------------------------------------------------------------
 # Frontend — serve static files and index.html

@@ -9,8 +9,8 @@ export default function Footer({ onOpenVision }) {
         <div className="footer-content">
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <EcoLeakLogo size={24} />
-            <strong style={{ color: 'var(--text-main)', fontSize: '15px' }}>
-              Eco<span style={{ color: 'var(--mint)' }}>Leak</span>
+            <strong style={{ color: 'var(--text-primary)', fontSize: '15px' }}>
+              Eco<span style={{ color: '#0f172a' }}>Leak</span>
             </strong>
             <span style={{ color: 'var(--text-dim)', fontSize: '13px' }}>— Find emissions. Close the loop. Save money.</span>
           </div>
@@ -36,14 +36,15 @@ export default function Footer({ onOpenVision }) {
               display: 'inline-flex', 
               alignItems: 'center', 
               gap: '5px',
-              padding: '2px 8px', 
+              padding: '3px 10px', 
               borderRadius: '999px', 
-              background: 'rgba(0, 184, 107, 0.08)', 
-              color: 'var(--mint-hover)', 
+              background: '#ffffff', 
+              color: '#0f172a', 
               fontWeight: 700, 
-              border: '1px solid rgba(0, 184, 107, 0.2)' 
+              border: '1px solid var(--line)',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)' 
             }}>
-              <Sparkles size={12} />
+              <Sparkles size={12} color="#0f172a" />
               <span>Made for Hackout 2026</span>
             </span>
           </div>

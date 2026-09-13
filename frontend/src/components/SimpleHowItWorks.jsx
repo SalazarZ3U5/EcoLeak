@@ -8,21 +8,21 @@ const steps = [
     title: 'Input Plant Process Data',
     desc: "Enter energy sources, raw materials, and waste streams, or drop last month's utility invoices with full multilingual document support (Hindi, Marathi, Tamil, etc.).",
     tag: 'Multilingual PDF & Invoices',
-    accent: 'var(--mint)',
+    accent: '#0f172a',
   },
   {
     num: '02',
     title: 'Pinpoint Emission Leak Points',
     desc: 'Our Pareto hotspot engine isolates exactly where carbon and energy escape — virgin feedstock, flue gas, and line friction.',
     tag: 'Instant hotspot mapping',
-    accent: 'var(--cyan-fresh)',
+    accent: '#0284c7',
   },
   {
     num: '03',
     title: 'Adopt Circular Interventions',
     desc: 'Receive pre-engineered circular recommendations (recycled loops, alternative feedstocks, heat recovery) with estimated cost and CO₂ savings.',
     tag: '< 8 mo payback',
-    accent: 'var(--mint-hover)',
+    accent: '#0f172a',
   },
 ];
 

@@ -98,7 +98,7 @@ export default function SimpleCalculator({ onOpenAssessment }) {
                     <span className="row-tag closed"><JargonTooltip term="Circular Economy">CIRCULAR FIX</JargonTooltip></span>
                     <span>{preset.circularIntervention}</span>
                   </div>
-                  <span className="row-val" style={{ color: 'var(--mint-hover)' }}>Verified Match</span>
+                  <span className="row-val" style={{ color: '#0f172a' }}>Verified Match</span>
                 </div>
 
                 <div className="ledger-breakdown-row">
@@ -124,11 +124,11 @@ export default function SimpleCalculator({ onOpenAssessment }) {
                 <div className="summary-stat-grid">
                   <div className="stat-item">
                     <small>Emissions Abatement</small>
-                    <strong style={{ color: 'var(--mint-hover)' }}>−{preset.reduction} <JargonTooltip term="CO2">CO₂</JargonTooltip></strong>
+                    <strong style={{ color: '#0f172a' }}>−{preset.reduction} <JargonTooltip term="CO2">CO₂</JargonTooltip></strong>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                       ~{co2CutTons} <JargonTooltip term="tCO2e">tCO₂e</JargonTooltip>/yr cut
                     </span>
-                    <span style={{ fontSize: '10.5px', color: 'var(--emerald-deep)', fontWeight: 700, marginTop: '3px', display: 'block' }}>
+                    <span style={{ fontSize: '10.5px', color: '#0f172a', fontWeight: 700, marginTop: '3px', display: 'block' }}>
                       ≈ {Math.round(co2CutTons / 4.6)} cars off road · {Math.round((co2CutTons * 1000) / 22).toLocaleString()} trees
                     </span>
                   </div>

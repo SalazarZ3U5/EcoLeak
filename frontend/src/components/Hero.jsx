@@ -37,10 +37,10 @@ export default function Hero({ onOpenAssessment }) {
 
             <div className="hero-guarantee-line" style={{ marginTop: '18px', flexWrap: 'wrap', gap: '16px' }}>
               <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Key Capabilities:</span>
-              <span><CheckCircle2 size={15} color="var(--mint)" />Multilingual Document Ingestion</span>
-              <span><CheckCircle2 size={15} color="var(--mint)" />Interactive Jargon Tooltips</span>
-              <span><CheckCircle2 size={15} color="var(--mint)" />Voice-Enabled AI Support</span>
-              <span><CheckCircle2 size={15} color="var(--mint)" />Deterministic Q × EF Math</span>
+              <span><CheckCircle2 size={15} color="#0f172a" />Multilingual Document Ingestion</span>
+              <span><CheckCircle2 size={15} color="#0f172a" />Interactive Jargon Tooltips</span>
+              <span><CheckCircle2 size={15} color="#0f172a" />Voice-Enabled AI Support</span>
+              <span><CheckCircle2 size={15} color="#0f172a" />Deterministic Q × EF Math</span>
             </div>
           </div>
 
@@ -75,7 +75,7 @@ export default function Hero({ onOpenAssessment }) {
             <div className="interactive-slider-track-wrap">
               <div className="slider-top-labels">
                 <span style={{ color: 'var(--rose)', fontWeight: 700 }}>0% Linear Bleed</span>
-                <span style={{ color: 'var(--mint-hover)', fontWeight: 700 }}>100% Fully Circular</span>
+                <span style={{ color: '#0f172a', fontWeight: 700 }}>100% Fully Circular</span>
               </div>
               <input
                 type="range"
@@ -91,7 +91,7 @@ export default function Hero({ onOpenAssessment }) {
             <div className="stream-flow-visual">
               <div className="stream-flow-station">
                 <div className="station-icon-wrap mint">
-                  <Zap size={20} color="var(--mint-hover)" />
+                  <Zap size={20} color="#0f172a" />
                 </div>
                 <span className="station-label">Intake Node</span>
                 <b className="station-name">Grid &amp; Fuel</b>
@@ -100,20 +100,20 @@ export default function Hero({ onOpenAssessment }) {
               <div className="stream-connector-track">
                 <div
                   className="stream-fluid-pulse"
-                  style={{ background: isClosed ? 'var(--mint)' : 'var(--rose)' }}
+                  style={{ background: isClosed ? '#0f172a' : 'var(--rose)' }}
                 />
               </div>
 
               <div className="stream-flow-station">
                 <div className={`station-icon-wrap ${isClosed ? 'mint' : 'rose'}`}>
                   {isClosed ? (
-                    <RefreshCw size={20} color="var(--mint-hover)" className="spin-on-active" />
+                    <RefreshCw size={20} color="#0f172a" className="spin-on-active" />
                   ) : (
                     <Flame size={20} color="var(--rose)" />
                   )}
                 </div>
                 <span className="station-label">{isClosed ? 'Recaptured' : 'Escaping'}</span>
-                <b className="station-name" style={{ color: isClosed ? 'var(--mint-hover)' : 'var(--rose)' }}>
+                <b className="station-name" style={{ color: isClosed ? '#0f172a' : 'var(--rose)' }}>
                   {isClosed ? 'Waste Heat Economizer' : 'Flue Exhaust Bleed'}
                 </b>
               </div>
@@ -121,7 +121,7 @@ export default function Hero({ onOpenAssessment }) {
               <div className="stream-connector-track">
                 <div
                   className="stream-fluid-pulse"
-                  style={{ background: isClosed ? 'var(--mint)' : 'var(--rose)' }}
+                  style={{ background: isClosed ? '#0f172a' : 'var(--rose)' }}
                 />
               </div>
 
@@ -140,7 +140,7 @@ export default function Hero({ onOpenAssessment }) {
             <div className="stream-metrics-strip">
               <div className="stream-metric-cell">
                 <small>Carbon Abatement</small>
-                <strong style={{ color: isClosed ? 'var(--mint-hover)' : 'var(--rose)' }}>
+                <strong style={{ color: isClosed ? '#0f172a' : 'var(--rose)' }}>
                   {isClosed ? `−${co2Cut}% CO₂` : '+482 tCO₂/yr'}
                 </strong>
               </div>
@@ -152,7 +152,7 @@ export default function Hero({ onOpenAssessment }) {
               </div>
               <div className="stream-metric-cell">
                 <small>Circularity Score</small>
-                <strong style={{ color: isClosed ? 'var(--mint-hover)' : 'var(--amber)' }}>
+                <strong style={{ color: isClosed ? '#0f172a' : 'var(--amber)' }}>
                   {closedLoopPercent}%
                 </strong>
               </div>

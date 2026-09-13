@@ -77,6 +77,27 @@ async def analyze_chat(
 
     result = run_analysis_pipeline(industry, activities)
     result.warnings = warnings + result.warnings
+
+    if supabase_service.is_configured():
+        try:
+            uid = user["uid"] if user else "anonymous-operator"
+            email = user.get("email", "") if user else ""
+            await supabase_service.save_audit(
+                user_id=uid,
+                user_email=email,
+                industry=industry,
+                total_co2e=result.facility_summary.total_emissions_kg_co2e,
+                scope_breakdown=result.facility_summary.scope_breakdown.model_dump(),
+                leak_points=[lp.model_dump() for lp in result.leak_points],
+                circular_recommendations=[r.model_dump() for r in result.circular_recommendations],
+                activities=[a.model_dump() for a in result.activities],
+                data_quality_index=result.facility_summary.data_quality_index,
+                facility_name="Natural Language Chat Audit",
+                operator_id=user["uid"] if user else None,
+            )
+        except Exception as e:
+            logger.warning("Auto-save chat analysis note: %s", e)
+
     return result
 
 
@@ -85,7 +106,10 @@ async def analyze_chat(
 # ---------------------------------------------------------------------------
 
 @router.post("/api/assistant/chat", response_model=AssistantChatResponse)
-async def assistant_chat(request: AssistantChatRequest):
+async def assistant_chat(
+    request: AssistantChatRequest,
+    user: Optional[dict] = Depends(get_current_user_optional),
+):
     """
     EcoBot Conversational Assistant.
 
@@ -94,7 +118,7 @@ async def assistant_chat(request: AssistantChatRequest):
       2. Industrial emission mathematics (Scope 1/2/3 formulas, grid factors, payback math).
       3. Facility consumption calculations.
 
-    Politely declines off-topic queries.
+    Automatically persists message history and sessions to Supabase.
     """
     logger.info("EcoBot query received: '%s'", request.message[:80])
     res = assistant_service.chat_with_assistant(
@@ -102,8 +126,43 @@ async def assistant_chat(request: AssistantChatRequest):
         history=request.history,
         context=request.context,
     )
+
+    session_id = request.session_id
+    stored = False
+    if supabase_service.is_configured():
+        try:
+            op_id = user["uid"] if user else None
+            # 1. Save user prompt
+            user_msg = await supabase_service.save_chat_message(
+                content=request.message,
+                sender="user",
+                session_id=session_id,
+                facility_id=request.facility_id,
+                operator_id=op_id,
+                title=f"EcoBot Session - {request.message[:40]}",
+                identified_activities=request.context.get("activities", []) if request.context else [],
+            )
+            if user_msg and "session_id" in user_msg:
+                session_id = user_msg["session_id"]
+
+            # 2. Save assistant response
+            if res.get("response"):
+                await supabase_service.save_chat_message(
+                    content=res["response"],
+                    sender="assistant",
+                    session_id=session_id,
+                    facility_id=request.facility_id,
+                    operator_id=op_id,
+                    citations=[{"source": res.get("source", "groq")}],
+                )
+            stored = True
+        except Exception as e:
+            logger.warning("Supabase chat message persistence note: %s", e)
+
     return AssistantChatResponse(
         response=res.get("response", ""),
         source=res.get("source", "groq"),
+        session_id=session_id,
+        stored_in_supabase=stored,
     )
 
